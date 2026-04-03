@@ -26,6 +26,7 @@ export default function UsersPage() {
     roleId: '',
     companyId: '',
     status: 'active' as 'active' | 'disabled',
+    avatar: '',
   });
 
   const filtered = users.filter(u =>
@@ -48,6 +49,7 @@ export default function UsersPage() {
       roleId: roles[0]?.id || '',
       companyId: allCompanies[0]?.id || '',
       status: 'active',
+      avatar: '',
     });
     setFormError('');
     setShowModal(true);
@@ -59,11 +61,12 @@ export default function UsersPage() {
       name: user.name,
       username: user.username,
       email: user.email,
-      password: '',
-      confirmPassword: '',
       roleId: user.roleId,
       companyId: user.companyId,
       status: user.status,
+      avatar: user.avatar || '',
+      password: '',
+      confirmPassword: '',
     });
     setFormError('');
     setShowModal(true);
@@ -74,17 +77,17 @@ export default function UsersPage() {
     setFormError('');
 
     if (!form.name.trim() || !form.username.trim() || !form.email.trim()) {
-      setFormError('Name, username, and email are required.');
+      setFormError('الاسم الكامل، اسم المستخدم، والبريد الإلكتروني مطلوبة.');
       return;
     }
 
     if (!editingUser && !form.password.trim()) {
-      setFormError('Password is required for new users.');
+      setFormError('كلمة المرور مطلوبة للمستخدمين الجدد.');
       return;
     }
 
     if (form.password.trim() && form.password !== form.confirmPassword) {
-      setFormError('Passwords do not match.');
+      setFormError('كلمات المرور غير متطابقة.');
       return;
     }
 
@@ -95,6 +98,7 @@ export default function UsersPage() {
       roleId: form.roleId,
       companyId: form.companyId,
       status: form.status,
+      avatar: form.avatar.trim() || undefined,
       ...(form.password.trim() ? { password: form.password } : {}),
     };
 
@@ -246,97 +250,110 @@ export default function UsersPage() {
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl">{editingUser ? 'Edit User' : 'Add New User'}</DialogTitle>
+            <DialogTitle className="text-xl">{editingUser ? 'تعديل مستخدم' : 'إضافة مستخدم جديد'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2" dir="rtl">
               {formError && (
-                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 text-right">
                   {formError}
                 </div>
               )}
               {[
-                { label: 'Full Name', key: 'name', type: 'text', placeholder: 'John Doe' },
-                { label: 'Username', key: 'username', type: 'text', placeholder: 'john.doe' },
-                { label: 'Email', key: 'email', type: 'email', placeholder: 'john@company.com' },
+                { label: 'الاسم بالكامل', key: 'name', type: 'text', placeholder: 'مثال: محمد أحمد' },
+                { label: 'اسم المستخدم', key: 'username', type: 'text', placeholder: 'مثال: mohamed.ahmed' },
+                { label: 'البريد الإلكتروني', key: 'email', type: 'email', placeholder: 'example@company.com' },
+                { label: 'رابط الصورة الشخصية (اختياري)', key: 'avatar', type: 'text', placeholder: 'https://example.com/photo.jpg' },
               ].map(field => (
-                <div key={field.key} className="space-y-1.5">
+                <div key={field.key} className="space-y-1.5 text-right">
                   <label className="text-sm font-semibold text-foreground/80">{field.label}</label>
+                  {field.key === 'avatar' && form.avatar && (
+                    <div className="flex justify-end mb-2">
+                      <div className="h-12 w-12 rounded-full border border-border overflow-hidden bg-muted">
+                        <img 
+                          src={form.avatar} 
+                          alt="Preview" 
+                          className="h-full w-full object-cover"
+                          onError={(e) => (e.currentTarget.style.display = 'none')}
+                        />
+                      </div>
+                    </div>
+                  )}
                   <Input
                     type={field.type}
                     value={form[field.key as keyof typeof form]}
                     onChange={e => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
                     placeholder={field.placeholder}
                     required
-                    className="bg-background"
+                    className="bg-background text-right"
                   />
                 </div>
               ))}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground/80">Password {editingUser ? '(leave blank to keep current)' : '*'}</label>
+                <div className="space-y-1.5 text-right">
+                  <label className="text-sm font-semibold text-foreground/80">كلمة المرور {editingUser ? '(اتركها فارغة للإبقاء على الحالية)' : '*'}</label>
                   <Input
                     type="password"
                     value={form.password}
                     onChange={e => setForm(prev => ({ ...prev, password: e.target.value }))}
-                    placeholder="Enter password"
+                    placeholder="أدخل كلمة المرور"
                     autoComplete="new-password"
-                    className="bg-background"
+                    className="bg-background text-right"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground/80">Confirm Password</label>
+                <div className="space-y-1.5 text-right">
+                  <label className="text-sm font-semibold text-foreground/80">تأكيد كلمة المرور</label>
                   <Input
                     type="password"
                     value={form.confirmPassword}
                     onChange={e => setForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    placeholder="Re-enter password"
+                    placeholder="أعد إدخال كلمة المرور"
                     autoComplete="new-password"
-                    className="bg-background"
+                    className="bg-background text-right"
                   />
                 </div>
               </div>
               
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-foreground/80">Role</label>
+              <div className="space-y-1.5 text-right">
+                <label className="text-sm font-semibold text-foreground/80">الصلاحية (Role)</label>
                 <select 
                   value={form.roleId} 
                   onChange={e => setForm(prev => ({ ...prev, roleId: e.target.value }))}
-                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-right"
                 >
                   {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-foreground/80">Company</label>
+              <div className="space-y-1.5 text-right">
+                <label className="text-sm font-semibold text-foreground/80">الشركة</label>
                 <select 
                   value={form.companyId} 
                   onChange={e => setForm(prev => ({ ...prev, companyId: e.target.value }))}
-                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-right"
                 >
                   {allCompanies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-foreground/80">Status</label>
+              <div className="space-y-1.5 text-right">
+                <label className="text-sm font-semibold text-foreground/80">الحالة</label>
                 <select 
                   value={form.status} 
                   onChange={e => setForm(prev => ({ ...prev, status: e.target.value as 'active' | 'disabled' }))}
-                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-right"
                 >
-                  <option value="active">Active</option>
-                  <option value="disabled">Disabled</option>
+                  <option value="active">نشط</option>
+                  <option value="disabled">معطل</option>
                 </select>
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
                 <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
-                  Cancel
+                  إلغاء
                 </Button>
                 <Button type="submit" className="shadow-md">
-                  {editingUser ? 'Save Changes' : 'Add User'}
+                  {editingUser ? 'حفظ التعديلات' : 'إضافة مستخدم'}
                 </Button>
               </div>
             </form>
