@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { getCurrentUser } from '@/app/actions/auth';
 
 interface User {
@@ -22,6 +23,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const pathname = usePathname();
 
   const fetchUser = useCallback(async () => {
     try {
@@ -33,9 +35,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           email: session.email,
           avatar: session.avatar
         });
+      } else {
+        setUser(null);
       }
     } catch (error) {
       console.error('Failed to fetch user:', error);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +48,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     fetchUser();
-  }, [fetchUser]);
+  }, [fetchUser, pathname]);
 
   const refreshUser = async () => {
     await fetchUser();

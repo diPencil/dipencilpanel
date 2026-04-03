@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { useConfirm } from '@/context/ConfirmationContext';
 import { User } from '@/lib/types';
-import { Users, Plus, Search, Edit, Trash2, CheckCircle, XCircle, Shield, Building2, Clock } from 'lucide-react';
+import { Users, Plus, Search, Edit, Trash2, CheckCircle, XCircle, Shield, Building2, Clock, Eye, Mail, AtSign, Calendar, LogIn, LogOut } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function UsersPage() {
-  const { users, roles, allCompanies, addUser, updateUser, deleteUser } = useInvoiceData();
+  const { users, roles, allCompanies, company, addUser, updateUser, deleteUser } = useInvoiceData();
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -28,6 +29,8 @@ export default function UsersPage() {
     status: 'active' as 'active' | 'disabled',
     avatar: '',
   });
+  const [viewingUser, setViewingUser] = useState<User | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   const filtered = users.filter(u =>
     u.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -77,17 +80,17 @@ export default function UsersPage() {
     setFormError('');
 
     if (!form.name.trim() || !form.username.trim() || !form.email.trim()) {
-      setFormError('الاسم الكامل، اسم المستخدم، والبريد الإلكتروني مطلوبة.');
+      setFormError('Full name, username, and email are required.');
       return;
     }
 
     if (!editingUser && !form.password.trim()) {
-      setFormError('كلمة المرور مطلوبة للمستخدمين الجدد.');
+      setFormError('Password is required for new users.');
       return;
     }
 
     if (form.password.trim() && form.password !== form.confirmPassword) {
-      setFormError('كلمات المرور غير متطابقة.');
+      setFormError('Passwords do not match.');
       return;
     }
 
@@ -224,6 +227,9 @@ export default function UsersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
+                        <Button onClick={() => { setViewingUser(user); setShowViewModal(true); }} variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:bg-blue-50">
+                          <Eye size={16} />
+                        </Button>
                         <Button onClick={() => openEdit(user)} variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:bg-muted">
                           <Edit size={16} />
                         </Button>
@@ -248,26 +254,26 @@ export default function UsersPage() {
 
       {/* Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-xl">{editingUser ? 'تعديل مستخدم' : 'إضافة مستخدم جديد'}</DialogTitle>
+            <DialogTitle className="text-xl">{editingUser ? 'Edit User' : 'Add New User'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 pt-2" dir="rtl">
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
               {formError && (
-                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 text-right">
+                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                   {formError}
                 </div>
               )}
               {[
-                { label: 'الاسم بالكامل', key: 'name', type: 'text', placeholder: 'مثال: محمد أحمد' },
-                { label: 'اسم المستخدم', key: 'username', type: 'text', placeholder: 'مثال: mohamed.ahmed' },
-                { label: 'البريد الإلكتروني', key: 'email', type: 'email', placeholder: 'example@company.com' },
-                { label: 'رابط الصورة الشخصية (اختياري)', key: 'avatar', type: 'text', placeholder: 'https://example.com/photo.jpg' },
+                { label: 'Full Name', key: 'name', type: 'text', placeholder: 'e.g., Mohamed Ahmed' },
+                { label: 'Username', key: 'username', type: 'text', placeholder: 'e.g., mohamed.ahmed' },
+                { label: 'Email', key: 'email', type: 'email', placeholder: 'example@company.com' },
+                { label: 'Avatar URL (Optional)', key: 'avatar', type: 'text', placeholder: 'https://example.com/photo.jpg' },
               ].map(field => (
-                <div key={field.key} className="space-y-1.5 text-right">
+                <div key={field.key} className="space-y-1.5">
                   <label className="text-sm font-semibold text-foreground/80">{field.label}</label>
                   {field.key === 'avatar' && form.avatar && (
-                    <div className="flex justify-end mb-2">
+                    <div className="flex mb-2">
                       <div className="h-12 w-12 rounded-full border border-border overflow-hidden bg-muted">
                         <img 
                           src={form.avatar} 
@@ -278,85 +284,191 @@ export default function UsersPage() {
                       </div>
                     </div>
                   )}
-                  <Input
-                    type={field.type}
-                    value={form[field.key as keyof typeof form]}
-                    onChange={e => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                    placeholder={field.placeholder}
-                    required
-                    className="bg-background text-right"
-                  />
+                    <Input
+                      type={field.type}
+                      value={form[field.key as keyof typeof form]}
+                      onChange={e => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                      placeholder={field.placeholder}
+                      required={field.key !== 'avatar'}
+                      disabled={field.key === 'username' && !!editingUser}
+                      className={cn(
+                        "bg-background",
+                        field.key === "username" && !!editingUser && "bg-muted/50 cursor-not-allowed opacity-70"
+                      )}
+                    />
                 </div>
               ))}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5 text-right">
-                  <label className="text-sm font-semibold text-foreground/80">كلمة المرور {editingUser ? '(اتركها فارغة للإبقاء على الحالية)' : '*'}</label>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-foreground/80">Password {editingUser ? '(Leave empty to keep current)' : '*'}</label>
                   <Input
                     type="password"
                     value={form.password}
                     onChange={e => setForm(prev => ({ ...prev, password: e.target.value }))}
-                    placeholder="أدخل كلمة المرور"
+                    placeholder="Enter password"
                     autoComplete="new-password"
-                    className="bg-background text-right"
+                    className="bg-background"
                   />
                 </div>
-                <div className="space-y-1.5 text-right">
-                  <label className="text-sm font-semibold text-foreground/80">تأكيد كلمة المرور</label>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-foreground/80">Confirm Password</label>
                   <Input
                     type="password"
                     value={form.confirmPassword}
                     onChange={e => setForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    placeholder="أعد إدخال كلمة المرور"
+                    placeholder="Repeat password"
                     autoComplete="new-password"
-                    className="bg-background text-right"
+                    className="bg-background"
                   />
                 </div>
               </div>
               
-              <div className="space-y-1.5 text-right">
-                <label className="text-sm font-semibold text-foreground/80">الصلاحية (Role)</label>
-                <select 
-                  value={form.roleId} 
-                  onChange={e => setForm(prev => ({ ...prev, roleId: e.target.value }))}
-                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-right"
-                >
-                  {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-foreground/80">Role</label>
+                  <select 
+                    value={form.roleId} 
+                    onChange={e => setForm(prev => ({ ...prev, roleId: e.target.value }))}
+                    className="w-full h-9 px-3 py-1 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-foreground/80">Status</label>
+                  <select 
+                    value={form.status} 
+                    onChange={e => setForm(prev => ({ ...prev, status: e.target.value as 'active' | 'disabled' }))}
+                    className="w-full h-9 px-3 py-1 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    <option value="active">Active</option>
+                    <option value="disabled">Disabled</option>
+                  </select>
+                </div>
               </div>
 
-              <div className="space-y-1.5 text-right">
-                <label className="text-sm font-semibold text-foreground/80">الشركة</label>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-foreground/80">Company</label>
                 <select 
                   value={form.companyId} 
                   onChange={e => setForm(prev => ({ ...prev, companyId: e.target.value }))}
-                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-right"
+                  className="w-full h-9 px-3 py-1 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   {allCompanies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
 
-              <div className="space-y-1.5 text-right">
-                <label className="text-sm font-semibold text-foreground/80">الحالة</label>
-                <select 
-                  value={form.status} 
-                  onChange={e => setForm(prev => ({ ...prev, status: e.target.value as 'active' | 'disabled' }))}
-                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-right"
-                >
-                  <option value="active">نشط</option>
-                  <option value="disabled">معطل</option>
-                </select>
-              </div>
-
               <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
-                  إلغاء
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowModal(false)}>
+                  Cancel
                 </Button>
-                <Button type="submit" className="shadow-md">
-                  {editingUser ? 'حفظ التعديلات' : 'إضافة مستخدم'}
+                <Button type="submit" size="sm" className="shadow-md px-6">
+                  {editingUser ? 'Save' : 'Add User'}
                 </Button>
               </div>
             </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* View User Modal */}
+      <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none shadow-2xl focus:outline-none">
+          {/* Hidden Header for Accessibility */}
+          <DialogHeader className="sr-only">
+            <DialogTitle>User Profile - {viewingUser?.name}</DialogTitle>
+          </DialogHeader>
+
+          {viewingUser && (
+            <div className="flex flex-col relative bg-card">
+              {/* Header / Cover area with Rich Sky Gradient (90 deg) and Logo */}
+              <div className="h-28 bg-linear-to-r from-sky-200/40 via-sky-50 to-white flex items-center justify-between px-6 border-b border-border/40 relative">
+                {/* Profile Photo Container (Floats) */}
+                <div className="absolute -bottom-10 left-6 h-20 w-20 rounded-2xl border-4 border-background bg-card shadow-md flex items-center justify-center font-bold text-2xl text-foreground z-20">
+                  {viewingUser.avatar ? (
+                    <img src={viewingUser.avatar} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    viewingUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+                  )}
+                </div>
+
+                {/* Clear System Logo Top Right */}
+                <div className="ml-auto">
+                   <img src={company.logo || '/favicon.png'} alt="System Logo" className="h-10 w-auto object-contain" />
+                </div>
+              </div>
+
+              <div className="pt-14 pb-6 px-6 space-y-6 relative">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">{viewingUser.name}</h2>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <AtSign size={14} /> {viewingUser.username}
+                    </span>
+                    <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Mail size={14} /> {viewingUser.email}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-1">Company</p>
+                    <p className="text-sm font-semibold flex items-center gap-2">
+                       <Building2 size={14} className="text-blue-500" /> {getCompany(viewingUser.companyId)?.name || 'N/A'}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-1">Role</p>
+                    <p className="text-sm font-semibold flex items-center gap-2">
+                       <Shield size={14} className="text-indigo-500" /> {getRole(viewingUser.roleId)?.name || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 border-b border-border pb-2">Activity Logs</h3>
+                  <div className="space-y-2.5">
+                    {[
+                      { icon: LogIn, label: 'Last opened', value: viewingUser.lastLogin ? new Date(viewingUser.lastLogin).toLocaleString() : 'Never' },
+                      { icon: LogOut, label: 'Last closed', value: (viewingUser as any).lastLogoutAt ? new Date((viewingUser as any).lastLogoutAt).toLocaleString() : 'N/A' },
+                      { 
+                        icon: Clock, 
+                        label: 'This session', 
+                        value: viewingUser.lastLogin ? (() => {
+                          const login = new Date(viewingUser.lastLogin).getTime();
+                          const logout = (viewingUser as any).lastLogoutAt ? new Date((viewingUser as any).lastLogoutAt).getTime() : 0;
+                          if (login > logout) {
+                             const diff = Date.now() - login;
+                             const mins = Math.floor(diff / 60000);
+                             return `${mins}m ${Math.floor((diff % 60000) / 1000)}s (Active)`;
+                          }
+                          return 'N/A';
+                        })() : 'N/A' 
+                      },
+                      { icon: Calendar, label: 'All sessions', value: '14 Recorded' }
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between py-1 shadow-xs border-b border-border/20 last:border-0">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                          <item.icon size={14} className="text-slate-400" /> {item.label}
+                        </div>
+                        <div className="text-sm font-semibold text-foreground tabular-nums">
+                          {item.value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <Button onClick={() => setShowViewModal(false)} variant="outline" size="sm" className="px-8">
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -95,6 +95,8 @@ model User {
   status    String    @default("active")
   lastLogin DateTime?
   lastLogoutAt DateTime?
+  lastNotificationCheck DateTime?
+  lastNotificationClearCheck DateTime?
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)

@@ -206,13 +206,6 @@ export function Sidebar() {
         </Link>
       </div>
 
-      {/* Collapse Toggle Button */}
-      <button
-        onClick={toggleFold}
-        className="absolute -right-3 top-8 z-50 flex h-6 w-6 items-center justify-center rounded-full bg-card border border-border shadow-md hover:bg-accent text-muted-foreground transition-all duration-200"
-      >
-        {isFolded ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-      </button>
 
       {/* Navigation */}
       <TooltipProvider delayDuration={0}>
@@ -334,8 +327,8 @@ export function Sidebar() {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate leading-none mb-1">{user?.name || 'diPencil Panel'}</p>
-              <p className="text-xs text-muted-foreground truncate font-medium">{user?.email || 'noreply@dipencil.com'}</p>
+              <p className="text-sm font-semibold truncate leading-none mb-1">{user?.name || 'User'}</p>
+              <p className="text-xs text-muted-foreground truncate font-medium">{user?.email || ''}</p>
             </div>
           </div>
         ) : (

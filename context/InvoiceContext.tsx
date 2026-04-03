@@ -496,7 +496,8 @@ function mapDbUser(u: Record<string, unknown>): User {
     roleId: u.roleId as string,
     companyId: u.companyId as string,
     status: (u.status as User['status']) ?? 'active',
-    lastLogin: (u.lastLogin as string) ?? undefined,
+    lastLogin: (u.lastLogin as Date | string | undefined)?.toString() ?? undefined,
+    lastLogoutAt: (u.lastLogoutAt as Date | string | undefined)?.toString() ?? undefined,
     avatar: (u.avatar as string) ?? undefined,
   };
 }

@@ -376,6 +376,7 @@ export interface User {
   companyId: string;
   status: 'active' | 'disabled';
   lastLogin?: string;
+  lastLogoutAt?: string;
   avatar?: string;
 }
 
