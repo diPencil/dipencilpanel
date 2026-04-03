@@ -1,0 +1,667 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useInvoiceData } from '@/context/InvoiceContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Monitor, Users, Globe, HardDrive, Server, Mail, CreditCard,
+  CheckCircle2, ChevronRight, ChevronLeft, AlertCircle,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/formatting';
+
+// ─── Step Definitions ─────────────────────────────────────────────────────────
+
+const STEPS = [
+  { id: 1, label: 'Website Info', icon: Monitor },
+  { id: 2, label: 'Client', icon: Users },
+  { id: 3, label: 'Domain', icon: Globe },
+  { id: 4, label: 'Infrastructure', icon: HardDrive },
+  { id: 5, label: 'Linked Email', icon: Mail },
+  { id: 6, label: 'Plan & Billing', icon: CreditCard },
+  { id: 7, label: 'Confirm', icon: CheckCircle2 },
+];
+
+// ─── Form Data ────────────────────────────────────────────────────────────────
+
+interface FormData {
+  name: string;
+  domain: string;
+  domainId: string; // Internal ID if linked
+  type: 'wordpress' | 'node' | 'php' | 'html';
+  clientId: string;
+  infraType: 'hosting' | 'vps' | '';
+  hostingId: string;
+  vpsId: string;
+  emailIds: string[];
+  planName: string;
+  price: string;
+  billingCycle: 'monthly' | 'yearly';
+  status: 'active' | 'inactive' | 'suspended';
+  storage: number;
+  bandwidth: number;
+  selectedCompanyId: string;
+}
+
+const INITIAL_FORM: FormData = {
+  name: '',
+  domain: '',
+  domainId: '',
+  type: 'wordpress',
+  clientId: '',
+  infraType: '',
+  hostingId: '',
+  vpsId: '',
+  emailIds: [],
+  planName: 'Professional',
+  price: '19.99',
+  billingCycle: 'monthly',
+  status: 'active',
+  storage: 50,
+  bandwidth: 100,
+  selectedCompanyId: '',
+};
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function StepIndicator({ current }: { current: number }) {
+  return (
+    <div className="flex items-center justify-between mb-8 overflow-x-auto pb-2">
+      {STEPS.map((step, i) => {
+        const Icon = step.icon;
+        const done = current > step.id;
+        const active = current === step.id;
+        return (
+          <React.Fragment key={step.id}>
+            <div className="flex flex-col items-center gap-1.5 min-w-[60px]">
+              <div className={cn(
+                'flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all',
+                done ? 'bg-primary border-primary text-primary-foreground' :
+                active ? 'border-primary text-primary bg-primary/10' :
+                'border-muted-foreground/30 text-muted-foreground/40',
+              )}>
+                {done ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-4 w-4" />}
+              </div>
+              <span className={cn(
+                'text-[10px] font-medium text-center leading-tight hidden sm:block',
+                active ? 'text-primary' : done ? 'text-foreground' : 'text-muted-foreground/50',
+              )}>
+                {step.label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div className={cn(
+                'h-px flex-1 mx-2 transition-colors',
+                current > step.id ? 'bg-primary' : 'bg-muted-foreground/20',
+              )} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <p className="text-destructive text-xs mt-1 flex items-center gap-1"><AlertCircle className="h-3 w-3" />{msg}</p>;
+}
+
+// ─── Main Wizard ─────────────────────────────────────────────────────────────
+
+export interface CreateWebsiteWizardProps {
+  initialType?: string;
+}
+
+export function CreateWebsiteWizard({ initialType }: CreateWebsiteWizardProps) {
+  const router = useRouter();
+  const { clients, domains = [], hosting, vps, emails, addWebsite, hostingPlans = [], cloudHostingPlans = [], allCompanies = [], currentCompany } = useInvoiceData();
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState<FormData>({
+    ...INITIAL_FORM,
+    type: (initialType as any) || 'wordpress',
+    selectedCompanyId: currentCompany?.id || ''
+  });
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData | 'infra', string>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const allAvailablePlans = [...hostingPlans, ...cloudHostingPlans];
+
+  const handlePlanSelect = (planId: string) => {
+    const plan = allAvailablePlans.find(p => p.id === planId);
+    if (plan) {
+      const price = form.billingCycle === 'yearly' ? plan.price.yearly : plan.price.monthly;
+      setForm(prev => ({
+        ...prev,
+        planName: plan.name,
+        price: price.toString(),
+        storage: parseInt(plan.resources.storage),
+        bandwidth: parseInt(plan.resources.bandwidth) || prev.bandwidth
+      }));
+    }
+  };
+
+  const set = (key: keyof FormData, value: unknown) => {
+    setForm((p) => ({ ...p, [key]: value }));
+    setErrors((p) => ({ ...p, [key]: undefined }));
+  };
+
+  // ─── Validation ────────────────────────────────────────────────────────────
+
+  const validate = (s: number): boolean => {
+    const e: typeof errors = {};
+    if (s === 1) {
+      if (!form.name.trim()) e.name = 'Website name is required';
+      if (!form.selectedCompanyId && allCompanies.length > 0) e.selectedCompanyId = 'Please select a company';
+    }
+    if (s === 2) {
+      if (!form.clientId) e.clientId = 'Please select a client';
+    }
+    if (s === 3) {
+      // Domain is optional if they skip, but required if they want to next
+      // However, we have a skip button.
+      // If they click NEXT, we should check if domain is set OR if it's optional.
+      // For now let's make it mandatory if you don't SKIP.
+      if (!form.domain.trim()) e.domain = 'Domain is required or skip this step';
+    }
+    if (s === 4) {
+      if (!form.infraType) e.infra = 'Please select infrastructure type';
+      if (form.infraType === 'hosting' && !form.hostingId) e.hostingId = 'Please select a hosting account';
+      if (form.infraType === 'vps' && !form.vpsId) e.vpsId = 'Please select a VPS';
+    }
+    if (s === 6) {
+      if (!form.price || isNaN(parseFloat(form.price)) || parseFloat(form.price) < 0) {
+        e.price = 'Please enter a valid price';
+      }
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const next = () => { if (validate(step)) setStep((s) => Math.min(s + 1, 7)); };
+  const back = () => setStep((s) => Math.max(s - 1, 1));
+
+  // ─── Submit ────────────────────────────────────────────────────────────────
+
+  const submit = () => {
+    if (!validate(6)) return;
+    setIsSubmitting(true);
+    try {
+      addWebsite({
+        name: form.name.trim(),
+        domain: form.domain.trim(),
+        clientId: form.clientId,
+        type: form.type,
+        storage: form.storage,
+        bandwidth: form.bandwidth,
+        plan: {
+          name: form.planName,
+          price: parseFloat(form.price),
+          billingCycle: form.billingCycle,
+        },
+        status: form.status,
+        linkedDomain: form.domain.trim(),
+        companyId: form.selectedCompanyId,
+      });
+      
+      toast.success(`${form.name} has been created!`, {
+        description: 'Website added to portfolio.',
+      });
+      router.push('/dashboard/websites');
+    } catch {
+      toast.error('Failed to create website');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ─── Filtered data per client ──────────────────────────────────────────────
+  const clientDomains = form.clientId ? domains.filter((d: any) => d.clientId === form.clientId) : domains;
+  const clientHosting = form.clientId ? hosting.filter((h: any) => h.clientId === form.clientId) : hosting;
+  const clientVPS = form.clientId ? vps.filter((v: any) => v.clientId === form.clientId) : vps;
+  const clientEmails = form.clientId ? emails.filter((e: any) => e.clientId === form.clientId) : emails;
+
+  const handleDomainSelect = (dId: string) => {
+    const d = clientDomains.find((x: any) => x.id === dId);
+    if (d) {
+      setForm(prev => ({
+        ...prev,
+        domainId: dId,
+        domain: `${d.name}${d.tld}`
+      }));
+    } else {
+      setForm(prev => ({ ...prev, domainId: '', domain: '' }));
+    }
+  };
+
+  // ─── Step Renders ──────────────────────────────────────────────────────────
+
+  const renderStep = () => {
+    switch (step) {
+      // Step 1: Info
+      case 1:
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Website Name *</Label>
+                <Input id="name" placeholder="My Business Site" value={form.name} onChange={(e) => set('name', e.target.value)} className="mt-1.5" />
+                <FieldError msg={errors.name} />
+              </div>
+              <div>
+                <Label>Contracted Company (Internal)</Label>
+                <Select value={form.selectedCompanyId} onValueChange={(v) => set('selectedCompanyId', v)}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue placeholder="Select Company..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allCompanies.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label>Website Type</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-1.5">
+                {[
+                  { value: 'wordpress', label: 'WordPress', icon: '/wordpress-139-svgrepo-com.svg', color: 'border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' },
+                  { value: 'node', label: 'Node.js', icon: '/node-js-svgrepo-com.svg', color: 'border-green-300 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' },
+                  { value: 'php', label: 'PHP', icon: '/phplaravel-svgrepo-com.svg', color: 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300' },
+                  { value: 'html', label: 'Static HTML', icon: '/html5-01-svgrepo-com.svg', color: 'border-orange-300 bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300' },
+                ].map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => set('type', t.value as any)}
+                    className={cn(
+                      'rounded-xl border-2 p-3 flex flex-col items-center justify-center gap-2 transition-all min-h-[100px]',
+                      form.type === t.value ? t.color + ' ring-2 shadow-md scale-105' : 'border-border hover:border-muted-foreground/30 bg-card/40',
+                    )}
+                  >
+                    <div className="h-10 w-10 flex items-center justify-center">
+                      <img 
+                        src={t.icon} 
+                        alt={t.label} 
+                        className={cn("h-8 w-8 object-contain transition-transform", form.type === t.value ? "scale-110" : "opacity-70 group-hover:opacity-100")} 
+                      />
+                    </div>
+                    <span className="text-sm font-bold tracking-tight">{t.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="storage">Storage (GB)</Label>
+                <Input id="storage" type="number" value={form.storage} onChange={(e) => set('storage', parseInt(e.target.value))} className="mt-1.5" />
+              </div>
+              <div>
+                <Label htmlFor="bandwidth">Bandwidth (GB)</Label>
+                <Input id="bandwidth" type="number" value={form.bandwidth} onChange={(e) => set('bandwidth', parseInt(e.target.value))} className="mt-1.5" />
+              </div>
+            </div>
+          </div>
+        );
+
+      // Step 2: Client
+      case 2:
+        return (
+          <div className="space-y-4">
+            <Label>Select Owner Client *</Label>
+            <div className="mt-2 space-y-2 max-h-72 overflow-y-auto pr-1">
+              {clients.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => { set('clientId', c.id); set('domainId', ''); set('domain', ''); set('hostingId', ''); set('vpsId', ''); set('emailIds', []); }}
+                  className={cn(
+                    'w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-all',
+                    form.clientId === c.id ? 'border-primary bg-primary/5 ring-1' : 'border-border hover:bg-muted/30',
+                  )}
+                >
+                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
+                    {c.name.charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{c.name}</p>
+                    <p className="text-xs text-muted-foreground">{c.email}</p>
+                  </div>
+                  {form.clientId === c.id && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                </button>
+              ))}
+            </div>
+            <FieldError msg={errors.clientId} />
+          </div>
+        );
+
+      // Step 3: Domain
+      case 3:
+        return (
+          <div className="space-y-6">
+            <p className="text-sm text-muted-foreground">Link an existing domain or enter one manually.</p>
+            
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {clientDomains.map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => handleDomainSelect(d.id)}
+                  className={cn(
+                    'w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-all',
+                    form.domainId === d.id ? 'border-primary bg-primary/5 ring-1' : 'border-border hover:bg-muted/30',
+                  )}
+                >
+                  <Globe className="h-5 w-5 text-blue-500" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{d.name}{d.tld}</p>
+                    <p className="text-xs text-muted-foreground">{d.registrar} · {d.status}</p>
+                  </div>
+                  {form.domainId === d.id && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                </button>
+              ))}
+            </div>
+
+            <div className="pt-4 border-t border-border/50">
+              <Label htmlFor="customDomain">Custom Domain (if not in context)</Label>
+              <div className="flex gap-2 mt-1.5">
+                <div className="relative flex-1">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="customDomain"
+                    placeholder="example.com"
+                    value={form.domainId ? '' : form.domain}
+                    onChange={(e) => {
+                      setForm(prev => ({ ...prev, domainId: '', domain: e.target.value }));
+                    }}
+                    className="pl-9"
+                    disabled={!!form.domainId}
+                  />
+                </div>
+                {form.domainId && (
+                   <Button variant="ghost" size="sm" onClick={() => set('domainId', '')}>Clear Selection</Button>
+                )}
+              </div>
+            </div>
+            <FieldError msg={errors.domain} />
+          </div>
+        );
+
+      // Step 4: Infrastructure
+      case 4:
+        return (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => set('infraType', 'hosting')}
+                className={cn(
+                  'rounded-xl border-2 p-4 text-left transition-all',
+                  form.infraType === 'hosting' ? 'border-primary bg-primary/5' : 'border-border',
+                )}
+              >
+                <HardDrive className="h-6 w-6 mb-2 text-primary" />
+                <p className="font-semibold text-sm">Hosting</p>
+                <p className="text-xs text-muted-foreground">Shared/Cloud Account</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => set('infraType', 'vps')}
+                className={cn(
+                  'rounded-xl border-2 p-4 text-left transition-all',
+                  form.infraType === 'vps' ? 'border-primary bg-primary/5' : 'border-border',
+                )}
+              >
+                <Server className="h-6 w-6 mb-2 text-primary" />
+                <p className="font-semibold text-sm">VPS</p>
+                <p className="text-xs text-muted-foreground">Private Server</p>
+              </button>
+            </div>
+            <FieldError msg={errors.infra} />
+
+            {form.infraType === 'hosting' && (
+              <Select value={form.hostingId} onValueChange={(v) => {
+                set('hostingId', v);
+                const h = hosting.find(x => x.id === v);
+                if (h) {
+                  setForm(prev => ({
+                    ...prev,
+                    planName: h.planName,
+                    price: h.price.toString(),
+                    storage: parseInt(h.resources.storage) || prev.storage,
+                    bandwidth: parseInt(h.resources.bandwidth) || prev.bandwidth
+                  }));
+                }
+              }}>
+                <SelectTrigger><SelectValue placeholder="Select Hosting Account" /></SelectTrigger>
+                <SelectContent>
+                  {clientHosting.map(h => <SelectItem key={h.id} value={h.id}>{h.name} ({h.planName})</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+
+            {form.infraType === 'vps' && (
+              <Select value={form.vpsId} onValueChange={(v) => {
+                set('vpsId', v);
+                const srv = vps.find(x => x.id === v);
+                if (srv) {
+                  setForm(prev => ({
+                    ...prev,
+                    planName: srv.planName,
+                    price: srv.price.toString(),
+                    storage: srv.storage || prev.storage,
+                  }));
+                }
+              }}>
+                <SelectTrigger><SelectValue placeholder="Select VPS" /></SelectTrigger>
+                <SelectContent>
+                  {clientVPS.map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.planName})</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        );
+
+      // Step 5: Services
+      case 5:
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground font-medium">Link Email Accounts (Optional)</p>
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {clientEmails.length === 0 ? <p className="text-sm text-muted-foreground italic">No emails available for this client.</p> :
+                clientEmails.map((e) => {
+                  const s = form.emailIds.includes(e.id);
+                  return (
+                    <button
+                      key={e.id}
+                      type="button"
+                      onClick={() => {
+                        const updated = s ? form.emailIds.filter(id => id !== e.id) : [...form.emailIds, e.id];
+                        set('emailIds', updated);
+                      }}
+                      className={cn(
+                        'w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-all',
+                        s ? 'border-primary bg-primary/5 ring-1' : 'border-border',
+                      )}
+                    >
+                      <Mail className={cn('h-4 w-4', s ? 'text-primary' : 'text-muted-foreground')} />
+                      <span className="text-sm font-medium">{e.name}@{e.domain}</span>
+                      {s && <CheckCircle2 className="h-4 w-4 text-primary ml-auto" />}
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        );
+
+      // Step 6: Billing
+      case 6:
+        return (
+          <div className="space-y-6">
+            <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 mb-4">
+              <Label className="text-primary font-bold mb-2 block">Choose from Available Plans (Bakat)</Label>
+              <Select onValueChange={handlePlanSelect}>
+                <SelectTrigger className="bg-white border-primary/20">
+                  <SelectValue placeholder="Select a predefined plan..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <div className="p-2 text-[10px] uppercase font-bold text-muted-foreground bg-muted/30 flex items-center gap-2">
+                    <Monitor className="h-3 w-3" /> Shared Hosting
+                  </div>
+                  {hostingPlans.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} - {formatCurrency(form.billingCycle === 'yearly' ? p.price.yearly : p.price.monthly)}
+                    </SelectItem>
+                  ))}
+                  <div className="p-2 text-[10px] uppercase font-bold text-muted-foreground bg-muted/30 mt-2 flex items-center gap-2">
+                    <Server className="h-3 w-3" /> Cloud Hosting
+                  </div>
+                  {cloudHostingPlans.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} - {formatCurrency(form.billingCycle === 'yearly' ? p.price.yearly : p.price.monthly)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground mt-2">Selecting a plan will automatically update the price and resources.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Plan Name</Label>
+                <Input value={form.planName} onChange={(e) => set('planName', e.target.value)} className="mt-1.5" />
+              </div>
+              <div>
+                <Label>Price *</Label>
+                <div className="relative mt-1.5">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input type="number" step="0.01" value={form.price} onChange={(e) => set('price', e.target.value)} className="pl-7" />
+                </div>
+                <FieldError msg={errors.price} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Billing Cycle</Label>
+                <Select value={form.billingCycle} onValueChange={(v: any) => {
+                  set('billingCycle', v);
+                  // Refresh price if a plan was already selected
+                  const activePlan = allAvailablePlans.find(p => p.name === form.planName);
+                  if (activePlan) {
+                    const newPrice = v === 'yearly' ? activePlan.price.yearly : activePlan.price.monthly;
+                    set('price', newPrice.toString());
+                  }
+                }}>
+                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Initial Status</Label>
+                <Select value={form.status} onValueChange={(v) => set('status', v)}>
+                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        );
+
+      // Step 7: Confirmation
+      case 7: {
+        const client = clients.find(c => c.id === form.clientId);
+        return (
+          <div className="space-y-4">
+            <div className="rounded-xl border divide-y">
+              {[
+                { label: 'Name', value: form.name },
+                { label: 'Domain', value: form.domain },
+                { label: 'Type', value: form.type.toUpperCase() },
+                { label: 'Client', value: client?.name ?? '-' },
+                { label: 'Storage', value: `${form.storage} GB` },
+                { label: 'Plan', value: `${form.planName} (${formatCurrency(parseFloat(form.price))}/${form.billingCycle})` },
+                { label: 'Status', value: form.status.toUpperCase() },
+              ].map(row => (
+                <div key={row.label} className="flex px-4 py-2 text-sm">
+                  <span className="w-24 text-muted-foreground">{row.label}</span>
+                  <span className="font-semibold">{row.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      default: return null;
+    }
+  };
+
+  const currentStep = STEPS.find(s => s.id === step);
+
+  return (
+    <div className="space-y-6">
+      <StepIndicator current={step} />
+      
+      <Card className="p-6">
+        <h2 className="text-xl font-bold mb-4">{currentStep?.label}</h2>
+        {renderStep()}
+      </Card>
+
+      <div className="flex items-center justify-between gap-3">
+        <Button variant="outline" onClick={() => (step === 1 ? router.back() : back())} disabled={isSubmitting}>
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          {step === 1 ? 'Cancel' : 'Back'}
+        </Button>
+
+        <div className="flex gap-2">
+          {step < 7 ? (
+            <>
+              {[3, 5].includes(step) && (
+                <Button 
+                   variant="ghost" 
+                   onClick={() => setStep((s) => s + 1)}
+                   className="text-muted-foreground hover:text-foreground"
+                >
+                  Skip
+                </Button>
+              )}
+              <Button onClick={next}>
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </>
+          ) : (
+            <Button onClick={submit} disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create Website'}
+              <CheckCircle2 className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

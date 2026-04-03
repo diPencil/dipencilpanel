@@ -1,0 +1,27 @@
+import { PrismaClient } from '@prisma/client';
+import { PrismaLibSql } from '@prisma/adapter-libsql';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import bcrypt from 'bcryptjs';
+
+const dbPath = path.join(process.cwd(), 'dev.db');
+const adapter = new PrismaLibSql({
+  url: pathToFileURL(dbPath).href,
+});
+const prisma = new PrismaClient({ adapter });
+
+async function updatePassword() {
+  const username = 'dipencil';
+  const newPasswordRaw = '@diPencil1907@';
+  const hashedPassword = await bcrypt.hash(newPasswordRaw, 12);
+
+  const updated = await prisma.user.update({
+    where: { username },
+    data: { password: hashedPassword }
+  });
+
+  console.log(`✅ Password updated for user: ${username}`);
+  console.log(`Now try logging in with: ${newPasswordRaw}`);
+}
+
+updatePassword().catch(console.error).finally(() => prisma.$disconnect());

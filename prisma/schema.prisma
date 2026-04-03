@@ -1,0 +1,547 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// ENUMS (stored as String in SQLite)
+// ==========================================
+// ServiceType: "domain" | "hosting" | "vps" | "email" | "website" | "mobile_app"
+// BillingCycle: "monthly" | "yearly"
+// InvoiceStatus: "paid" | "pending" | "overdue"
+// PaymentStatus: "paid" | "unpaid" | "partial"
+// SubscriptionStatus: "active" | "cancelled" | "expired" | "suspended"
+// PaymentMethod: "card" | "bank_transfer" | "paypal" | "cash"
+// TransferStatus: "pending" | "completed" | "failed"
+// CompanyStatus: "active" | "suspended"
+// UserStatus: "active" | "disabled"
+
+// ==========================================
+// 1. CORE SYSTEM & TENANCY (Multi-Tenant)
+// ==========================================
+
+model Company {
+  id            String   @id @default(cuid())
+  name          String
+  ownerName     String?
+  email         String?
+  phone         String?
+  address       String?
+  vatNumber     String?
+  logo          String?
+  invoiceLogo   String?
+  /// Optional HTML fragment (table rows or inner markup) for invoice notification emails; use {{placeholders}} — see settings UI.
+  invoiceEmailHeaderHtml String?
+  /// Middle section: greeting, line items table, totals, dates, agent note — use {{itemsTableRows}}, {{totalsBlock}}, etc.
+  invoiceEmailBodyHtml String?
+  invoiceEmailFooterHtml String?
+  /// Subscription / renewal reminder emails (Send Reminder). {{placeholders}} — see Settings → Reminder email template.
+  reminderEmailHeaderHtml String?
+  reminderEmailBodyHtml   String?
+  reminderEmailFooterHtml String?
+  currency      String   @default("USD")
+  taxRate       Float    @default(0)
+  exchangeRates String?  // JSON: { "EUR": 0.92, ... }
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  users             User[]
+  roles             Role[]
+  clients           Client[]
+  clientGroups      ClientGroup[]
+  domains           Domain[]
+  domainTransfers   DomainTransfer[]
+  hosting           Hosting[]
+  vps               VPS[]
+  emails            Email[]
+  websites          Website[]
+  mobileApps        MobileApp[]
+  subscriptions     Subscription[]
+  invoices          Invoice[]
+  payments          Payment[]
+  websiteMigrations WebsiteMigration[]
+  reminderLogs      ReminderLog[]
+  businessEmails    BusinessEmail[]
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  permissions String   // JSON: { dashboard: { view, create, edit, delete }, ... }
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  users User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model User {
+  id        String    @id @default(cuid())
+  username  String    @unique
+  name      String
+  email     String    @unique
+  password  String?
+  avatar    String?
+  status    String    @default("active")
+  lastLogin DateTime?
+  lastLogoutAt DateTime?
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+// ==========================================
+// 2. CLIENT MANAGEMENT
+// ==========================================
+
+model Client {
+  id          String  @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  address     String?
+  companyName String?
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  domains         Domain[]
+  domainTransfers DomainTransfer[]
+  hosting         Hosting[]
+  vps             VPS[]
+  emails          Email[]
+  websites        Website[]
+  mobileApps      MobileApp[]
+  subscriptions   Subscription[]
+  invoices        Invoice[]
+  payments        Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model ClientGroup {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  color       String?
+  clientIds   String  @default("[]") // JSON array of client IDs
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+// ==========================================
+// 3. SERVICES
+// ==========================================
+
+model Domain {
+  id           String   @id @default(cuid())
+  name         String
+  tld          String
+  registrar    String
+  expiryDate   DateTime
+  autoRenew    Boolean  @default(true)
+  status       String   @default("active") // "active" | "expiring" | "expired" | "suspended"
+  nameservers  String?  // JSON array
+  notes        String?
+  reminderDays Int?
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  subscriptionId String?       @unique
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([companyId])
+  @@index([status])
+}
+
+model DomainTransfer {
+  id               String    @id @default(cuid())
+  domainName       String
+  tld              String
+  previousProvider String
+  transferDate     DateTime
+  expiryDate       DateTime?
+  status           String    @default("pending") // "pending" | "completed" | "failed"
+  autoRenew        Boolean   @default(true)
+  notes            String?
+  price            Float     @default(0)
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([companyId])
+  @@index([status])
+}
+
+model Hosting {
+  id         String    @id @default(cuid())
+  name       String
+  type       String    // "web" | "wordpress" | "cloud" | "node"
+  planName   String
+  status     String    @default("active") // "active" | "suspended" | "expired"
+  expiryDate DateTime?
+  resources  String?   // JSON: { cpu, ram, storage, bandwidth }
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  subscriptionId String?       @unique
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([companyId])
+  @@index([status])
+}
+
+model VPS {
+  id         String    @id @default(cuid())
+  name       String
+  planName   String
+  ram        Int
+  storage    Int
+  cpu        Int
+  status     String    @default("active")
+  expiryDate DateTime?
+  notes      String?
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  subscriptionId String?       @unique
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([companyId])
+  @@index([status])
+}
+
+model Email {
+  id         String    @id @default(cuid())
+  name       String
+  domain     String
+  storage    Int
+  status     String    @default("active")
+  expiryDate DateTime?
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  subscriptionId String?       @unique
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([companyId])
+  @@index([status])
+}
+
+model Website {
+  id           String    @id @default(cuid())
+  name         String
+  domain       String
+  type         String    @default("wordpress") // "wordpress" | "node" | "php" | "html"
+  storage      Int       @default(0)
+  bandwidth    Int       @default(0)
+  status       String    @default("active") // "active" | "inactive" | "suspended"
+  linkedDomain String?
+  planName     String?
+  planPrice    Float     @default(0)
+  billingCycle String    @default("monthly")
+  renewalDate  DateTime?
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  subscriptionId String?       @unique
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([companyId])
+  @@index([status])
+}
+
+// ==========================================
+// 5. MOBILE APPLICATIONS
+// ==========================================
+
+model MobileApp {
+  id          String    @id @default(cuid())
+  name        String
+  appType     String    // "android" | "ios" | "windows"
+  framework   String    @default("native") // "flutter" | "react_native" | "kotlin" | "swift" | "java" | "dart" | "python" | "nodejs" | "native"
+  description String?
+  status      String    @default("development") // "development" | "live" | "suspended" | "expired"
+  plan        String    @default("basic")       // "basic" | "pro" | "enterprise"
+  price       Float     @default(0)
+  billingCycle String   @default("monthly")     // "monthly" | "yearly"
+  autoRenew   Boolean   @default(true)
+  expiryDate  DateTime?
+
+  // Soft references to linked services (stored as plain IDs, no FK constraint)
+  domainId    String?  // optional linked domain ID
+  hostingId   String?  // optional linked hosting ID
+  vpsId       String?  // optional linked VPS ID
+  emailIds    String   @default("[]") // JSON array of linked email IDs
+
+  clientId  String
+  client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  subscriptionId String?       @unique
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([companyId])
+  @@index([status])
+}
+
+// ==========================================
+// 4. BILLING ENGINE (Core)
+// ==========================================
+
+model Subscription {
+  id           String   @id @default(cuid())
+  serviceType  String   // "domain" | "hosting" | "vps" | "email" | "website" | "mobile_app"
+  serviceId    String
+  serviceName  String?
+  planName     String?
+  price        Float
+  /// Upstream/provider cost (internal only — not on invoices or payments)
+  providerPrice Float?
+  currency     String   @default("USD")
+  billingCycle String   // "monthly" | "yearly"
+  startDate    DateTime
+  endDate      DateTime
+  autoRenew    Boolean  @default(true)
+  status       String   @default("active") // "active" | "cancelled" | "expired" | "suspended"
+  notes        String?
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Reverse one-to-one relations
+  domain    Domain?
+  hosting   Hosting?
+  vps       VPS?
+  email     Email?
+  website   Website?
+  mobileApp MobileApp?
+
+  invoices Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([companyId])
+  @@index([status])
+  @@index([endDate])
+}
+
+model Invoice {
+  id               String    @id @default(cuid())
+  number           String
+  issueDate        DateTime
+  dueDate          DateTime
+  nextBillingDate  DateTime?
+  status           String    @default("pending") // "paid" | "pending" | "overdue"
+  paymentStatus String   @default("unpaid")  // "paid" | "unpaid" | "partial"
+  currency      String   @default("USD")
+  notes         String?
+  subtotal      Float
+  discountAmount Float   @default(0)
+  vatAmount     Float    @default(0)
+  total         Float
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Restrict)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  items    InvoiceItem[]
+  payments Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([companyId])
+  @@index([status])
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  description String
+  quantity    Int     @default(1)
+  price       Float
+  discount    Float   @default(0)
+  vat         Float   @default(0)
+
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id       String   @id @default(cuid())
+  amount   Float
+  method   String   // "card" | "bank_transfer" | "paypal" | "cash"
+  currency String   @default("USD")
+  date     DateTime @default(now())
+  notes    String?
+  status   String   @default("completed") // "completed" | "failed" | "refunded"
+
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Restrict)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([invoiceId])
+  @@index([clientId])
+  @@index([companyId])
+}
+
+// ==========================================
+// 6. COMMUNICATIONS ENGINE
+// ==========================================
+
+model ReminderLog {
+  id          String   @id @default(cuid())
+  companyId   String
+  clientId    String
+  serviceType String   // "domain" | "hosting" | "vps" | "email" | "website" | "mobile_app"
+  serviceId   String
+  serviceName String
+  daysLeft    Int
+  sentAt      DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([serviceId])
+}
+
+model BusinessEmail {
+  id        String    @id @default(cuid())
+  companyId String
+  clientId  String?
+  type      String    // "quotation" | "contract" | "project_start" | "custom"
+  subject   String
+  body      String
+  status    String    @default("draft") // "draft" | "sent"
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([clientId])
+  @@index([status])
+}
+
+model WebsiteMigration {
+  id           String  @id @default(cuid())
+  sourceIp     String
+  port         Int     @default(22)
+  username     String
+  password     String  // AES-256-CBC encrypted
+  type         String  @default("cpanel")
+  status       String  @default("pending") // pending | analyzing | ready | in_progress | completed | failed | cancelled
+  logs         String  @default("[]")      // JSON array of { time, message, level }
+  dataSize     Float   @default(0)
+  notes        String?
+  errorMessage String?
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([status])
+}
