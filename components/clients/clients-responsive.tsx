@@ -27,10 +27,10 @@ export function ClientsResponsive({
   return (
     <div className="space-y-4">
       {/* Desktop table - hidden on mobile */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-sm bg-white">
+      <div className="hidden md:block overflow-x-auto bg-white rounded-lg border border-border">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border">
+            <tr className="border-b border-border bg-white">
               <th className="text-left py-3 px-4 font-semibold text-muted-foreground">
                 Name
               </th>
