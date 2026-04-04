@@ -168,13 +168,13 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
             <img
               src={companyLogo}
               alt={company.name}
-              style={{ height: '24px', maxWidth: '110px', objectFit: 'contain', display: 'block' }}
+              style={{ height: '24px', maxWidth: '110px', objectFit: 'contain', display: 'block', marginTop: '-1px' }}
             />
           </div>
 
           <div style={{ flexShrink: 0, minWidth: '260px' }}>
             <h1 style={{
-              margin: 0,
+              margin: '-1px 0 0 0',
               fontSize: '22px',
               fontWeight: 700,
               textTransform: 'uppercase',
