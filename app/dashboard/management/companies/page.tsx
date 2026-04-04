@@ -237,73 +237,137 @@ export default function CompaniesPage() {
 
       {/* Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[min(96vw,56rem)] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl">{editingCompany ? 'Edit Company' : 'Add New Company'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-              {formError && (
-                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {formError}
-                </div>
-              )}
-              {[
-                { label: 'Company Name', key: 'name', placeholder: 'Acme Corp' },
-                { label: 'Owner Name', key: 'ownerName', placeholder: 'John Doe' },
-                { label: 'Email', key: 'email', placeholder: 'owner@company.com' },
-                { label: 'Phone', key: 'phone', placeholder: '+1 (555) 000-0000' },
-                { label: 'Address', key: 'address', placeholder: '123 Main St, City' },
-                { label: 'VAT Number', key: 'vatNumber', placeholder: 'VAT-12345' },
-                { label: 'Logo URL', key: 'logo', placeholder: '/logo.png' },
-                { label: 'Invoice Logo URL', key: 'invoiceLogo', placeholder: '/invoice-logo.png' },
-              ].map(field => (
-                <div key={field.key} className="space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground/80">{field.label}</label>
-                  <Input
-                    value={form[field.key as keyof typeof form]}
-                    onChange={e => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                    placeholder={field.placeholder}
-                    required={field.key !== 'address'}
-                    className="bg-background"
-                  />
-                </div>
-              ))}
+          <form onSubmit={handleSubmit} className="pt-2">
+              <div className="max-h-[calc(90vh-9rem)] overflow-y-auto pr-1 space-y-4">
+                {formError && (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {formError}
+                  </div>
+                )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground/80">Currency</label>
-                  <Input
-                    value={form.currency}
-                    onChange={e => setForm(prev => ({ ...prev, currency: e.target.value }))}
-                    placeholder="USD"
-                    className="bg-background"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground/80">Tax Rate</label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={form.taxRate}
-                    onChange={e => setForm(prev => ({ ...prev, taxRate: e.target.value }))}
-                    placeholder="0"
-                    className="bg-background"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-sm font-semibold text-foreground/80">Company Name</label>
+                    <Input
+                      value={form.name}
+                      onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Acme Corp"
+                      required
+                      className="bg-background"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-foreground/80">Owner Name</label>
+                    <Input
+                      value={form.ownerName}
+                      onChange={e => setForm(prev => ({ ...prev, ownerName: e.target.value }))}
+                      placeholder="John Doe"
+                      className="bg-background"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-foreground/80">Email</label>
+                    <Input
+                      value={form.email}
+                      onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="owner@company.com"
+                      className="bg-background"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-foreground/80">Phone</label>
+                    <Input
+                      value={form.phone}
+                      onChange={e => setForm(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="+1 (555) 000-0000"
+                      className="bg-background"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-sm font-semibold text-foreground/80">Address</label>
+                    <Input
+                      value={form.address}
+                      onChange={e => setForm(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="123 Main St, City"
+                      className="bg-background"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-foreground/80">VAT Number</label>
+                    <Input
+                      value={form.vatNumber}
+                      onChange={e => setForm(prev => ({ ...prev, vatNumber: e.target.value }))}
+                      placeholder="VAT-12345"
+                      className="bg-background"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-foreground/80">Status</label>
+                    <select
+                      value={form.status}
+                      onChange={e => setForm(prev => ({ ...prev, status: e.target.value as 'active' | 'suspended' }))}
+                      className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    >
+                      <option value="active">Active</option>
+                      <option value="suspended">Suspended</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-foreground/80">Currency</label>
+                    <Input
+                      value={form.currency}
+                      onChange={e => setForm(prev => ({ ...prev, currency: e.target.value }))}
+                      placeholder="USD"
+                      className="bg-background"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-foreground/80">Tax Rate</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={form.taxRate}
+                      onChange={e => setForm(prev => ({ ...prev, taxRate: e.target.value }))}
+                      placeholder="0"
+                      className="bg-background"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-sm font-semibold text-foreground/80">Logo URL</label>
+                    <Input
+                      value={form.logo}
+                      onChange={e => setForm(prev => ({ ...prev, logo: e.target.value }))}
+                      placeholder="/logo.png"
+                      className="bg-background"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-sm font-semibold text-foreground/80">Invoice Logo URL</label>
+                    <Input
+                      value={form.invoiceLogo}
+                      onChange={e => setForm(prev => ({ ...prev, invoiceLogo: e.target.value }))}
+                      placeholder="/invoice-logo.png"
+                      className="bg-background"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-foreground/80">Status</label>
-                <select
-                  value={form.status}
-                  onChange={e => setForm(prev => ({ ...prev, status: e.target.value as 'active' | 'suspended' }))}
-                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                >
-                  <option value="active">Active</option>
-                  <option value="suspended">Suspended</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border/50 mt-4 bg-background">
                 <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
                   Cancel
                 </Button>
