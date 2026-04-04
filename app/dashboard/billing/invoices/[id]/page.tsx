@@ -221,7 +221,7 @@ export default function InvoiceDetailPage() {
           </div>
         </Card>
       ) : (
-        <div className="w-full overflow-hidden mb-12">
+        <div className="w-full overflow-x-auto mb-12 pb-4">
           <style dangerouslySetInnerHTML={{ __html: `
             @media print {
               .no-print { display: none !important; }

@@ -168,7 +168,7 @@ export default function PaymentDetailsPage() {
       </Card>
 
       {/* Hidden InvoiceDisplay for PDF generation */}
-      <div className="hidden pointer-events-none opacity-0 absolute -z-50" aria-hidden="true">
+      <div className="pointer-events-none opacity-0 absolute left-[-10000px] top-0 -z-50" aria-hidden="true">
         {invoice && client && company && (
           <InvoiceDisplay 
             invoice={invoice} 

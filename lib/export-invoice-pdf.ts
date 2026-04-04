@@ -53,8 +53,15 @@ export async function exportElementToPdf(element: HTMLElement, filename: string)
   // @ts-ignore — force the browser ES build; the node build breaks Next/Turbopack SSR
   const { default: jsPDF } = await import('jspdf/dist/jspdf.es.min.js');
 
+  const renderWidth = Math.max(element.scrollWidth, 794);
+  const renderHeight = Math.max(element.scrollHeight, 1123);
+
   const canvas = await html2canvas(element, {
     scale: 2,
+    width: renderWidth,
+    height: renderHeight,
+    windowWidth: renderWidth,
+    windowHeight: renderHeight,
     useCORS: true,
     allowTaint: true,
     logging: false,

@@ -103,7 +103,10 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
   };
 
   return (
-    <div id="invoice-content" className="bg-white text-black p-12 w-full mx-auto shadow-sm min-h-[1000px] font-sans">
+    <div
+      id="invoice-content"
+      className="bg-white text-black mx-auto shadow-sm font-sans box-border w-[210mm] min-h-[297mm] p-[16mm] max-w-full"
+    >
       {/* Top: seller (left) + INVOICE meta (right) — Hostinger layout */}
       <div className="flex justify-between items-start mb-12">
         <div className="flex flex-col gap-4 max-w-[55%]">
