@@ -160,23 +160,31 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
 
           <div className="text-left shrink-0 min-w-[240px]">
             <h1 className="text-[26px] font-bold tracking-tight uppercase leading-none mb-2 text-black">INVOICE</h1>
-            <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 text-[11px] items-baseline">
-              <span className="text-gray-500">Invoice #</span>
-              <span className="font-bold text-gray-900 whitespace-nowrap text-[11px]">{formatInvoiceNumber(invoice.number)}</span>
-              <span className="text-gray-500">Invoice Issued #</span>
-              <span className="font-bold text-gray-900 whitespace-nowrap text-[11px]">{formatInvoiceDate(invoice.issueDate)}</span>
-              <span className="text-gray-500">Invoice Amount #</span>
-              <span className="font-bold font-mono text-gray-900 whitespace-nowrap tabular-nums text-[11px]">
-                {formatCurrency(invoice.total, invoice.currency)} ({invoice.currency})
-              </span>
+            <div className="flex flex-col gap-y-0.5 text-[11px]">
+              <p className="m-0">
+                <span className="text-gray-500">Invoice # </span>
+                <span className="font-bold text-gray-900">{formatInvoiceNumber(invoice.number)}</span>
+              </p>
+              <p className="m-0">
+                <span className="text-gray-500">Invoice Issued # </span>
+                <span className="font-bold text-gray-900">{formatInvoiceDate(invoice.issueDate)}</span>
+              </p>
+              <p className="m-0">
+                <span className="text-gray-500">Invoice Amount # </span>
+                <span className="font-bold text-gray-900 tabular-nums">
+                  {formatCurrency(invoice.total, invoice.currency)} ({invoice.currency})
+                </span>
+              </p>
               {invoice.nextBillingDate ? (
-                <>
-                  <span className="text-gray-500">Next Billing Date #</span>
-                  <span className="font-bold text-gray-900 whitespace-nowrap text-[11px]">{formatInvoiceDate(invoice.nextBillingDate)}</span>
-                </>
+                <p className="m-0">
+                  <span className="text-gray-500">Next Billing Date # </span>
+                  <span className="font-bold text-gray-900">{formatInvoiceDate(invoice.nextBillingDate)}</span>
+                </p>
               ) : null}
-              <span className="text-gray-500">Order Nr. #</span>
-              <span className="font-bold font-mono text-gray-900 whitespace-nowrap tabular-nums text-[11px]">{orderRef}</span>
+              <p className="m-0">
+                <span className="text-gray-500">Order Nr. # </span>
+                <span className="font-bold text-gray-900 tabular-nums">{orderRef}</span>
+              </p>
             </div>
             <p className={`font-bold mt-2 uppercase text-[13px] tracking-wide ${status.className}`}>
               {status.text}
