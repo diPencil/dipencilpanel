@@ -162,18 +162,34 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       {/* ═══════════════════════════════════════
           HEADER
       ═══════════════════════════════════════ */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-
-        {/* LEFT — logo + seller */}
-        <div style={{ flex: '1 1 auto', minWidth: 0, paddingRight: '40px' }}>
-          <div style={{ marginBottom: '10px' }}>
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ flex: '1 1 auto', minWidth: 0, paddingRight: '40px' }}>
             <img
               src={companyLogo}
               alt={company.name}
               style={{ height: '24px', maxWidth: '110px', objectFit: 'contain', display: 'block' }}
             />
           </div>
-          <div style={{ fontSize: '11px', lineHeight: '1.5', color: '#333333', fontFamily: FONT }}>
+
+          <div style={{ flexShrink: 0, minWidth: '260px' }}>
+            <h1 style={{
+              margin: 0,
+              fontSize: '22px',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '-0.3px',
+              color: C_PRIMARY,
+              lineHeight: 1,
+              fontFamily: FONT,
+            }}>
+              INVOICE
+            </h1>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '10px' }}>
+          <div style={{ flex: '1 1 auto', minWidth: 0, paddingRight: '40px', fontSize: '11px', lineHeight: '1.5', color: '#333333', fontFamily: FONT }}>
             <p style={{ margin: 0 }}>{company.name?.trim() || 'Company'}</p>
             {sellerLines.map((l) => <p key={l} style={{ margin: 0 }}>{l}</p>)}
             {company.vatNumber?.trim() && (
@@ -184,24 +200,8 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
             {company.email?.trim() && <p style={{ margin: '2px 0 0 0' }}>{company.email}</p>}
             {company.phone?.trim() && <p style={{ margin: '1px 0 0 0' }}>{company.phone}</p>}
           </div>
-        </div>
 
-        {/* RIGHT — INVOICE title + meta */}
-        <div style={{ flexShrink: 0, minWidth: '260px' }}>
-          <h1 style={{
-            margin: '0 0 10px 0',
-            fontSize: '22px',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '-0.3px',
-            color: C_PRIMARY,
-            lineHeight: 1,
-            fontFamily: FONT,
-          }}>
-            INVOICE
-          </h1>
-
-          <div style={{ fontSize: '11px', lineHeight: '1.7', color: C_PRIMARY, fontFamily: FONT }}>
+          <div style={{ flexShrink: 0, minWidth: '260px', fontSize: '11px', lineHeight: '1.7', color: C_PRIMARY, fontFamily: FONT }}>
             <p style={{ margin: 0 }}>
               <span style={{ fontWeight: 400 }}>Invoice # </span>
               <span style={{ fontWeight: 400, color: C_SECONDARY }}>{formatInvoiceNumber(invoice.number)}</span>
@@ -224,19 +224,18 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
               <span style={{ fontWeight: 400 }}>Order Nr. # </span>
               <span style={{ fontWeight: 400, color: C_SECONDARY }}>{orderRef}</span>
             </p>
+            <p style={{
+              margin: '6px 0 0 0',
+              fontSize: '11px',
+              fontWeight: 400,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              color: status.color,
+              fontFamily: FONT,
+            }}>
+              {status.text}
+            </p>
           </div>
-
-          <p style={{
-            margin: '6px 0 0 0',
-            fontSize: '11px',
-            fontWeight: 400,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            color: status.color,
-            fontFamily: FONT,
-          }}>
-            {status.text}
-          </p>
         </div>
       </div>
 
