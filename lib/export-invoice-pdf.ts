@@ -120,12 +120,12 @@ export async function exportElementToPdf(element: HTMLElement, filename: string)
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
   const scale = Math.min(pageW / canvas.width, pageH / canvas.height);
-  const renderWidth = canvas.width * scale;
-  const renderHeight = canvas.height * scale;
-  const offsetX = (pageW - renderWidth) / 2;
-  const offsetY = (pageH - renderHeight) / 2;
+  const pdfWidth = canvas.width * scale;
+  const pdfHeight = canvas.height * scale;
+  const offsetX = (pageW - pdfWidth) / 2;
+  const offsetY = (pageH - pdfHeight) / 2;
 
-  pdf.addImage(imgData, 'PNG', offsetX, offsetY, renderWidth, renderHeight);
+  pdf.addImage(imgData, 'PNG', offsetX, offsetY, pdfWidth, pdfHeight);
 
   pdf.save(filename);
 }
