@@ -365,8 +365,6 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       ═══════════════════════════════════════ */}
       <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
         <div style={{
-          borderTop: `1px solid ${C_BORDER}`,
-          paddingTop: '8px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-end',
@@ -382,8 +380,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
             </p>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '20px' }}>
-            <p style={{ margin: 0 }}>Engineer Mahmoud El-Sabbagh</p>
-            <p style={{ margin: '3px 0 0 0' }}>Technical Agent Provider in the Middle East @Pencil Studio.</p>
+            <p style={{ margin: 0 }}>Pencil for E-Marketing Ltd. · Technical Agent Provider of Hosting &amp; Digital Systems in the Middle East.</p>
           </div>
         </div>
       </div>
