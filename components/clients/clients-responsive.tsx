@@ -11,12 +11,14 @@ interface ClientsResponsiveProps {
   clients: Client[];
   onEdit?: (client: Client) => void;
   onDelete?: (id: string) => void;
+  emptyMessage?: string;
 }
 
 export function ClientsResponsive({
   clients,
   onEdit,
   onDelete,
+  emptyMessage = 'No clients found',
 }: ClientsResponsiveProps) {
   const { clientGroups } = useInvoiceData();
 
@@ -159,7 +161,7 @@ export function ClientsResponsive({
 
       {clients.length === 0 && (
         <Card className="p-8 text-center">
-          <p className="text-muted-foreground">No clients found</p>
+          <p className="text-muted-foreground">{emptyMessage}</p>
         </Card>
       )}
     </div>

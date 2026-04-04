@@ -1,23 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { ClientsResponsive } from '@/components/clients/clients-responsive';
 import { ClientDialog } from '@/components/clients/client-dialog';
 import { Client } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Plus, Search } from 'lucide-react';
 import { ConfirmDeleteDialog } from '@/components/shared/confirm-delete-dialog';
 import { toast } from 'sonner';
 
 export default function ClientsPage() {
   const {
     clients,
+    clientGroups,
     addClient,
     updateClient,
     deleteClient,
   } = useInvoiceData();
 
+  const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | undefined>();
 
@@ -46,6 +50,27 @@ export default function ClientsPage() {
     setIsDialogOpen(true);
   };
 
+  const filteredClients = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return clients;
+
+    return clients.filter((client) => {
+      const groupName = clientGroups.find((group) => group.clientIds.includes(client.id))?.name ?? 'Ungrouped';
+
+      return (
+        client.name.toLowerCase().includes(query) ||
+        client.email.toLowerCase().includes(query) ||
+        client.phone.toLowerCase().includes(query) ||
+        client.companyName.toLowerCase().includes(query) ||
+        groupName.toLowerCase().includes(query)
+      );
+    });
+  }, [clients, clientGroups, searchTerm]);
+
+  const emptyMessage = searchTerm.trim()
+    ? 'No clients found'
+    : 'No clients yet. Add one to get started.';
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -55,22 +80,52 @@ export default function ClientsPage() {
             Manage your clients and their information
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setSelectedClient(undefined);
-            setIsDialogOpen(true);
-          }}
-          className="w-full sm:w-auto"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Client
-        </Button>
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          <Badge variant="outline" className="h-10 px-3 whitespace-nowrap tabular-nums">
+            {filteredClients.length} {filteredClients.length === 1 ? 'client' : 'clients'}
+          </Badge>
+          <Button
+            onClick={() => {
+              setSelectedClient(undefined);
+              setIsDialogOpen(true);
+            }}
+            className="w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Client
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+        <div className="flex items-center gap-3 flex-wrap md:justify-end w-full md:w-auto">
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search clients..."
+              className="pl-9 bg-card"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              aria-describedby="clients-search-count"
+            />
+          </div>
+          <p
+            id="clients-search-count"
+            className="text-sm text-muted-foreground whitespace-nowrap tabular-nums"
+            aria-live="polite"
+          >
+            <span className="font-semibold text-foreground">{filteredClients.length}</span>
+            {filteredClients.length === 1 ? ' client' : ' clients'}
+            {searchTerm.trim() ? ' match' : ''}
+          </p>
+        </div>
       </div>
 
       <ClientsResponsive
-        clients={clients}
+        clients={filteredClients}
         onEdit={handleEdit}
         onDelete={confirmDeleteClient}
+        emptyMessage={emptyMessage}
       />
 
       <ClientDialog
