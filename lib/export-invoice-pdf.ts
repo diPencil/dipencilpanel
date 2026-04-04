@@ -53,42 +53,60 @@ export async function exportElementToPdf(element: HTMLElement, filename: string)
   // @ts-ignore — force the browser ES build; the node build breaks Next/Turbopack SSR
   const { default: jsPDF } = await import('jspdf/dist/jspdf.es.min.js');
 
+  /** A4 at 96dpi — matches jsPDF `format: 'a4'` (210×297mm). */
   const pageWidthPx = 794;
   const pageHeightPx = 1123;
-  const renderWidth = pageWidthPx;
-  const renderHeight = pageHeightPx;
+
+  const prevInline = {
+    width: element.style.width,
+    minHeight: element.style.minHeight,
+    maxWidth: element.style.maxWidth,
+  };
 
   element.style.width = `${pageWidthPx}px`;
-  element.style.minHeight = `${pageHeightPx}px`;
   element.style.maxWidth = `${pageWidthPx}px`;
+  // Full scroll height so long invoices are not clipped; keep at least one A4 screen for short ones
+  const captureHeight = Math.max(element.scrollHeight, pageHeightPx);
+  element.style.minHeight = `${captureHeight}px`;
 
-  const canvas = await html2canvas(element, {
-    scale: 1.75,
-    width: renderWidth,
-    height: renderHeight,
-    windowWidth: renderWidth,
-    windowHeight: renderHeight,
-    useCORS: true,
-    allowTaint: true,
-    logging: false,
-    backgroundColor: '#ffffff',
-    foreignObjectRendering: false,
-    onclone: (clonedDoc, clonedElement) => {
-      // 1. Remove every stylesheet so html2canvas never parses lab()/oklch()
-      clonedDoc
-        .querySelectorAll('link[rel="stylesheet"], link[rel="preload"][as="style"], style')
-        .forEach((el) => el.remove());
+  const renderWidth = pageWidthPx;
+  const renderHeight = captureHeight;
 
-      // 2. Force safe backgrounds on root elements
-      clonedDoc.documentElement.style.cssText = 'background:#ffffff !important;';
-      clonedDoc.body.style.cssText = 'background:#ffffff !important; margin:0; padding:0;';
+  let canvas: HTMLCanvasElement;
+  try {
+    canvas = await html2canvas(element, {
+      scale: 1.75,
+      width: renderWidth,
+      height: renderHeight,
+      windowWidth: renderWidth,
+      windowHeight: renderHeight,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      foreignObjectRendering: false,
+      onclone: (clonedDoc, clonedElement) => {
+        // 1. Remove every stylesheet so html2canvas never parses lab()/oklch()
+        clonedDoc
+          .querySelectorAll('link[rel="stylesheet"], link[rel="preload"][as="style"], style')
+          .forEach((el) => el.remove());
 
-      // 3. Copy resolved rgb() computed values from the live DOM onto the clone
-      flattenCloneForCanvas(element, clonedElement);
-    },
-  });
+        // 2. Force safe backgrounds on root elements
+        clonedDoc.documentElement.style.cssText = 'background:#ffffff !important;';
+        clonedDoc.body.style.cssText = 'background:#ffffff !important; margin:0; padding:0;';
 
-  const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        // 3. Copy resolved rgb() computed values from the live DOM onto the clone
+        flattenCloneForCanvas(element, clonedElement);
+      },
+    });
+  } finally {
+    element.style.width = prevInline.width;
+    element.style.minHeight = prevInline.minHeight;
+    element.style.maxWidth = prevInline.maxWidth;
+  }
+
+  // PNG keeps invoice text sharper vs JPEG (Hostinger PDFs are vector; this is the closest raster match)
+  const imgData = canvas.toDataURL('image/png');
   const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
@@ -97,13 +115,13 @@ export async function exportElementToPdf(element: HTMLElement, filename: string)
   let remaining = imgH;
   let offset = 0;
 
-  pdf.addImage(imgData, 'JPEG', 0, offset, pageW, imgH);
+  pdf.addImage(imgData, 'PNG', 0, offset, pageW, imgH);
   remaining -= pageH;
 
   while (remaining > 0) {
     offset = remaining - imgH;
     pdf.addPage();
-    pdf.addImage(imgData, 'JPEG', 0, offset, pageW, imgH);
+    pdf.addImage(imgData, 'PNG', 0, offset, pageW, imgH);
     remaining -= pageH;
   }
 

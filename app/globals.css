@@ -149,7 +149,8 @@
     inset: 0 !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 28px 36px !important;
+    /* Match Hostinger-style tight A4 margins (~15pt ≈ 20px sides, ~13px top) */
+    padding: 13px 20px 40px !important;
     box-shadow: none !important;
     background: white !important;
     overflow: visible !important;

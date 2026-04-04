@@ -105,12 +105,12 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
   return (
     <div
       id="invoice-content"
-      className="bg-white text-black mx-auto shadow-none box-border w-[794px] min-h-[1123px] p-[60px] max-w-none text-[12px] leading-[1.32] overflow-hidden"
+      className="bg-white text-black mx-auto shadow-none box-border w-[794px] min-h-[1123px] max-w-none text-[12px] leading-[1.32] overflow-hidden px-5 pt-[13px] pb-10"
       style={{ fontFamily: 'Arial, Helvetica, sans-serif', letterSpacing: '0', wordSpacing: 'normal' }}
     >
-      {/* Top: seller (left) + INVOICE meta (right) — Hostinger layout */}
-      <div className="flex justify-between items-start mb-10 gap-8">
-        <div className="flex flex-col gap-4 max-w-[55%]">
+      {/* Top: seller (left) + INVOICE meta (right) — Hostinger uses ~15pt (~20px) page margins */}
+      <div className="flex justify-between items-start gap-10 mb-8">
+        <div className="flex flex-col gap-3 min-w-0 max-w-[48%]">
           <div className="flex items-center gap-2">
             {companyLogo ? (
               <img
@@ -142,8 +142,8 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           </div>
         </div>
 
-        <div className="text-left shrink-0 pl-4 pr-[120px]">
-          <h1 className="text-[30px] font-bold tracking-tight uppercase leading-none mb-4 text-black">INVOICE</h1>
+        <div className="text-left shrink-0 min-w-[260px]">
+          <h1 className="text-[30px] font-bold tracking-tight uppercase leading-none mb-3 text-black">INVOICE</h1>
           <div className="space-y-1 text-[13px]">
             <p>
               <span className="text-gray-500">Invoice #</span>{' '}
