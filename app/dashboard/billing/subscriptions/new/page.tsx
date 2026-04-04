@@ -25,6 +25,16 @@ import { convertCurrency } from '@/lib/currency-utils';
 const SERVICE_TYPES: Subscription['serviceType'][] = ['website', 'domain', 'hosting', 'email', 'vps', 'mobile_app'];
 const BILLING_CYCLES: Subscription['billingCycle'][] = ['monthly', 'yearly'];
 const STATUSES: Subscription['status'][] = ['active', 'suspended', 'expired'];
+const PLAN_OPTIONS = [
+  'Website Service',
+  'Domain Protection',
+  'Domain Plan',
+  'Email Plan',
+  'Domain Certificate',
+  'Web Hosting',
+  'Cloud Hosting',
+  'VPS Server',
+];
 
 const toInputDate = (date: Date) => {
   const t = date.getTime();
@@ -79,6 +89,7 @@ export default function CreateSubscriptionPage() {
     serviceName: '',
     serviceId: generateSubscriptionServiceId('hosting'),
     planName: '',
+    planMode: 'select' as 'select' | 'custom',
     billingCycle: 'monthly' as Subscription['billingCycle'],
     price: '',
     providerPrice: '',
@@ -360,13 +371,73 @@ export default function CreateSubscriptionPage() {
             </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Plan Name</label>
-            <Input
-              value={formData.planName}
-              onChange={(event) => updateField('planName', event.target.value)}
-              placeholder="e.g. Business Plan"
-            />
+          <div className="md:col-span-2">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium mb-1.5">Plan Name</label>
+                <Select
+                  value={formData.planMode === 'select' ? formData.planName : '__custom__'}
+                  onValueChange={(value) => {
+                    if (value === '__custom__') {
+                      setFormData((prev) => ({ ...prev, planMode: 'custom' }));
+                      return;
+                    }
+                    updateField('planMode', 'select');
+                    updateField('planName', value);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLAN_OPTIONS.map((plan) => (
+                      <SelectItem key={plan} value={plan}>
+                        {plan}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="__custom__">Create a new plan...</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1.5 gap-3">
+                  <label className="block text-sm font-medium">Create Plan</label>
+                  {formData.planMode === 'custom' ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setFormData((prev) => ({ ...prev, planMode: 'select', planName: '' }))}
+                    >
+                      Use existing plan
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setFormData((prev) => ({ ...prev, planMode: 'custom', planName: '' }))}
+                    >
+                      Create Plan
+                    </Button>
+                  )}
+                </div>
+                {formData.planMode === 'custom' ? (
+                  <Input
+                    value={formData.planName}
+                    onChange={(event) => updateField('planName', event.target.value)}
+                    placeholder="Create a new plan name"
+                  />
+                ) : (
+                  <div className="rounded-md border border-dashed border-border px-3 py-2.5 text-sm text-muted-foreground">
+                    Pick an existing plan or create a new one.
+                  </div>
+                )}
+              </div>
+            </div>
             {errors.planName && <p className="text-xs text-red-600 mt-1">{errors.planName}</p>}
           </div>
 
