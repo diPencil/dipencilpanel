@@ -105,10 +105,11 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
   return (
     <div
       id="invoice-content"
-      className="bg-white text-black mx-auto shadow-sm font-sans box-border w-[210mm] min-h-[297mm] p-[16mm] max-w-full"
+      className="bg-white text-black mx-auto shadow-none box-border w-[794px] min-h-[1123px] p-[60px] max-w-none text-[12px] leading-[1.32] overflow-hidden"
+      style={{ fontFamily: 'Arial, Helvetica, sans-serif', letterSpacing: '0', wordSpacing: 'normal' }}
     >
       {/* Top: seller (left) + INVOICE meta (right) — Hostinger layout */}
-      <div className="flex justify-between items-start mb-12">
+      <div className="flex justify-between items-start mb-10 gap-8">
         <div className="flex flex-col gap-4 max-w-[55%]">
           <div className="flex items-center gap-2">
             {companyLogo ? (
@@ -141,8 +142,8 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           </div>
         </div>
 
-        <div className="text-left shrink-0 pl-4 pr-[160px]">
-          <h1 className="text-[32px] font-bold tracking-tight uppercase leading-none mb-4 text-black">INVOICE</h1>
+        <div className="text-left shrink-0 pl-4 pr-[120px]">
+          <h1 className="text-[30px] font-bold tracking-tight uppercase leading-none mb-4 text-black">INVOICE</h1>
           <div className="space-y-1 text-[13px]">
             <p>
               <span className="text-gray-500">Invoice #</span>{' '}
@@ -176,7 +177,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       </div>
 
       {/* BILLED TO */}
-      <div className="mb-12">
+      <div className="mb-10">
         <h3 className="text-[14px] font-bold uppercase mb-2 tracking-tight">BILLED TO</h3>
         <div className="text-[13px] text-gray-800 leading-relaxed">
           <p className="font-medium text-gray-900">{client.name}</p>
@@ -189,7 +190,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       </div>
 
       {/* Line items */}
-      <div className="mb-8">
+      <div className="mb-7">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-gray-200">
@@ -210,8 +211,8 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       </div>
 
       {/* Summary — right column like Hostinger */}
-      <div className="flex justify-end pt-4">
-        <div className="w-[320px] space-y-2">
+      <div className="flex justify-end pt-3">
+        <div className="w-[300px] space-y-1.5">
           <div className="flex justify-between text-[13px]">
             <span className="text-gray-700 font-medium">Total excl. VAT</span>
             <span className="text-black font-semibold font-mono">
@@ -260,32 +261,27 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
         </div>
       )}
 
-      <div className="mt-24 pt-10 pb-2 text-gray-500">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 max-w-4xl mx-auto items-start">
-          <div className="flex flex-col gap-1 text-left [&_p]:m-0">
-            <p className="text-[11px] leading-tight text-gray-600">
-              Thank you for your business! <span className="mx-1 text-gray-400">|</span>{' '}
-              {company.name?.trim() || 'Company'}
-            </p>
-            <p className="text-[10px] leading-snug text-gray-500">
-              If you would like assistance with renewal or have any questions, please contact our exclusive service agent:
-            </p>
-          </div>
-          <div className="flex flex-col gap-0.5 text-left text-[10px] leading-tight border-t border-gray-200 pt-4 md:border-t-0 md:border-l md:border-gray-200 md:pl-8 md:pt-0 [&_p]:m-0">
-            <p className="font-medium text-gray-600">
-              Engineer Mahmoud El-Sabbagh — Technical Agent, diPencil
-            </p>
-            <p>Phone: +201003778273</p>
-            <p>
-              Email:{' '}
-              <a
-                href="mailto:elsabbagh@dipencil.com"
-                className="text-gray-600 underline underline-offset-1 hover:text-gray-900"
-              >
-                elsabbagh@dipencil.com
-              </a>
-            </p>
-          </div>
+      <div className="mt-8 pt-2 pb-0 text-gray-400 opacity-55">
+        <div className="mx-auto max-w-[220px] space-y-0.5 text-[7px] leading-tight text-center">
+          <p className="m-0">
+            Thank you for your business! | {company.name?.trim() || 'Company'}
+          </p>
+          <p className="m-0">
+            Need help with renewal or billing? Contact our service agent below.
+          </p>
+          <p className="m-0">
+            Engineer Mahmoud El-Sabbagh — Technical Agent, diPencil
+          </p>
+          <p className="m-0">Phone: +201003778273</p>
+          <p className="m-0">
+            Email: {' '}
+            <a
+              href="mailto:elsabbagh@dipencil.com"
+              className="text-gray-400 underline underline-offset-1"
+            >
+              elsabbagh@dipencil.com
+            </a>
+          </p>
         </div>
       </div>
     </div>
