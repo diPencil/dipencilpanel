@@ -72,6 +72,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
   const isPaid = invoice.paymentStatus === 'paid' || invoice.status === 'paid';
   const amountDue = isPaid ? 0 : invoice.total;
   const orderRef = hostingerOrderRef(invoice);
+  const generatedOn = new Date(invoice.createdAt).toLocaleString('en-US');
 
   const renderItem = (item: Invoice['items'][number]) => {
     const qty = item.quantity || 1;
@@ -269,27 +270,20 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           </div>
         )}
 
-        <div className="mt-auto pt-4 pb-0 text-gray-400 opacity-55">
-          <div className="mx-auto grid max-w-[340px] grid-cols-2 gap-x-6 gap-y-0.5 text-[7px] leading-tight text-center">
-            <p className="m-0 col-span-2">
-              Thank you for your business! | {company.name?.trim() || 'Company'}
-            </p>
-            <p className="m-0 col-span-2">
-              Need help with renewal or billing? Contact our service agent below.
-            </p>
-            <p className="m-0 col-span-2">
-              Engineer Mahmoud El-Sabbagh — Technical Agent, diPencil
-            </p>
-            <p className="m-0 text-left">Phone: +201003778273</p>
-            <p className="m-0 text-right">
-              Email: {' '}
-              <a
-                href="mailto:elsabbagh@dipencil.com"
-                className="text-gray-400 underline underline-offset-1"
-              >
-                elsabbagh@dipencil.com
-              </a>
-            </p>
+        <div className="mt-auto pt-5 pb-1 text-gray-500 opacity-70">
+          <div className="border-t border-gray-200 pt-3 grid grid-cols-[1fr_auto] gap-6 items-end text-[11px] leading-tight">
+            <div className="min-w-0">
+              <p className="m-0 max-w-[360px]">
+                This is a non-binding quotation valid until the expiration date.
+              </p>
+              <p className="m-0 mt-1 max-w-[360px]">
+                Need help with renewal or billing? Contact our service agent below.
+              </p>
+            </div>
+            <div className="text-right whitespace-nowrap">
+              <p className="m-0">{company.name?.trim() || 'diPencil'}</p>
+              <p className="m-0 mt-1">Generated on {generatedOn}</p>
+            </div>
           </div>
         </div>
       </div>
