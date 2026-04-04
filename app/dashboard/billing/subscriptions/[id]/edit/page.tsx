@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ChevronLeft, Save, Trash2, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Check, ChevronLeft, Pencil, Plus, Save, Trash2, AlertTriangle, X } from 'lucide-react';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,8 @@ const PLAN_OPTIONS = [
   'VPS Server',
 ];
 
+const CUSTOM_PLANS_KEY = 'pencil_custom_plans';
+
 const toInputDate = (date: Date | string) => {
   if (!date) return '';
   const d = new Date(date);
@@ -74,7 +76,6 @@ export default function EditSubscriptionPage() {
     serviceName: '',
     serviceId: '',
     planName: '',
-    planMode: 'select' as 'select' | 'custom',
     billingCycle: 'monthly' as Subscription['billingCycle'],
     price: '',
     providerPrice: '',
@@ -88,6 +89,24 @@ export default function EditSubscriptionPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const [customPlans, setCustomPlans] = useState<string[]>([]);
+  const [showAddPlan, setShowAddPlan] = useState(false);
+  const [newPlanInput, setNewPlanInput] = useState('');
+  const [editingPlan, setEditingPlan] = useState<{ index: number; value: string } | null>(null);
+  const customPlansFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (customPlansFirstRender.current) {
+      customPlansFirstRender.current = false;
+      try {
+        const stored = localStorage.getItem(CUSTOM_PLANS_KEY);
+        if (stored) setCustomPlans(JSON.parse(stored));
+      } catch {}
+      return;
+    }
+    localStorage.setItem(CUSTOM_PLANS_KEY, JSON.stringify(customPlans));
+  }, [customPlans]);
+
   useEffect(() => {
     if (subscription) {
       setFormData({
@@ -96,7 +115,6 @@ export default function EditSubscriptionPage() {
         serviceName: subscription.serviceName,
         serviceId: subscription.serviceId,
         planName: subscription.planName,
-        planMode: PLAN_OPTIONS.includes(subscription.planName) ? 'select' : 'custom',
         billingCycle: subscription.billingCycle,
         price: subscription.price.toString(),
         providerPrice:
@@ -155,6 +173,35 @@ export default function EditSubscriptionPage() {
         return next;
       });
     }
+  };
+
+  const handleAddCustomPlan = () => {
+    const trimmed = newPlanInput.trim();
+    if (!trimmed) return;
+    if (PLAN_OPTIONS.includes(trimmed) || customPlans.includes(trimmed)) {
+      toast({ title: 'Plan already exists', description: 'Choose a different name.', variant: 'destructive' });
+      return;
+    }
+    setCustomPlans((prev) => [...prev, trimmed]);
+    updateField('planName', trimmed);
+    setNewPlanInput('');
+    setShowAddPlan(false);
+  };
+
+  const handleSaveEditPlan = () => {
+    if (!editingPlan) return;
+    const trimmed = editingPlan.value.trim();
+    if (!trimmed) return;
+    const oldValue = customPlans[editingPlan.index];
+    setCustomPlans((prev) => prev.map((p, i) => (i === editingPlan.index ? trimmed : p)));
+    if (formData.planName === oldValue) updateField('planName', trimmed);
+    setEditingPlan(null);
+  };
+
+  const handleDeleteCustomPlan = (index: number) => {
+    const deleted = customPlans[index];
+    setCustomPlans((prev) => prev.filter((_, i) => i !== index));
+    if (formData.planName === deleted) updateField('planName', '');
   };
 
   const validate = () => {
@@ -365,71 +412,81 @@ export default function EditSubscriptionPage() {
                 
                 <div>
                   <label className="block text-sm font-semibold mb-2">Plan Details</label>
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-                    <div className="flex-1 min-w-0">
-                      <Select
-                        value={formData.planMode === 'select' ? formData.planName : '__custom__'}
-                        onValueChange={(value) => {
-                          if (value === '__custom__') {
-                            setFormData((prev) => ({ ...prev, planMode: 'custom' }));
-                            return;
-                          }
-                          updateField('planMode', 'select');
-                          updateField('planName', value);
-                        }}
-                      >
-                        <SelectTrigger className="bg-muted/30">
-                          <SelectValue placeholder="Select a plan" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PLAN_OPTIONS.map((plan) => (
-                            <SelectItem key={plan} value={plan}>
-                              {plan}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="__custom__">Create a new plan...</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1.5 gap-3">
-                        <label className="block text-sm font-medium">Create Plan</label>
-                        {formData.planMode === 'custom' ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            onClick={() => setFormData((prev) => ({ ...prev, planMode: 'select', planName: '' }))}
-                          >
-                            Use existing plan
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            onClick={() => setFormData((prev) => ({ ...prev, planMode: 'custom', planName: '' }))}
-                          >
-                            Create Plan
-                          </Button>
-                        )}
-                      </div>
-                      {formData.planMode === 'custom' ? (
-                        <Input
-                          value={formData.planName}
-                          onChange={(event) => updateField('planName', event.target.value)}
-                          className="bg-muted/30"
-                          placeholder="Create a new plan name"
-                        />
-                      ) : (
-                        <div className="rounded-md border border-dashed border-border px-3 py-2.5 text-sm text-muted-foreground">
-                          Pick an existing plan or create a new one.
+                  <Select
+                    value={formData.planName || ''}
+                    onValueChange={(value) => updateField('planName', value)}
+                  >
+                    <SelectTrigger className="bg-muted/30">
+                      <SelectValue placeholder="Select a plan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PLAN_OPTIONS.map((plan) => (
+                        <SelectItem key={plan} value={plan}>{plan}</SelectItem>
+                      ))}
+                      {customPlans.map((plan) => (
+                        <SelectItem key={`custom-${plan}`} value={plan}>{plan}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {customPlans.length > 0 && (
+                    <div className="mt-2 rounded-md border border-border divide-y divide-border">
+                      {customPlans.map((plan, index) => (
+                        <div key={index} className="flex items-center gap-2 px-3 py-2">
+                          {editingPlan?.index === index ? (
+                            <>
+                              <Input
+                                value={editingPlan.value}
+                                onChange={(e) => setEditingPlan((prev) => prev ? { ...prev, value: e.target.value } : null)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') { e.preventDefault(); handleSaveEditPlan(); }
+                                  if (e.key === 'Escape') setEditingPlan(null);
+                                }}
+                                className="h-7 text-sm flex-1 bg-muted/30"
+                                autoFocus
+                              />
+                              <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleSaveEditPlan}>
+                                <Check className="h-3.5 w-3.5 text-green-600" />
+                              </Button>
+                              <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingPlan(null)}>
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-sm flex-1">{plan}</span>
+                              <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingPlan({ index, value: plan })}>
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteCustomPlan(index)}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          )}
                         </div>
-                      )}
+                      ))}
                     </div>
-                  </div>
+                  )}
+                  {showAddPlan ? (
+                    <div className="mt-2 flex gap-2">
+                      <Input
+                        value={newPlanInput}
+                        onChange={(e) => setNewPlanInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') { e.preventDefault(); handleAddCustomPlan(); }
+                          if (e.key === 'Escape') { setShowAddPlan(false); setNewPlanInput(''); }
+                        }}
+                        placeholder="Enter plan name..."
+                        className="flex-1 bg-muted/30"
+                        autoFocus
+                      />
+                      <Button type="button" onClick={handleAddCustomPlan} disabled={!newPlanInput.trim()}>Save</Button>
+                      <Button type="button" variant="outline" onClick={() => { setShowAddPlan(false); setNewPlanInput(''); }}>Cancel</Button>
+                    </div>
+                  ) : (
+                    <Button type="button" variant="outline" size="sm" className="mt-2 text-xs" onClick={() => setShowAddPlan(true)}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Create custom plan
+                    </Button>
+                  )}
                   {errors.planName && <p className="text-xs text-red-600 mt-1">{errors.planName}</p>}
                 </div>
              </div>
