@@ -1,14 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaLibSql } from '@prisma/adapter-libsql';
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import bcrypt from 'bcryptjs';
 
-const dbPath = path.join(process.cwd(), 'dev.db');
-const adapter = new PrismaLibSql({
-  url: pathToFileURL(dbPath).href,
-});
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function createAdmin() {
   const company = await prisma.company.findFirst();

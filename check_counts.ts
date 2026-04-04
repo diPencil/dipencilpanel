@@ -1,16 +1,8 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaLibSql } from '@prisma/adapter-libsql';
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 
-const dbPath = path.join(process.cwd(), 'dev.db');
-const adapter = new PrismaLibSql({
-  url: pathToFileURL(dbPath).href,
-});
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function check() {
-  console.log('Inspecting:', dbPath);
   const userCount = await prisma.user.count();
   const companyCount = await prisma.company.count();
   const clientCount = await prisma.client.count();

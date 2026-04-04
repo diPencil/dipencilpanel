@@ -1,5 +1,3 @@
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { defineConfig } from 'prisma/config';
 
 export default defineConfig({
@@ -8,6 +6,6 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    url: 'file:./dev.db',
+    url: process.env.DATABASE_URL ?? 'postgresql://panel:panel_password@localhost:5432/panel_db',
   },
 });

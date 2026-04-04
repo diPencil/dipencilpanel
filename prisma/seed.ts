@@ -3,15 +3,10 @@
  * Run: npx tsx prisma/seed.ts   (or: npx prisma db seed)
  */
 
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { PrismaClient } from '@prisma/client';
-import { PrismaLibSql } from '@prisma/adapter-libsql';
 import bcrypt from 'bcryptjs';
 
-const dbPath = path.join(process.cwd(), 'dev.db');
-const adapter = new PrismaLibSql({ url: pathToFileURL(dbPath).href });
-const prisma = new PrismaClient({ adapter } as any);
+const prisma = new PrismaClient();
 
 async function main() {
   // Ensure there's at least one company to attach the user to

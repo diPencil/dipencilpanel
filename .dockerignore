@@ -1,0 +1,11 @@
+.git
+.next
+node_modules
+dev.db
+dev-backup-*.db
+temp-import-*.db
+.env
+.env.local
+.env.development
+.env.production
+README.md
