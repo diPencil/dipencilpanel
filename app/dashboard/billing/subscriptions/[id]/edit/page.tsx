@@ -95,6 +95,14 @@ export default function EditSubscriptionPage() {
   const [editingPlan, setEditingPlan] = useState<{ index: number; value: string } | null>(null);
   const customPlansFirstRender = useRef(true);
 
+  const planOptions = useMemo(() => {
+    const options = [...PLAN_OPTIONS, ...customPlans];
+    if (formData.planName && !options.includes(formData.planName)) {
+      options.push(formData.planName);
+    }
+    return options;
+  }, [customPlans, formData.planName]);
+
   useEffect(() => {
     if (customPlansFirstRender.current) {
       customPlansFirstRender.current = false;
@@ -130,6 +138,12 @@ export default function EditSubscriptionPage() {
       });
     }
   }, [subscription]);
+
+  useEffect(() => {
+    if (!subscription?.planName) return;
+    if (PLAN_OPTIONS.includes(subscription.planName)) return;
+    setCustomPlans((prev) => (prev.includes(subscription.planName) ? prev : [...prev, subscription.planName]));
+  }, [subscription?.planName]);
 
   const updateField = <K extends keyof typeof formData>(key: K, value: (typeof formData)[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -420,11 +434,8 @@ export default function EditSubscriptionPage() {
                       <SelectValue placeholder="Select a plan" />
                     </SelectTrigger>
                     <SelectContent>
-                      {PLAN_OPTIONS.map((plan) => (
+                      {planOptions.map((plan) => (
                         <SelectItem key={plan} value={plan}>{plan}</SelectItem>
-                      ))}
-                      {customPlans.map((plan) => (
-                        <SelectItem key={`custom-${plan}`} value={plan}>{plan}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
