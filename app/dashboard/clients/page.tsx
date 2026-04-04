@@ -73,16 +73,30 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Clients</h1>
           <p className="text-muted-foreground text-sm sm:text-base">
             Manage your clients and their information
           </p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          <Badge variant="outline" className="h-10 px-3 whitespace-nowrap tabular-nums">
-            {filteredClients.length} {filteredClients.length === 1 ? 'client' : 'clients'}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto lg:justify-end">
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search clients..."
+              className="pl-9 bg-card"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              aria-describedby="clients-search-count"
+            />
+          </div>
+          <Badge
+            variant="outline"
+            className="h-10 min-w-12 justify-center px-3 whitespace-nowrap tabular-nums"
+            aria-label={`${filteredClients.length} clients`}
+          >
+            {filteredClients.length}
           </Badge>
           <Button
             onClick={() => {
@@ -94,30 +108,6 @@ export default function ClientsPage() {
             <Plus className="h-4 w-4 mr-2" />
             Add Client
           </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
-        <div className="flex items-center gap-3 flex-wrap md:justify-end w-full md:w-auto">
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search clients..."
-              className="pl-9 bg-card"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              aria-describedby="clients-search-count"
-            />
-          </div>
-          <p
-            id="clients-search-count"
-            className="text-sm text-muted-foreground whitespace-nowrap tabular-nums"
-            aria-live="polite"
-          >
-            <span className="font-semibold text-foreground">{filteredClients.length}</span>
-            {filteredClients.length === 1 ? ' client' : ' clients'}
-            {searchTerm.trim() ? ' match' : ''}
-          </p>
         </div>
       </div>
 
