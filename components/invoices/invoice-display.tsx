@@ -82,28 +82,34 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
     const vatValue = exclVat * ((item.vat || 0) / 100);
     const finalAmount = exclVat + vatValue;
 
+    const numericCellClass = 'text-[10px] text-right align-middle text-gray-800 font-normal whitespace-nowrap tabular-nums [font-family:Arial,Helvetica,sans-serif]';
+
     return (
       <tr key={item.id} className="border-b border-gray-100 group">
         <td className="py-4 pr-4 align-top">
-          <div className="text-[13px] font-bold text-black mb-0.5 leading-tight">{item.description}</div>
-          <div className="text-[10px] font-normal text-gray-500 leading-snug">
+          <div className="text-[12px] font-semibold text-black mb-0.5 leading-tight">{item.description}</div>
+          <div className="text-[9px] font-normal text-gray-500 leading-snug">
             {formatInvoiceDate(invoice.issueDate)} to{' '}
             {invoice.nextBillingDate ? formatInvoiceDate(invoice.nextBillingDate) : '—'}
           </div>
         </td>
-        <td className="py-4 text-[11px] text-right align-middle text-gray-800 font-medium font-mono whitespace-nowrap tabular-nums">
-          {formatCurrency(price, invoice.currency)} x {qty}
+        <td className={numericCellClass}>
+          <span className="inline-flex items-center justify-end gap-1 whitespace-nowrap">
+            <span>{formatCurrency(price, invoice.currency)}</span>
+            <span>x</span>
+            <span>{qty}</span>
+          </span>
         </td>
-        <td className="py-4 text-[11px] text-right align-middle text-gray-800 font-medium whitespace-nowrap font-mono tabular-nums">
+        <td className={numericCellClass}>
           {item.discount && item.discount > 0 ? `(${formatCurrency(discountValue, invoice.currency)})` : '-'}
         </td>
-        <td className="py-4 text-[11px] text-right align-middle text-gray-800 font-medium font-mono whitespace-nowrap tabular-nums">
+        <td className={numericCellClass}>
           {formatCurrency(exclVat, invoice.currency)}
         </td>
-        <td className="py-4 text-[11px] text-right align-middle text-gray-800 font-medium font-mono whitespace-nowrap tabular-nums">
+        <td className={numericCellClass}>
           {formatCurrency(vatValue, invoice.currency)}
         </td>
-        <td className="py-4 text-[11px] text-right align-middle font-bold text-black font-mono whitespace-nowrap tabular-nums">
+        <td className="py-4 text-[10px] text-right align-middle font-semibold text-black whitespace-nowrap tabular-nums [font-family:Arial,Helvetica,sans-serif]">
           {formatCurrency(finalAmount, invoice.currency)}
         </td>
       </tr>
@@ -113,13 +119,13 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
   return (
     <div
       id="invoice-content"
-      className={`${invoiceFont.className} bg-white text-black mx-auto shadow-none box-border w-[794px] min-h-[1123px] max-w-none text-[12px] leading-[1.28] overflow-hidden px-5 pt-[13px] pb-8 flex flex-col`}
+      className={`${invoiceFont.className} bg-white text-black mx-auto shadow-none box-border w-[794px] min-h-[1123px] max-w-none text-[11px] leading-[1.28] overflow-hidden pl-3 pr-5 pt-[13px] pb-8 flex flex-col`}
       style={{ fontFamily: '"Noto Sans SC", Arial, Helvetica, sans-serif', letterSpacing: '0', wordSpacing: 'normal' }}
     >
-      {/* Top: seller (left) + INVOICE meta (right) */}
-      <div className="flex justify-between items-start gap-8 mb-6">
-        <div className="flex flex-col gap-2.5 min-w-0 max-w-[48%]">
-          <div className="flex items-center gap-2">
+      {/* Top: logo and INVOICE title aligned on the same row */}
+      <div className="mb-6">
+        <div className="grid grid-cols-[1fr_auto] items-start gap-8">
+          <div className="flex items-start">
             {companyLogo ? (
               <img
                 src={companyLogo}
@@ -134,7 +140,12 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
               </div>
             )}
           </div>
-          <div className="text-[12px] leading-relaxed text-gray-800">
+
+          <h1 className="text-[26px] font-bold tracking-tight uppercase leading-none text-black">INVOICE</h1>
+        </div>
+
+        <div className="mt-3 grid grid-cols-[1fr_auto] gap-8 items-start">
+          <div className="text-[11px] leading-relaxed text-gray-800 min-w-0 max-w-[48%]">
             <p className="font-medium text-gray-900">{company.name?.trim() || 'Company'}</p>
             {sellerAddressLines.map((line) => (
               <p key={line}>{line}</p>
@@ -148,39 +159,38 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
             {company.email?.trim() ? <p className="mt-1">{company.email}</p> : null}
             {company.phone?.trim() ? <p>{company.phone}</p> : null}
           </div>
-        </div>
 
-        <div className="text-left shrink-0 min-w-[240px]">
-          <h1 className="text-[28px] font-bold tracking-tight uppercase leading-none mb-2.5 text-black">INVOICE</h1>
-          <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-[12px] items-baseline">
-            <span className="text-gray-500">Invoice #</span>
-            <span className="font-bold text-gray-900 whitespace-nowrap">{formatInvoiceNumber(invoice.number)}</span>
-            <span className="text-gray-500">Invoice Issued #</span>
-            <span className="font-bold text-gray-900 whitespace-nowrap">{formatInvoiceDate(invoice.issueDate)}</span>
-            <span className="text-gray-500">Invoice Amount #</span>
-            <span className="font-bold font-mono text-gray-900 whitespace-nowrap tabular-nums">
-              {formatCurrency(invoice.total, invoice.currency)} ({invoice.currency})
-            </span>
-            {invoice.nextBillingDate ? (
-              <>
-                <span className="text-gray-500">Next Billing Date #</span>
-                <span className="font-bold text-gray-900 whitespace-nowrap">{formatInvoiceDate(invoice.nextBillingDate)}</span>
-              </>
-            ) : null}
-            <span className="text-gray-500">Order Nr. #</span>
-            <span className="font-bold font-mono text-gray-900 whitespace-nowrap tabular-nums">{orderRef}</span>
+          <div className="text-left shrink-0 min-w-[240px]">
+            <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 text-[11px] items-baseline">
+              <span className="text-gray-500">Invoice #</span>
+              <span className="font-bold text-gray-900 whitespace-nowrap text-[11px]">{formatInvoiceNumber(invoice.number)}</span>
+              <span className="text-gray-500">Invoice Issued #</span>
+              <span className="font-bold text-gray-900 whitespace-nowrap text-[11px]">{formatInvoiceDate(invoice.issueDate)}</span>
+              <span className="text-gray-500">Invoice Amount #</span>
+              <span className="font-bold font-mono text-gray-900 whitespace-nowrap tabular-nums text-[11px]">
+                {formatCurrency(invoice.total, invoice.currency)} ({invoice.currency})
+              </span>
+              {invoice.nextBillingDate ? (
+                <>
+                  <span className="text-gray-500">Next Billing Date #</span>
+                  <span className="font-bold text-gray-900 whitespace-nowrap text-[11px]">{formatInvoiceDate(invoice.nextBillingDate)}</span>
+                </>
+              ) : null}
+              <span className="text-gray-500">Order Nr. #</span>
+              <span className="font-bold font-mono text-gray-900 whitespace-nowrap tabular-nums text-[11px]">{orderRef}</span>
+            </div>
+            <p className={`font-bold mt-2 uppercase text-[13px] tracking-wide ${status.className}`}>
+              {status.text}
+            </p>
           </div>
-          <p className={`font-bold mt-2.5 uppercase text-[14px] tracking-wide ${status.className}`}>
-            {status.text}
-          </p>
         </div>
       </div>
 
       <div className="flex flex-col flex-1 min-h-0">
         {/* BILLED TO */}
         <div className="mb-7">
-          <h3 className="text-[13px] font-bold uppercase mb-1.5 tracking-tight">BILLED TO</h3>
-          <div className="text-[12px] text-gray-800 leading-relaxed">
+          <h3 className="text-[12px] font-bold uppercase mb-1.5 tracking-tight">BILLED TO</h3>
+          <div className="text-[11px] text-gray-800 leading-relaxed">
             <p className="font-medium text-gray-900">{client.name}</p>
             {clientLines.length > 0 ? (
               clientLines.map((line) => <p key={line}>{line}</p>)
@@ -194,26 +204,26 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
         <div className="mb-6">
           <table className="w-full text-left border-collapse table-fixed">
             <colgroup>
-              <col className="w-[38%]" />
-              <col className="w-[12%]" />
+              <col className="w-[40%]" />
+              <col className="w-[13%]" />
               <col className="w-[12%]" />
               <col className="w-[15%]" />
-              <col className="w-[11%]" />
-              <col className="w-[12%]" />
+              <col className="w-[10%]" />
+              <col className="w-[10%]" />
             </colgroup>
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="py-2 text-[9px] font-bold uppercase tracking-[0.05em] text-black">DESCRIPTION</th>
-                <th className="py-2 text-[9px] font-bold uppercase tracking-[0.05em] text-black text-right whitespace-nowrap">PRICE</th>
-                <th className="py-2 text-[9px] font-bold uppercase tracking-[0.05em] text-black text-right whitespace-nowrap">DISCOUNT</th>
-                <th className="py-2 text-[9px] font-bold uppercase tracking-[0.05em] text-black text-right whitespace-nowrap">TOTAL EXCL. VAT</th>
-                <th className="py-2 text-[9px] font-bold uppercase tracking-[0.05em] text-black text-right whitespace-nowrap">VAT</th>
-                <th className="py-2 text-[9px] font-bold uppercase tracking-[0.05em] text-black text-right whitespace-nowrap">
+              <tr className="border-b border-gray-150">
+                <th className="py-2.5 text-[8px] font-bold uppercase tracking-[0.06em] text-black">DESCRIPTION</th>
+                <th className="py-2.5 text-[8px] font-bold uppercase tracking-[0.06em] text-black text-right whitespace-nowrap">PRICE</th>
+                <th className="py-2.5 text-[8px] font-bold uppercase tracking-[0.06em] text-black text-right whitespace-nowrap">DISCOUNT</th>
+                <th className="py-2.5 text-[8px] font-bold uppercase tracking-[0.06em] text-black text-right whitespace-nowrap">TOTAL EXCL. VAT</th>
+                <th className="py-2.5 text-[8px] font-bold uppercase tracking-[0.06em] text-black text-right whitespace-nowrap">VAT</th>
+                <th className="py-2.5 text-[8px] font-bold uppercase tracking-[0.06em] text-black text-right whitespace-nowrap">
                   AMOUNT ({invoice.currency})
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="[&>tr:last-child]:border-b-0">
               {invoice.items.map((item) => renderItem(item))}
             </tbody>
           </table>
@@ -222,29 +232,29 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
         {/* Summary — right column like Hostinger */}
         <div className="flex justify-end pt-2">
           <div className="w-[300px] space-y-1.5">
-            <div className="flex justify-between text-[12px]">
+            <div className="flex justify-between text-[11px]">
               <span className="text-gray-700 font-medium">Total excl. VAT</span>
-              <span className="text-black font-semibold font-mono whitespace-nowrap tabular-nums">
+              <span className="text-black font-medium font-mono whitespace-nowrap tabular-nums text-[11px]">
                 {formatCurrency(invoice.subtotal - invoice.discountAmount, invoice.currency)}
               </span>
             </div>
-            <div className="flex justify-between text-[12px]">
+            <div className="flex justify-between text-[11px]">
               <span className="text-gray-700 font-medium">VAT @ {vatPct}%</span>
-              <span className="text-black font-semibold font-mono whitespace-nowrap tabular-nums">
+              <span className="text-black font-medium font-mono whitespace-nowrap tabular-nums text-[11px]">
                 {formatCurrency(invoice.vatAmount, invoice.currency)}
               </span>
             </div>
 
             <div className="pt-2 border-t border-gray-100 flex flex-col gap-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-[13px] font-bold uppercase">Total</span>
-                <span className="text-[13px] font-bold font-mono whitespace-nowrap tabular-nums">
+                <span className="text-[12px] font-bold uppercase">Total</span>
+                <span className="text-[12px] font-semibold font-mono whitespace-nowrap tabular-nums">
                   {formatCurrency(invoice.total, invoice.currency)}
                 </span>
               </div>
               <div className="flex justify-between items-center text-gray-500 italic">
-                <span className="text-[12px]">Payments</span>
-                <span className="text-[12px] font-mono whitespace-nowrap tabular-nums">
+                <span className="text-[11px]">Payments</span>
+                <span className="text-[11px] font-mono whitespace-nowrap tabular-nums">
                   {isPaid ? `(${formatCurrency(invoice.total, invoice.currency)})` : '-'}
                 </span>
               </div>
@@ -252,10 +262,10 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
 
             <div className="pt-2 border-t border-gray-100">
               <div className="flex justify-between items-center">
-                <span className="text-[13px] font-bold uppercase">
+                <span className="text-[12px] font-bold uppercase">
                   Amount Due ({invoice.currency})
                 </span>
-                <span className="text-[13px] font-bold font-mono whitespace-nowrap tabular-nums">
+                <span className="text-[12px] font-bold font-mono whitespace-nowrap tabular-nums">
                   {formatCurrency(amountDue, invoice.currency)}
                 </span>
               </div>
@@ -270,19 +280,27 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           </div>
         )}
 
-        <div className="mt-auto pt-5 pb-1 text-gray-500 opacity-70">
-          <div className="border-t border-gray-200 pt-3 grid grid-cols-[1fr_auto] gap-6 items-end text-[11px] leading-tight">
+        <div className="mt-auto pt-4 pb-1 text-gray-500 opacity-70">
+          <div
+            className="border-t border-gray-200 pt-2.5 grid grid-cols-[1fr_auto] gap-5 items-end text-[9px] leading-[1.35]"
+            style={{
+              fontFamily: 'Arial, Helvetica, sans-serif',
+              letterSpacing: '0.01em',
+              wordSpacing: '0.08em',
+              fontVariantLigatures: 'none',
+            }}
+          >
             <div className="min-w-0">
-              <p className="m-0 max-w-[360px]">
-                This is a non-binding quotation valid until the expiration date.
+              <p className="m-0 max-w-[360px] whitespace-normal break-normal">
+                Hostinger International Ltd.
               </p>
-              <p className="m-0 mt-1 max-w-[360px]">
-                Need help with renewal or billing? Contact our service agent below.
+              <p className="m-0 mt-0.5 max-w-[360px] whitespace-normal break-normal">
+                If you would like assistance with renewal or have any questions, please contact our exclusive service middle east agent.
               </p>
             </div>
             <div className="text-right whitespace-nowrap">
-              <p className="m-0">{company.name?.trim() || 'diPencil'}</p>
-              <p className="m-0 mt-1">Generated on {generatedOn}</p>
+              <p className="m-0 mt-0.5">Engineer Mahmoud El-Sabbagh</p>
+              <p className="m-0 mt-0.5">Technical Agent Provider in the Middle East @Pencil Studio.</p>
             </div>
           </div>
         </div>
