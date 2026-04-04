@@ -122,45 +122,44 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       className={`${invoiceFont.className} bg-white text-black mx-auto shadow-none box-border w-[794px] min-h-[1123px] max-w-none text-[11px] leading-[1.28] overflow-hidden pl-3 pr-5 pt-[13px] pb-8 flex flex-col`}
       style={{ fontFamily: '"Noto Sans SC", Arial, Helvetica, sans-serif', letterSpacing: '0', wordSpacing: 'normal' }}
     >
-      {/* Top: logo and INVOICE title aligned on the same row */}
+      {/* Top: seller left + invoice block right */}
       <div className="mb-6">
-        <div className="grid grid-cols-[1fr_auto] items-start gap-8">
-          <div className="flex items-start">
-            {companyLogo ? (
-              <img
-                src={companyLogo}
-                alt={company.name}
-                className="h-8 max-w-[150px] object-contain"
-              />
-            ) : (
-              <div className="w-8 h-8 bg-black rounded-sm flex items-center justify-center">
-                <span className="text-white font-bold text-xl">
-                  {company.name?.charAt(0).toUpperCase() || 'P'}
-                </span>
-              </div>
-            )}
-          </div>
+        <div className="flex justify-between items-start gap-8">
+          <div className="flex flex-col gap-2.5 min-w-0 max-w-[48%]">
+            <div className="flex items-start">
+              {companyLogo ? (
+                <img
+                  src={companyLogo}
+                  alt={company.name}
+                  className="h-8 max-w-[150px] object-contain"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-black rounded-sm flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">
+                    {company.name?.charAt(0).toUpperCase() || 'P'}
+                  </span>
+                </div>
+              )}
+            </div>
 
-          <h1 className="text-[26px] font-bold tracking-tight uppercase leading-none text-black">INVOICE</h1>
-        </div>
-
-        <div className="mt-3 grid grid-cols-[1fr_auto] gap-8 items-start">
-          <div className="text-[11px] leading-relaxed text-gray-800 min-w-0 max-w-[48%]">
-            <p className="font-medium text-gray-900">{company.name?.trim() || 'Company'}</p>
-            {sellerAddressLines.map((line) => (
-              <p key={line}>{line}</p>
-            ))}
-            {company.vatNumber?.trim() ? (
-              <p className="mt-1">
-                VAT Reg #:{' '}
-                <span className="font-medium uppercase">{company.vatNumber}</span>
-              </p>
-            ) : null}
-            {company.email?.trim() ? <p className="mt-1">{company.email}</p> : null}
-            {company.phone?.trim() ? <p>{company.phone}</p> : null}
+            <div className="text-[11px] leading-relaxed text-gray-800">
+              <p className="font-medium text-gray-900">{company.name?.trim() || 'Company'}</p>
+              {sellerAddressLines.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
+              {company.vatNumber?.trim() ? (
+                <p className="mt-1">
+                  VAT Reg #:{' '}
+                  <span className="font-medium uppercase">{company.vatNumber}</span>
+                </p>
+              ) : null}
+              {company.email?.trim() ? <p className="mt-1">{company.email}</p> : null}
+              {company.phone?.trim() ? <p>{company.phone}</p> : null}
+            </div>
           </div>
 
           <div className="text-left shrink-0 min-w-[240px]">
+            <h1 className="text-[26px] font-bold tracking-tight uppercase leading-none mb-2 text-black">INVOICE</h1>
             <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 text-[11px] items-baseline">
               <span className="text-gray-500">Invoice #</span>
               <span className="font-bold text-gray-900 whitespace-nowrap text-[11px]">{formatInvoiceNumber(invoice.number)}</span>
