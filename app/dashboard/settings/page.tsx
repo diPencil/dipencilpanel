@@ -162,7 +162,7 @@ export default function SettingsPage() {
               <h3 className="font-semibold">Database Management</h3>
             </div>
             <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-              Export to backup your records, or Import &amp; Merge to add new data from another device.
+              Export a JSON backup, or Import &amp; Merge to add new data from another device.
               <span className="block mt-1 font-medium text-red-600/80 italic">Note: Importing will only add new records and won&apos;t delete your current data.</span>
             </p>
 
@@ -183,13 +183,13 @@ export default function SettingsPage() {
                 className="flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors disabled:opacity-50"
               >
                 <Download className="h-3.5 w-3.5" />
-                Export Full Backup
+                Export JSON Backup
               </button>
 
               <div className="relative">
                 <input
                   type="file"
-                  accept=".db"
+                  accept=".json"
                   id="import-db"
                   className="hidden"
                   onChange={async (e) => {
@@ -198,7 +198,7 @@ export default function SettingsPage() {
 
                     const confirmed = await confirm({
                       title: 'Merge Database',
-                      description: 'Are you sure you want to merge this database? New records will be added to your current data without deleting anything.',
+                      description: 'Are you sure you want to merge this backup? New records will be added to your current data without deleting anything.',
                       confirmText: 'Merge Now',
                       cancelText: 'Cancel',
                       variant: 'destructive'
@@ -240,7 +240,7 @@ export default function SettingsPage() {
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
                   {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                  Import &amp; Merge Database
+                  Import &amp; Merge Backup
                 </button>
               </div>
             </div>
