@@ -43,10 +43,9 @@ function flattenCloneForCanvas(origRoot: HTMLElement, cloneRoot: HTMLElement): v
   cloneRoot.setAttribute('id', 'invoice-content');
 }
 
-function shouldKeepFontStyleTag(node: Element): boolean {
-  if (node.tagName !== 'STYLE') return false;
-  const text = node.textContent ?? '';
-  return /@font-face/i.test(text) && /Noto Sans SC|NotoSansSC|NotoSansCJKsc/i.test(text);
+// All fonts are system fonts (Arial/Helvetica) — no @font-face rules to preserve
+function shouldKeepFontStyleTag(_node: Element): boolean {
+  return false;
 }
 
 /**

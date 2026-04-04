@@ -1,15 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Noto_Sans_SC } from 'next/font/google';
 import { Invoice, Client, Company } from '@/lib/types';
 import { formatCurrency, formatInvoiceDate, formatInvoiceNumber } from '@/lib/formatting';
-
-const invoiceFont = Noto_Sans_SC({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  display: 'swap',
-});
 
 interface InvoiceDisplayProps {
   invoice: Invoice;
@@ -82,13 +75,24 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
     const vatValue = exclVat * ((item.vat || 0) / 100);
     const finalAmount = exclVat + vatValue;
 
-    const numericCellClass = 'text-[10px] text-right align-middle text-gray-800 font-normal whitespace-nowrap tabular-nums [font-family:Arial,Helvetica,sans-serif]';
+    const numericCellClass = 'text-[11px] text-right align-middle text-gray-800 font-normal whitespace-nowrap tabular-nums [font-family:Arial,Helvetica,sans-serif]';
 
     return (
       <tr key={item.id} className="border-b border-gray-100 group">
-        <td className="py-4 pr-4 align-top">
-          <div className="text-[12px] font-semibold text-black mb-0.5 leading-tight">{item.description}</div>
-          <div className="text-[9px] font-normal text-gray-500 leading-snug">
+        <td className="py-5 pr-4 align-top">
+          {(item.description || '').split('\n').map((line, i) => (
+            <div
+              key={i}
+              className={`leading-snug ${
+                i === 0
+                  ? 'text-[11px] font-bold text-black'
+                  : 'text-[11px] font-normal text-gray-800 mt-0.5'
+              }`}
+            >
+              {line}
+            </div>
+          ))}
+          <div className="text-[9px] font-normal text-gray-500 leading-snug mt-1">
             {formatInvoiceDate(invoice.issueDate)} to{' '}
             {invoice.nextBillingDate ? formatInvoiceDate(invoice.nextBillingDate) : '—'}
           </div>
@@ -109,7 +113,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
         <td className={numericCellClass}>
           {formatCurrency(vatValue, invoice.currency)}
         </td>
-        <td className="py-4 text-[10px] text-right align-middle font-semibold text-black whitespace-nowrap tabular-nums [font-family:Arial,Helvetica,sans-serif]">
+        <td className="py-5 text-[11px] text-right align-middle font-bold text-black whitespace-nowrap tabular-nums [font-family:Arial,Helvetica,sans-serif]">
           {formatCurrency(finalAmount, invoice.currency)}
         </td>
       </tr>
@@ -119,8 +123,8 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
   return (
     <div
       id="invoice-content"
-      className={`${invoiceFont.className} bg-white text-black mx-auto shadow-none box-border w-[794px] min-h-[1123px] max-w-none text-[11px] leading-[1.28] overflow-hidden pl-3 pr-5 pt-[13px] pb-8 flex flex-col`}
-      style={{ fontFamily: '"Noto Sans SC", Arial, Helvetica, sans-serif', letterSpacing: '0', wordSpacing: 'normal' }}
+      className="bg-white text-black mx-auto shadow-none box-border w-[794px] min-h-[1123px] max-w-none text-[11px] leading-[1.4] overflow-hidden px-10 pt-10 pb-8 flex flex-col"
+      style={{ fontFamily: 'Arial, Helvetica, sans-serif', letterSpacing: '0', wordSpacing: 'normal' }}
     >
       {/* Top: seller left + invoice block right */}
       <div className="mb-6">
@@ -150,7 +154,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
               {company.vatNumber?.trim() ? (
                 <p className="mt-1">
                   VAT Reg #:{' '}
-                  <span className="font-medium uppercase">{company.vatNumber}</span>
+                  <span className="font-bold uppercase">{company.vatNumber}</span>
                 </p>
               ) : null}
               {company.email?.trim() ? <p className="mt-1">{company.email}</p> : null}
@@ -159,7 +163,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           </div>
 
           <div className="text-left shrink-0 min-w-[240px]">
-            <h1 className="text-[26px] font-bold tracking-tight uppercase leading-none mb-2 text-black">INVOICE</h1>
+            <h1 className="text-[32px] font-bold tracking-tight uppercase leading-none mb-3 text-black">INVOICE</h1>
             <div className="flex flex-col gap-y-0.5 text-[11px]">
               <p className="m-0">
                 <span className="text-gray-500">Invoice # </span>
@@ -196,7 +200,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       <div className="flex flex-col flex-1 min-h-0">
         {/* BILLED TO */}
         <div className="mb-7">
-          <h3 className="text-[12px] font-bold uppercase mb-1.5 tracking-tight">BILLED TO</h3>
+          <h3 className="text-[11px] font-bold uppercase pb-1 mb-1.5 tracking-tight border-b border-gray-300">BILLED TO</h3>
           <div className="text-[11px] text-gray-800 leading-relaxed">
             <p className="font-medium text-gray-900">{client.name}</p>
             {clientLines.length > 0 ? (
@@ -219,7 +223,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
               <col className="w-[10%]" />
             </colgroup>
             <thead>
-              <tr className="border-b border-gray-150">
+              <tr className="border-b border-gray-300">
                 <th className="py-2.5 text-[8px] font-bold uppercase tracking-[0.06em] text-black">DESCRIPTION</th>
                 <th className="py-2.5 text-[8px] font-bold uppercase tracking-[0.06em] text-black text-right whitespace-nowrap">PRICE</th>
                 <th className="py-2.5 text-[8px] font-bold uppercase tracking-[0.06em] text-black text-right whitespace-nowrap">DISCOUNT</th>
