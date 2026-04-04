@@ -28,7 +28,7 @@ export function ClientsResponsive({
     <div className="space-y-4">
       {/* Desktop table - hidden on mobile */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-sm bg-background">
+        <table className="w-full text-sm bg-white">
           <thead>
             <tr className="border-b border-border">
               <th className="text-left py-3 px-4 font-semibold text-muted-foreground">
@@ -53,7 +53,7 @@ export function ClientsResponsive({
           </thead>
           <tbody>
             {clients.map((client) => (
-              <tr key={client.id} className="border-b border-border bg-background">
+              <tr key={client.id} className="border-b border-border bg-white">
                 <td className="py-3 px-4 font-medium">{client.name}</td>
                 <td className="py-3 px-4 text-muted-foreground">{client.email}</td>
                 <td className="py-3 px-4 text-muted-foreground">{client.phone}</td>
