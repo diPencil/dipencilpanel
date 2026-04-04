@@ -1,8 +1,15 @@
 'use client';
 
 import React from 'react';
+import { Noto_Sans_SC } from 'next/font/google';
 import { Invoice, Client, Company } from '@/lib/types';
 import { formatCurrency, formatInvoiceDate, formatInvoiceNumber } from '@/lib/formatting';
+
+const invoiceFont = Noto_Sans_SC({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  display: 'swap',
+});
 
 interface InvoiceDisplayProps {
   invoice: Invoice;
@@ -76,26 +83,26 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
 
     return (
       <tr key={item.id} className="border-b border-gray-100 group">
-        <td className="py-5 pr-4 align-top">
-          <div className="text-[14px] font-bold text-black mb-1 leading-tight">{item.description}</div>
-          <div className="text-[11px] font-normal text-gray-500 leading-snug">
+        <td className="py-4 pr-4 align-top">
+          <div className="text-[13px] font-bold text-black mb-0.5 leading-tight">{item.description}</div>
+          <div className="text-[10px] font-normal text-gray-500 leading-snug">
             {formatInvoiceDate(invoice.issueDate)} to{' '}
             {invoice.nextBillingDate ? formatInvoiceDate(invoice.nextBillingDate) : '—'}
           </div>
         </td>
-        <td className="py-5 text-[13px] text-right align-middle text-gray-800 font-medium font-mono">
+        <td className="py-4 text-[11px] text-right align-middle text-gray-800 font-medium font-mono whitespace-nowrap tabular-nums">
           {formatCurrency(price, invoice.currency)} x {qty}
         </td>
-        <td className="py-5 text-[13px] text-right align-middle text-gray-800 font-medium whitespace-nowrap font-mono">
+        <td className="py-4 text-[11px] text-right align-middle text-gray-800 font-medium whitespace-nowrap font-mono tabular-nums">
           {item.discount && item.discount > 0 ? `(${formatCurrency(discountValue, invoice.currency)})` : '-'}
         </td>
-        <td className="py-5 text-[13px] text-right align-middle text-gray-800 font-medium font-mono">
+        <td className="py-4 text-[11px] text-right align-middle text-gray-800 font-medium font-mono whitespace-nowrap tabular-nums">
           {formatCurrency(exclVat, invoice.currency)}
         </td>
-        <td className="py-5 text-[13px] text-right align-middle text-gray-800 font-medium font-mono">
+        <td className="py-4 text-[11px] text-right align-middle text-gray-800 font-medium font-mono whitespace-nowrap tabular-nums">
           {formatCurrency(vatValue, invoice.currency)}
         </td>
-        <td className="py-5 text-[13px] text-right align-middle font-bold text-black font-mono">
+        <td className="py-4 text-[11px] text-right align-middle font-bold text-black font-mono whitespace-nowrap tabular-nums">
           {formatCurrency(finalAmount, invoice.currency)}
         </td>
       </tr>
@@ -105,12 +112,12 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
   return (
     <div
       id="invoice-content"
-      className="bg-white text-black mx-auto shadow-none box-border w-[794px] min-h-[1123px] max-w-none text-[12px] leading-[1.32] overflow-hidden px-5 pt-[13px] pb-10"
-      style={{ fontFamily: 'Arial, Helvetica, sans-serif', letterSpacing: '0', wordSpacing: 'normal' }}
+      className={`${invoiceFont.className} bg-white text-black mx-auto shadow-none box-border w-[794px] min-h-[1123px] max-w-none text-[12px] leading-[1.28] overflow-hidden px-5 pt-[13px] pb-8 flex flex-col`}
+      style={{ fontFamily: '"Noto Sans SC", Arial, Helvetica, sans-serif', letterSpacing: '0', wordSpacing: 'normal' }}
     >
-      {/* Top: seller (left) + INVOICE meta (right) — Hostinger uses ~15pt (~20px) page margins */}
-      <div className="flex justify-between items-start gap-10 mb-8">
-        <div className="flex flex-col gap-3 min-w-0 max-w-[48%]">
+      {/* Top: seller (left) + INVOICE meta (right) */}
+      <div className="flex justify-between items-start gap-8 mb-6">
+        <div className="flex flex-col gap-2.5 min-w-0 max-w-[48%]">
           <div className="flex items-center gap-2">
             {companyLogo ? (
               <img
@@ -126,7 +133,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
               </div>
             )}
           </div>
-          <div className="text-[13px] leading-relaxed text-gray-800">
+          <div className="text-[12px] leading-relaxed text-gray-800">
             <p className="font-medium text-gray-900">{company.name?.trim() || 'Company'}</p>
             {sellerAddressLines.map((line) => (
               <p key={line}>{line}</p>
@@ -142,146 +149,148 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           </div>
         </div>
 
-        <div className="text-left shrink-0 min-w-[260px]">
-          <h1 className="text-[30px] font-bold tracking-tight uppercase leading-none mb-3 text-black">INVOICE</h1>
-          <div className="space-y-1 text-[13px]">
-            <p>
-              <span className="text-gray-500">Invoice #</span>{' '}
-              <span className="font-bold text-gray-900">{formatInvoiceNumber(invoice.number)}</span>
-            </p>
-            <p>
-              <span className="text-gray-500">Invoice Issued #</span>{' '}
-              <span className="font-bold text-gray-900">{formatInvoiceDate(invoice.issueDate)}</span>
-            </p>
-            <p>
-              <span className="text-gray-500">Invoice Amount #</span>{' '}
-              <span className="font-bold font-mono text-gray-900">
-                {formatCurrency(invoice.total, invoice.currency)} ({invoice.currency})
-              </span>
-            </p>
-            {invoice.nextBillingDate && (
-              <p>
-                <span className="text-gray-500">Next Billing Date #</span>{' '}
-                <span className="font-bold text-gray-900">{formatInvoiceDate(invoice.nextBillingDate)}</span>
-              </p>
-            )}
-            <p>
-              <span className="text-gray-500">Order Nr. #</span>{' '}
-              <span className="font-bold font-mono text-gray-900">{orderRef}</span>
-            </p>
-            <p className={`font-bold mt-3 uppercase text-[15px] tracking-wide ${status.className}`}>
-              {status.text}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* BILLED TO */}
-      <div className="mb-10">
-        <h3 className="text-[14px] font-bold uppercase mb-2 tracking-tight">BILLED TO</h3>
-        <div className="text-[13px] text-gray-800 leading-relaxed">
-          <p className="font-medium text-gray-900">{client.name}</p>
-          {clientLines.length > 0 ? (
-            clientLines.map((line) => <p key={line}>{line}</p>)
-          ) : null}
-          <p>{client.email}</p>
-          {client.phone ? <p>{client.phone}</p> : null}
-        </div>
-      </div>
-
-      {/* Line items */}
-      <div className="mb-7">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="py-2 text-[10px] font-bold uppercase tracking-[0.05em] text-black">DESCRIPTION</th>
-              <th className="py-2 text-[10px] font-bold uppercase tracking-[0.05em] text-black text-right">PRICE</th>
-              <th className="py-2 text-[10px] font-bold uppercase tracking-[0.05em] text-black text-right">DISCOUNT</th>
-              <th className="py-2 text-[10px] font-bold uppercase tracking-[0.05em] text-black text-right">TOTAL EXCL. VAT</th>
-              <th className="py-2 text-[10px] font-bold uppercase tracking-[0.05em] text-black text-right">VAT</th>
-              <th className="py-3 text-[10px] font-bold uppercase tracking-[0.05em] text-black text-right">
-                AMOUNT ({invoice.currency})
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoice.items.map((item) => renderItem(item))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Summary — right column like Hostinger */}
-      <div className="flex justify-end pt-3">
-        <div className="w-[300px] space-y-1.5">
-          <div className="flex justify-between text-[13px]">
-            <span className="text-gray-700 font-medium">Total excl. VAT</span>
-            <span className="text-black font-semibold font-mono">
-              {formatCurrency(invoice.subtotal - invoice.discountAmount, invoice.currency)}
+        <div className="text-left shrink-0 min-w-[240px]">
+          <h1 className="text-[28px] font-bold tracking-tight uppercase leading-none mb-2.5 text-black">INVOICE</h1>
+          <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-[12px] items-baseline">
+            <span className="text-gray-500">Invoice #</span>
+            <span className="font-bold text-gray-900 whitespace-nowrap">{formatInvoiceNumber(invoice.number)}</span>
+            <span className="text-gray-500">Invoice Issued #</span>
+            <span className="font-bold text-gray-900 whitespace-nowrap">{formatInvoiceDate(invoice.issueDate)}</span>
+            <span className="text-gray-500">Invoice Amount #</span>
+            <span className="font-bold font-mono text-gray-900 whitespace-nowrap tabular-nums">
+              {formatCurrency(invoice.total, invoice.currency)} ({invoice.currency})
             </span>
+            {invoice.nextBillingDate ? (
+              <>
+                <span className="text-gray-500">Next Billing Date #</span>
+                <span className="font-bold text-gray-900 whitespace-nowrap">{formatInvoiceDate(invoice.nextBillingDate)}</span>
+              </>
+            ) : null}
+            <span className="text-gray-500">Order Nr. #</span>
+            <span className="font-bold font-mono text-gray-900 whitespace-nowrap tabular-nums">{orderRef}</span>
           </div>
-          <div className="flex justify-between text-[13px]">
-            <span className="text-gray-700 font-medium">VAT @ {vatPct}%</span>
-            <span className="text-black font-semibold font-mono">
-              {formatCurrency(invoice.vatAmount, invoice.currency)}
-            </span>
-          </div>
-
-          <div className="pt-2 border-t border-gray-100 flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <span className="text-[14px] font-bold uppercase">Total</span>
-              <span className="text-[14px] font-bold font-mono">
-                {formatCurrency(invoice.total, invoice.currency)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center text-gray-500 italic">
-              <span className="text-[13px]">Payments</span>
-              <span className="text-[13px] font-mono">
-                {isPaid ? `(${formatCurrency(invoice.total, invoice.currency)})` : '-'}
-              </span>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-gray-100">
-            <div className="flex justify-between items-center">
-              <span className="text-[14px] font-bold uppercase">
-                Amount Due ({invoice.currency})
-              </span>
-              <span className="text-[14px] font-bold font-mono">
-                {formatCurrency(amountDue, invoice.currency)}
-              </span>
-            </div>
-          </div>
+          <p className={`font-bold mt-2.5 uppercase text-[14px] tracking-wide ${status.className}`}>
+            {status.text}
+          </p>
         </div>
       </div>
 
-      {invoice.notes && (
-        <div className="border-t border-gray-300 pt-6 mt-8">
-          <h4 className="text-sm font-semibold mb-2">Notes:</h4>
-          <p className="text-sm text-gray-700 whitespace-pre-wrap">{invoice.notes}</p>
+      <div className="flex flex-col flex-1 min-h-0">
+        {/* BILLED TO */}
+        <div className="mb-7">
+          <h3 className="text-[13px] font-bold uppercase mb-1.5 tracking-tight">BILLED TO</h3>
+          <div className="text-[12px] text-gray-800 leading-relaxed">
+            <p className="font-medium text-gray-900">{client.name}</p>
+            {clientLines.length > 0 ? (
+              clientLines.map((line) => <p key={line}>{line}</p>)
+            ) : null}
+            <p>{client.email}</p>
+            {client.phone ? <p>{client.phone}</p> : null}
+          </div>
         </div>
-      )}
 
-      <div className="mt-8 pt-2 pb-0 text-gray-400 opacity-55">
-        <div className="mx-auto max-w-[220px] space-y-0.5 text-[7px] leading-tight text-center">
-          <p className="m-0">
-            Thank you for your business! | {company.name?.trim() || 'Company'}
-          </p>
-          <p className="m-0">
-            Need help with renewal or billing? Contact our service agent below.
-          </p>
-          <p className="m-0">
-            Engineer Mahmoud El-Sabbagh — Technical Agent, diPencil
-          </p>
-          <p className="m-0">Phone: +201003778273</p>
-          <p className="m-0">
-            Email: {' '}
-            <a
-              href="mailto:elsabbagh@dipencil.com"
-              className="text-gray-400 underline underline-offset-1"
-            >
-              elsabbagh@dipencil.com
-            </a>
-          </p>
+        {/* Line items */}
+        <div className="mb-6">
+          <table className="w-full text-left border-collapse table-fixed">
+            <colgroup>
+              <col className="w-[38%]" />
+              <col className="w-[12%]" />
+              <col className="w-[12%]" />
+              <col className="w-[15%]" />
+              <col className="w-[11%]" />
+              <col className="w-[12%]" />
+            </colgroup>
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="py-2 text-[9px] font-bold uppercase tracking-[0.05em] text-black">DESCRIPTION</th>
+                <th className="py-2 text-[9px] font-bold uppercase tracking-[0.05em] text-black text-right whitespace-nowrap">PRICE</th>
+                <th className="py-2 text-[9px] font-bold uppercase tracking-[0.05em] text-black text-right whitespace-nowrap">DISCOUNT</th>
+                <th className="py-2 text-[9px] font-bold uppercase tracking-[0.05em] text-black text-right whitespace-nowrap">TOTAL EXCL. VAT</th>
+                <th className="py-2 text-[9px] font-bold uppercase tracking-[0.05em] text-black text-right whitespace-nowrap">VAT</th>
+                <th className="py-2 text-[9px] font-bold uppercase tracking-[0.05em] text-black text-right whitespace-nowrap">
+                  AMOUNT ({invoice.currency})
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoice.items.map((item) => renderItem(item))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Summary — right column like Hostinger */}
+        <div className="flex justify-end pt-2">
+          <div className="w-[300px] space-y-1.5">
+            <div className="flex justify-between text-[12px]">
+              <span className="text-gray-700 font-medium">Total excl. VAT</span>
+              <span className="text-black font-semibold font-mono whitespace-nowrap tabular-nums">
+                {formatCurrency(invoice.subtotal - invoice.discountAmount, invoice.currency)}
+              </span>
+            </div>
+            <div className="flex justify-between text-[12px]">
+              <span className="text-gray-700 font-medium">VAT @ {vatPct}%</span>
+              <span className="text-black font-semibold font-mono whitespace-nowrap tabular-nums">
+                {formatCurrency(invoice.vatAmount, invoice.currency)}
+              </span>
+            </div>
+
+            <div className="pt-2 border-t border-gray-100 flex flex-col gap-1.5">
+              <div className="flex justify-between items-center">
+                <span className="text-[13px] font-bold uppercase">Total</span>
+                <span className="text-[13px] font-bold font-mono whitespace-nowrap tabular-nums">
+                  {formatCurrency(invoice.total, invoice.currency)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-gray-500 italic">
+                <span className="text-[12px]">Payments</span>
+                <span className="text-[12px] font-mono whitespace-nowrap tabular-nums">
+                  {isPaid ? `(${formatCurrency(invoice.total, invoice.currency)})` : '-'}
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-gray-100">
+              <div className="flex justify-between items-center">
+                <span className="text-[13px] font-bold uppercase">
+                  Amount Due ({invoice.currency})
+                </span>
+                <span className="text-[13px] font-bold font-mono whitespace-nowrap tabular-nums">
+                  {formatCurrency(amountDue, invoice.currency)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {invoice.notes && (
+          <div className="border-t border-gray-300 pt-4 mt-5">
+            <h4 className="text-[12px] font-semibold mb-1.5">Notes:</h4>
+            <p className="text-[11px] text-gray-700 whitespace-pre-wrap leading-relaxed">{invoice.notes}</p>
+          </div>
+        )}
+
+        <div className="mt-auto pt-4 pb-0 text-gray-400 opacity-55">
+          <div className="mx-auto grid max-w-[340px] grid-cols-2 gap-x-6 gap-y-0.5 text-[7px] leading-tight text-center">
+            <p className="m-0 col-span-2">
+              Thank you for your business! | {company.name?.trim() || 'Company'}
+            </p>
+            <p className="m-0 col-span-2">
+              Need help with renewal or billing? Contact our service agent below.
+            </p>
+            <p className="m-0 col-span-2">
+              Engineer Mahmoud El-Sabbagh — Technical Agent, diPencil
+            </p>
+            <p className="m-0 text-left">Phone: +201003778273</p>
+            <p className="m-0 text-right">
+              Email: {' '}
+              <a
+                href="mailto:elsabbagh@dipencil.com"
+                className="text-gray-400 underline underline-offset-1"
+              >
+                elsabbagh@dipencil.com
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
+    seed: 'tsx prisma/seed.ts',
   },
   datasource: {
     url: process.env.DATABASE_URL ?? 'postgresql://panel:panel_password@localhost:5432/panel_db',

@@ -43,8 +43,14 @@ function flattenCloneForCanvas(origRoot: HTMLElement, cloneRoot: HTMLElement): v
   cloneRoot.setAttribute('id', 'invoice-content');
 }
 
+function shouldKeepFontStyleTag(node: Element): boolean {
+  if (node.tagName !== 'STYLE') return false;
+  const text = node.textContent ?? '';
+  return /@font-face/i.test(text) && /Noto Sans SC|NotoSansSC|NotoSansCJKsc/i.test(text);
+}
+
 /**
- * Renders the element to a multi-page A4 PDF via html2canvas.
+ * Renders the element to a single-page A4 PDF via html2canvas.
  * The onclone handler strips Tailwind stylesheets and copies resolved RGB styles
  * so html2canvas never sees lab()/oklch() values.
  */
@@ -65,7 +71,7 @@ export async function exportElementToPdf(element: HTMLElement, filename: string)
 
   element.style.width = `${pageWidthPx}px`;
   element.style.maxWidth = `${pageWidthPx}px`;
-  // Full scroll height so long invoices are not clipped; keep at least one A4 screen for short ones
+  // Keep the capture at least one A4 page tall, but allow the content to fit on a single page.
   const captureHeight = Math.max(element.scrollHeight, pageHeightPx);
   element.style.minHeight = `${captureHeight}px`;
 
@@ -89,7 +95,10 @@ export async function exportElementToPdf(element: HTMLElement, filename: string)
         // 1. Remove every stylesheet so html2canvas never parses lab()/oklch()
         clonedDoc
           .querySelectorAll('link[rel="stylesheet"], link[rel="preload"][as="style"], style')
-          .forEach((el) => el.remove());
+          .forEach((el) => {
+            if (shouldKeepFontStyleTag(el)) return;
+            el.remove();
+          });
 
         // 2. Force safe backgrounds on root elements
         clonedDoc.documentElement.style.cssText = 'background:#ffffff !important;';
@@ -110,20 +119,13 @@ export async function exportElementToPdf(element: HTMLElement, filename: string)
   const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
-  const imgH = (canvas.height * pageW) / canvas.width;
+  const scale = Math.min(pageW / canvas.width, pageH / canvas.height);
+  const renderWidth = canvas.width * scale;
+  const renderHeight = canvas.height * scale;
+  const offsetX = (pageW - renderWidth) / 2;
+  const offsetY = (pageH - renderHeight) / 2;
 
-  let remaining = imgH;
-  let offset = 0;
-
-  pdf.addImage(imgData, 'PNG', 0, offset, pageW, imgH);
-  remaining -= pageH;
-
-  while (remaining > 0) {
-    offset = remaining - imgH;
-    pdf.addPage();
-    pdf.addImage(imgData, 'PNG', 0, offset, pageW, imgH);
-    remaining -= pageH;
-  }
+  pdf.addImage(imgData, 'PNG', offsetX, offsetY, renderWidth, renderHeight);
 
   pdf.save(filename);
 }

@@ -5,6 +5,10 @@ services:
       - "3000:3000"
     env_file:
       - .env
+    # Inside the app container, `localhost` is not Postgres — use the compose service name `db`.
+    # This overrides DATABASE_URL from .env so Docker deployments work with the bundled database.
+    environment:
+      DATABASE_URL: postgresql://panel:panel_password@db:5432/panel_db
     depends_on:
       db:
         condition: service_healthy
