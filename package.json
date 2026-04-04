@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
+    "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "@radix-ui/react-accordion": "1.2.12",
     "@radix-ui/react-alert-dialog": "1.1.15",
@@ -78,9 +79,9 @@
     "@tailwindcss/postcss": "^4.2.0",
     "@types/bcryptjs": "^3.0.0",
     "@types/jspdf": "^2.0.0",
-    "@types/pg": "^8.15.5",
     "@types/node": "^22",
     "@types/nodemailer": "^7.0.11",
+    "@types/pg": "^8.15.5",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "postcss": "^8.5",
