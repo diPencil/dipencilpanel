@@ -366,7 +366,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-end',
+          alignItems: 'flex-start',
           fontSize: '9px',
           lineHeight: '1.5',
           color: C_LIGHT,
@@ -378,8 +378,9 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
               If you would like assistance with renewal or have any questions, please contact our exclusive service middle east agent.
             </p>
           </div>
-          <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '20px' }}>
-            <p style={{ margin: 0 }}>Pencil for E-Marketing Ltd. · Technical Agent Provider of Hosting &amp; Digital Systems in the Middle East.</p>
+          <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '20px', marginTop: '13px' }}>
+            <p style={{ margin: 0 }}>Pencil for E-Marketing Ltd. · Technical Agent Provider</p>
+            <p style={{ margin: '0' }}>of Hosting &amp; Digital Systems in the Middle East.</p>
           </div>
         </div>
       </div>
