@@ -93,11 +93,11 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
     const descLines   = (item.description || '').split('\n').filter(Boolean);
 
     const N: React.CSSProperties = {
-      padding: '14px 8px',
+      padding: '10px 6px',
       textAlign: 'right',
       verticalAlign: 'top',
-      fontSize: '13px',
-      fontWeight: 500,
+      fontSize: '11px',
+      fontWeight: 400,
       color: C_PRIMARY,
       whiteSpace: 'nowrap',
       fontFamily: FONT,
@@ -107,11 +107,11 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
     return (
       <tr key={item.id}>
         {/* Description */}
-        <td style={{ padding: '14px 8px', verticalAlign: 'top', borderBottom: `1px solid ${C_ROW_BD}`, fontFamily: FONT }}>
+        <td style={{ padding: '10px 6px', verticalAlign: 'top', borderBottom: `1px solid ${C_ROW_BD}`, fontFamily: FONT }}>
           {descLines.map((line, i) => (
             <div key={i} style={{
-              fontSize:   i === 0 ? '14px' : '13px',
-              fontWeight: i === 0 ? 600    : 400,
+              fontSize:   i === 0 ? '12px' : '11px',
+              fontWeight: 400,
               color:      i === 0 ? C_PRIMARY : '#444444',
               lineHeight: 1.4,
               marginTop:  i > 0 ? '2px' : 0,
@@ -119,7 +119,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
               {line}
             </div>
           ))}
-          <div style={{ fontSize: '11px', color: C_LIGHT, marginTop: '4px', lineHeight: 1.4 }}>
+          <div style={{ fontSize: '10px', color: C_LIGHT, marginTop: '3px', lineHeight: 1.4 }}>
             {formatInvoiceDate(invoice.issueDate)} to{' '}
             {invoice.nextBillingDate ? formatInvoiceDate(invoice.nextBillingDate) : '—'}
           </div>
@@ -130,13 +130,13 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
         </td>
         <td style={N}>{formatCurrency(exclVat, invoice.currency)}</td>
         <td style={N}>{formatCurrency(vatAmt,  invoice.currency)}</td>
-        <td style={{ ...N, fontWeight: 700 }}>{formatCurrency(total, invoice.currency)}</td>
+        <td style={{ ...N, fontWeight: 400 }}>{formatCurrency(total, invoice.currency)}</td>
       </tr>
     );
   };
 
   /* ── thin divider ── */
-  const Divider = () => <div style={{ height: '1px', background: C_ROW_BD, margin: '12px 0' }} />;
+  const Divider = () => <div style={{ height: '1px', background: C_ROW_BD, margin: '8px 0' }} />;
 
   /* ── root container ── */
   const root: React.CSSProperties = {
@@ -145,10 +145,10 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
     color: C_PRIMARY,
     width: '860px',
     minHeight: '1123px',
-    margin: '40px auto',
-    padding: '32px 40px',
+    margin: '12px auto',
+    padding: '22px 28px',
     boxSizing: 'border-box',
-    fontSize: '13px',
+    fontSize: '11px',
     lineHeight: '1.5',
     display: 'flex',
     flexDirection: 'column',
@@ -166,19 +166,19 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
 
         {/* LEFT — logo + seller */}
         <div style={{ flex: '1 1 auto', minWidth: 0, paddingRight: '40px' }}>
-          <div style={{ marginBottom: '12px' }}>
+          <div style={{ marginBottom: '10px' }}>
             <img
               src={companyLogo}
               alt={company.name}
-              style={{ height: '28px', maxWidth: '120px', objectFit: 'contain', display: 'block' }}
+              style={{ height: '24px', maxWidth: '110px', objectFit: 'contain', display: 'block' }}
             />
           </div>
-          <div style={{ fontSize: '13px', lineHeight: '1.5', color: '#333333', fontFamily: FONT }}>
+          <div style={{ fontSize: '11px', lineHeight: '1.5', color: '#333333', fontFamily: FONT }}>
             <p style={{ margin: 0 }}>{company.name?.trim() || 'Company'}</p>
             {sellerLines.map((l) => <p key={l} style={{ margin: 0 }}>{l}</p>)}
             {company.vatNumber?.trim() && (
               <p style={{ margin: '4px 0 0 0' }}>
-                VAT Reg #:&nbsp;<strong style={{ color: C_PRIMARY }}>{company.vatNumber}</strong>
+                VAT Reg #:&nbsp;{company.vatNumber}
               </p>
             )}
             {company.email?.trim() && <p style={{ margin: '2px 0 0 0' }}>{company.email}</p>}
@@ -189,8 +189,8 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
         {/* RIGHT — INVOICE title + meta */}
         <div style={{ flexShrink: 0, minWidth: '260px' }}>
           <h1 style={{
-            margin: '0 0 12px 0',
-            fontSize: '26px',
+            margin: '0 0 10px 0',
+            fontSize: '22px',
             fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '-0.3px',
@@ -201,35 +201,35 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
             INVOICE
           </h1>
 
-          <div style={{ fontSize: '13px', lineHeight: '1.7', color: C_PRIMARY, fontFamily: FONT }}>
+          <div style={{ fontSize: '11px', lineHeight: '1.7', color: C_PRIMARY, fontFamily: FONT }}>
             <p style={{ margin: 0 }}>
-              <strong style={{ fontWeight: 700 }}>Invoice # </strong>
+              <span style={{ fontWeight: 400 }}>Invoice # </span>
               <span style={{ fontWeight: 400, color: C_SECONDARY }}>{formatInvoiceNumber(invoice.number)}</span>
             </p>
             <p style={{ margin: 0 }}>
-              <strong style={{ fontWeight: 700 }}>Invoice Issued # </strong>
+              <span style={{ fontWeight: 400 }}>Invoice Issued # </span>
               <span style={{ fontWeight: 400, color: C_SECONDARY }}>{formatInvoiceDate(invoice.issueDate)}</span>
             </p>
             <p style={{ margin: 0 }}>
-              <strong style={{ fontWeight: 700 }}>Invoice Amount # </strong>
+              <span style={{ fontWeight: 400 }}>Invoice Amount # </span>
               <span style={{ fontWeight: 400, color: C_SECONDARY }}>{formatCurrency(invoice.total, invoice.currency)} ({invoice.currency})</span>
             </p>
             {invoice.nextBillingDate && (
               <p style={{ margin: 0 }}>
-                <strong style={{ fontWeight: 700 }}>Next Billing Date # </strong>
+                <span style={{ fontWeight: 400 }}>Next Billing Date # </span>
                 <span style={{ fontWeight: 400, color: C_SECONDARY }}>{formatInvoiceDate(invoice.nextBillingDate)}</span>
               </p>
             )}
             <p style={{ margin: 0 }}>
-              <strong style={{ fontWeight: 700 }}>Order Nr. # </strong>
+              <span style={{ fontWeight: 400 }}>Order Nr. # </span>
               <span style={{ fontWeight: 400, color: C_SECONDARY }}>{orderRef}</span>
             </p>
           </div>
 
           <p style={{
             margin: '6px 0 0 0',
-            fontSize: '13px',
-            fontWeight: 600,
+            fontSize: '11px',
+            fontWeight: 400,
             textTransform: 'uppercase',
             letterSpacing: '0.04em',
             color: status.color,
@@ -243,11 +243,11 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       {/* ═══════════════════════════════════════
           BILLED TO
       ═══════════════════════════════════════ */}
-      <div style={{ marginTop: '28px' }}>
+      <div style={{ marginTop: '20px' }}>
         <p style={{
-          margin: '0 0 6px 0',
-          fontSize: '12px',
-          fontWeight: 700,
+          margin: '0 0 4px 0',
+          fontSize: '10px',
+          fontWeight: 400,
           textTransform: 'uppercase',
           letterSpacing: '0.5px',
           color: C_PRIMARY,
@@ -255,8 +255,8 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
         }}>
           BILLED TO
         </p>
-        <div style={{ fontSize: '13px', lineHeight: '1.6', color: '#222222', fontFamily: FONT }}>
-          <p style={{ margin: 0, fontWeight: 600 }}>{client.name}</p>
+        <div style={{ fontSize: '11px', lineHeight: '1.6', color: '#222222', fontFamily: FONT }}>
+          <p style={{ margin: 0, fontWeight: 400 }}>{client.name}</p>
           {clientLines.map((l) => <p key={l} style={{ margin: 0 }}>{l}</p>)}
           <p style={{ margin: 0 }}>{client.email}</p>
           {client.phone && <p style={{ margin: 0 }}>{client.phone}</p>}
@@ -266,7 +266,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       {/* ═══════════════════════════════════════
           TABLE
       ═══════════════════════════════════════ */}
-      <div style={{ marginTop: '24px' }}>
+      <div style={{ marginTop: '18px' }}>
         <table style={{
           width: '100%',
           borderCollapse: 'collapse',
@@ -289,9 +289,9 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
                   [`AMOUNT (${invoice.currency})`, 'right'],
               ] as [string,'left'|'right'][]).map(([label, align]) => (
                 <th key={label} style={{
-                  padding: '10px 8px',
-                  fontSize: '11px',
-                  fontWeight: 600,
+                  padding: '8px 6px',
+                  fontSize: '10px',
+                  fontWeight: 400,
                   textTransform: 'uppercase',
                   letterSpacing: '0.03em',
                   color: '#444444',
@@ -312,34 +312,34 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       {/* ═══════════════════════════════════════
           TOTALS
       ═══════════════════════════════════════ */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-        <div style={{ width: '280px', fontFamily: FONT }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '18px' }}>
+        <div style={{ width: '260px', fontFamily: FONT }}>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '6px' }}>
             <span style={{ color: C_SECONDARY }}>Total excl. VAT</span>
-            <span style={{ fontWeight: 500 }}>{formatCurrency(invoice.subtotal - invoice.discountAmount, invoice.currency)}</span>
+            <span style={{ fontWeight: 400 }}>{formatCurrency(invoice.subtotal - invoice.discountAmount, invoice.currency)}</span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '6px' }}>
             <span style={{ color: C_SECONDARY }}>VAT @ {vatPct}%</span>
-            <span style={{ fontWeight: 500 }}>{formatCurrency(invoice.vatAmount, invoice.currency)}</span>
+            <span style={{ fontWeight: 400 }}>{formatCurrency(invoice.vatAmount, invoice.currency)}</span>
           </div>
 
           <Divider />
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 700, marginBottom: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 400, marginBottom: '6px' }}>
             <span>Total</span>
             <span>{formatCurrency(invoice.total, invoice.currency)}</span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: C_SECONDARY, marginBottom: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: C_SECONDARY, marginBottom: '6px' }}>
             <span>Payments</span>
             <span>{isPaid ? `(${formatCurrency(invoice.total, invoice.currency)})` : '—'}</span>
           </div>
 
           <Divider />
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 600 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 400 }}>
             <span>Amount Due ({invoice.currency})</span>
             <span>{formatCurrency(amountDue, invoice.currency)}</span>
           </div>
@@ -351,10 +351,10 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       ═══════════════════════════════════════ */}
       {invoice.notes && (
         <div style={{ borderTop: `1px solid ${C_BORDER}`, marginTop: '24px', paddingTop: '14px' }}>
-          <p style={{ margin: '0 0 6px 0', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: C_PRIMARY, fontFamily: FONT }}>
+          <p style={{ margin: '0 0 4px 0', fontSize: '10px', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '0.5px', color: C_PRIMARY, fontFamily: FONT }}>
             Notes
           </p>
-          <p style={{ margin: 0, fontSize: '13px', color: '#555555', lineHeight: 1.6, whiteSpace: 'pre-wrap', fontFamily: FONT }}>
+          <p style={{ margin: 0, fontSize: '11px', color: '#555555', lineHeight: 1.6, whiteSpace: 'pre-wrap', fontFamily: FONT }}>
             {invoice.notes}
           </p>
         </div>
@@ -363,14 +363,14 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       {/* ═══════════════════════════════════════
           FOOTER
       ═══════════════════════════════════════ */}
-      <div style={{ marginTop: 'auto', paddingTop: '28px' }}>
+      <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
         <div style={{
           borderTop: `1px solid ${C_BORDER}`,
-          paddingTop: '10px',
+          paddingTop: '8px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-end',
-          fontSize: '11px',
+          fontSize: '9px',
           lineHeight: '1.5',
           color: C_LIGHT,
           fontFamily: 'Arial, Helvetica, sans-serif',
