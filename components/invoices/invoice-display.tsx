@@ -108,7 +108,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
               key={i}
               style={{
                 fontSize: i === 0 ? '14px' : '13px',
-                fontWeight: i === 0 ? 700 : 400,
+                fontWeight: i === 0 ? 600 : 400,
                 color: i === 0 ? C_PRIMARY : '#444444',
                 lineHeight: 1.4,
                 marginTop: i > 0 ? '2px' : 0,
@@ -175,17 +175,17 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
         {/* ── LEFT: logo + seller ── */}
         <div style={{ flex: '1 1 auto', minWidth: 0 }}>
           {/* Logo */}
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{ marginBottom: '12px' }}>
             <img
               src={companyLogo}
               alt={company.name}
-              style={{ height: '36px', maxWidth: '160px', objectFit: 'contain', display: 'block' }}
+              style={{ height: '28px', maxWidth: '132px', objectFit: 'contain', display: 'block' }}
             />
           </div>
 
           {/* Seller address */}
           <div style={{ fontSize: '14px', lineHeight: '1.6', color: '#444444' }}>
-            <p style={{ margin: '0 0 2px 0', fontWeight: 700, color: C_PRIMARY, fontFamily: FONT }}>
+            <p style={{ margin: '0 0 2px 0', fontWeight: 500, color: C_PRIMARY, fontFamily: FONT }}>
               {company.name?.trim() || 'Company'}
             </p>
             {sellerLines.map((line) => (
@@ -193,7 +193,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
             ))}
             {company.vatNumber?.trim() && (
               <p style={{ margin: '6px 0 0 0', fontFamily: FONT }}>
-                VAT Reg #:&nbsp;<strong style={{ color: C_PRIMARY }}>{company.vatNumber}</strong>
+                VAT Reg #:&nbsp;<strong style={{ color: C_PRIMARY, fontWeight: 600 }}>{company.vatNumber}</strong>
               </p>
             )}
             {company.email?.trim() && (
@@ -222,28 +222,28 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
             INVOICE
           </h1>
 
-          <div style={{ fontSize: '14px', lineHeight: '1.8', color: C_PRIMARY, fontFamily: FONT }}>
+          <div style={{ fontSize: '14px', lineHeight: '1.7', color: C_PRIMARY, fontFamily: FONT }}>
             <p style={{ margin: 0 }}>
               <span style={{ color: C_SECONDARY }}>Invoice # </span>
-              <strong>{formatInvoiceNumber(invoice.number)}</strong>
+              <strong style={{ fontWeight: 600 }}>{formatInvoiceNumber(invoice.number)}</strong>
             </p>
             <p style={{ margin: 0 }}>
               <span style={{ color: C_SECONDARY }}>Invoice Issued # </span>
-              <strong>{formatInvoiceDate(invoice.issueDate)}</strong>
+              <strong style={{ fontWeight: 600 }}>{formatInvoiceDate(invoice.issueDate)}</strong>
             </p>
             <p style={{ margin: 0 }}>
               <span style={{ color: C_SECONDARY }}>Invoice Amount # </span>
-              <strong>{formatCurrency(invoice.total, invoice.currency)} ({invoice.currency})</strong>
+              <strong style={{ fontWeight: 600 }}>{formatCurrency(invoice.total, invoice.currency)} ({invoice.currency})</strong>
             </p>
             {invoice.nextBillingDate && (
               <p style={{ margin: 0 }}>
                 <span style={{ color: C_SECONDARY }}>Next Billing Date # </span>
-                <strong>{formatInvoiceDate(invoice.nextBillingDate)}</strong>
+                <strong style={{ fontWeight: 600 }}>{formatInvoiceDate(invoice.nextBillingDate)}</strong>
               </p>
             )}
             <p style={{ margin: 0 }}>
               <span style={{ color: C_SECONDARY }}>Order Nr. # </span>
-              <strong>{orderRef}</strong>
+              <strong style={{ fontWeight: 600 }}>{orderRef}</strong>
             </p>
           </div>
 
@@ -283,7 +283,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           BILLED TO
         </h3>
         <div style={{ fontSize: '14px', lineHeight: '1.6', color: '#444444', fontFamily: FONT }}>
-          <p style={{ margin: 0, fontWeight: 600, color: C_PRIMARY }}>{client.name}</p>
+          <p style={{ margin: 0, fontWeight: 500, color: C_PRIMARY }}>{client.name}</p>
           {clientLines.map((line) => (
             <p key={line} style={{ margin: 0 }}>{line}</p>
           ))}
@@ -295,7 +295,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       {/* ════════════════════════════════════════════════════════════
           TABLE
       ════════════════════════════════════════════════════════════ */}
-      <div style={{ flex: 1 }}>
+      <div style={{ marginBottom: '30px' }}>
         <table
           style={{
             width: '100%',
@@ -315,7 +315,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           </colgroup>
 
           <thead>
-            <tr style={{ backgroundColor: C_TH_BG, borderBottom: `1px solid ${C_BORDER}` }}>
+            <tr style={{ backgroundColor: '#ffffff', borderBottom: `1px solid ${C_BORDER}` }}>
               {(
                 [
                   ['DESCRIPTION',      'left'  ],
@@ -353,7 +353,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       {/* ════════════════════════════════════════════════════════════
           TOTALS  (right-aligned)
       ════════════════════════════════════════════════════════════ */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '30px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0' }}>
         <div style={{ width: '320px', fontFamily: FONT }}>
 
           {/* Total excl. VAT */}
@@ -423,11 +423,9 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
       {/* ════════════════════════════════════════════════════════════
           FOOTER
       ════════════════════════════════════════════════════════════ */}
-      <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
+      <div style={{ marginTop: '30px', paddingTop: '0' }}>
         <div
           style={{
-            borderTop: `1px solid ${C_BORDER}`,
-            paddingTop: '10px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-end',
