@@ -233,8 +233,10 @@ export function CreateWebsiteWizard({ initialType }: CreateWebsiteWizardProps) {
 
   // ─── Filtered data per client ──────────────────────────────────────────────
   const clientDomains = form.clientId ? domains.filter((d: any) => d.clientId === form.clientId) : domains;
-  const clientHosting = form.clientId ? hosting.filter((h: any) => h.clientId === form.clientId) : hosting;
-  const clientVPS = form.clientId ? vps.filter((v: any) => v.clientId === form.clientId) : vps;
+  // Infrastructure (hosting/VPS) is company-wide — show ALL accounts regardless of which client owns them.
+  // The dropdown label shows the owning client so the user can distinguish between accounts.
+  const clientHosting = hosting;
+  const clientVPS = vps;
   const clientEmails = form.clientId ? emails.filter((e: any) => e.clientId === form.clientId) : emails;
 
   const handleDomainSelect = (dId: string) => {
@@ -439,44 +441,72 @@ export function CreateWebsiteWizard({ initialType }: CreateWebsiteWizardProps) {
             <FieldError msg={errors.infra} />
 
             {form.infraType === 'hosting' && (
-              <Select value={form.hostingId} onValueChange={(v) => {
-                set('hostingId', v);
-                const h = hosting.find(x => x.id === v);
-                if (h) {
-                  setForm(prev => ({
-                    ...prev,
-                    planName: h.planName,
-                    price: h.price.toString(),
-                    storage: parseInt(h.resources.storage) || prev.storage,
-                    bandwidth: parseInt(h.resources.bandwidth) || prev.bandwidth
-                  }));
-                }
-              }}>
-                <SelectTrigger><SelectValue placeholder="Select Hosting Account" /></SelectTrigger>
-                <SelectContent>
-                  {clientHosting.map(h => <SelectItem key={h.id} value={h.id}>{h.name} ({h.planName})</SelectItem>)}
-                </SelectContent>
-              </Select>
+              clientHosting.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">
+                  No hosting accounts found. Please add a hosting account first.
+                </p>
+              ) : (
+                <Select value={form.hostingId} onValueChange={(v) => {
+                  set('hostingId', v);
+                  const h = hosting.find(x => x.id === v);
+                  if (h) {
+                    const ownerName = clients.find((c: any) => c.id === h.clientId)?.name;
+                    setForm(prev => ({
+                      ...prev,
+                      planName: h.planName,
+                      price: (h.price ?? 0).toString(),
+                      storage: parseInt(h.resources?.storage) || prev.storage,
+                      bandwidth: parseInt(h.resources?.bandwidth) || prev.bandwidth,
+                    }));
+                    void ownerName;
+                  }
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Select Hosting Account" /></SelectTrigger>
+                  <SelectContent>
+                    {clientHosting.map(h => {
+                      const ownerName = clients.find((c: any) => c.id === h.clientId)?.name;
+                      return (
+                        <SelectItem key={h.id} value={h.id}>
+                          {h.name} ({h.planName}){ownerName ? ` — ${ownerName}` : ''}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              )
             )}
 
             {form.infraType === 'vps' && (
-              <Select value={form.vpsId} onValueChange={(v) => {
-                set('vpsId', v);
-                const srv = vps.find(x => x.id === v);
-                if (srv) {
-                  setForm(prev => ({
-                    ...prev,
-                    planName: srv.planName,
-                    price: srv.price.toString(),
-                    storage: srv.storage || prev.storage,
-                  }));
-                }
-              }}>
-                <SelectTrigger><SelectValue placeholder="Select VPS" /></SelectTrigger>
-                <SelectContent>
-                  {clientVPS.map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.planName})</SelectItem>)}
-                </SelectContent>
-              </Select>
+              clientVPS.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">
+                  No VPS servers found. Please add a VPS first.
+                </p>
+              ) : (
+                <Select value={form.vpsId} onValueChange={(v) => {
+                  set('vpsId', v);
+                  const srv = vps.find(x => x.id === v);
+                  if (srv) {
+                    setForm(prev => ({
+                      ...prev,
+                      planName: srv.planName,
+                      price: (srv.price ?? 0).toString(),
+                      storage: srv.storage || prev.storage,
+                    }));
+                  }
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Select VPS" /></SelectTrigger>
+                  <SelectContent>
+                    {clientVPS.map(v => {
+                      const ownerName = clients.find((c: any) => c.id === v.clientId)?.name;
+                      return (
+                        <SelectItem key={v.id} value={v.id}>
+                          {v.name} ({v.planName}){ownerName ? ` — ${ownerName}` : ''}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              )
             )}
           </div>
         );
