@@ -1,7 +1,6 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { generateNextInvoiceNumber } from '@/lib/billing-utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,8 +19,6 @@ type CreateDomainInput = {
   price: number;
   currency?: string;
   planName?: string;
-  // Invoice fields
-  taxRate?: number;
 };
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -76,16 +73,14 @@ export async function getExpiringDomains(companyId: string, withinDays = 30) {
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 /**
- * Creates a Domain + Subscription + Invoice atomically in a single transaction.
+ * Creates a Domain + Subscription atomically in a single transaction.
  */
 export async function createDomain(input: CreateDomainInput) {
   try {
     const company = await prisma.company.findUnique({
       where: { id: input.companyId },
     });
-    const taxRate = input.taxRate ?? company?.taxRate ?? 0;
     const currency = input.currency ?? company?.currency ?? 'USD';
-    const invoiceNumber = await generateNextInvoiceNumber(input.companyId);
 
     const result = await prisma.$transaction(async (tx) => {
       const startDate = new Date();
@@ -95,7 +90,7 @@ export async function createDomain(input: CreateDomainInput) {
       const subscription = await tx.subscription.create({
         data: {
           serviceType: 'domain',
-          serviceId: 'pending', // updated after domain creation
+          serviceId: 'pending',
           serviceName: `${input.name}${input.tld}`,
           planName: input.planName ?? 'Domain Registration',
           price: input.price,
@@ -133,41 +128,7 @@ export async function createDomain(input: CreateDomainInput) {
         data: { serviceId: domain.id },
       });
 
-      // 4. Calculate invoice totals
-      const basePrice = input.price;
-      const vatAmount = basePrice * (taxRate / 100);
-      const total = basePrice + vatAmount;
-
-      // 5. Create Invoice
-      const invoice = await tx.invoice.create({
-        data: {
-          number: invoiceNumber,
-          issueDate: startDate,
-          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          status: 'pending',
-          paymentStatus: 'unpaid',
-          currency,
-          notes: `Domain registration: ${input.name}${input.tld}`,
-          subtotal: basePrice,
-          discountAmount: 0,
-          vatAmount,
-          total,
-          clientId: input.clientId,
-          companyId: input.companyId,
-          subscriptionId: subscription.id,
-          items: {
-            create: {
-              description: `${input.planName ?? 'Domain Registration'} — ${input.name}${input.tld}`,
-              quantity: 1,
-              price: input.price,
-              discount: 0,
-              vat: taxRate,
-            },
-          },
-        },
-      });
-
-      return { domain, subscription, invoice };
+      return { domain, subscription };
     });
 
     return { success: true as const, data: result };

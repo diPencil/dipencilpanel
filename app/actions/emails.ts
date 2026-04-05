@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { generateNextInvoiceNumber, computeEndDate } from '@/lib/billing-utils';
+import { computeEndDate } from '@/lib/billing-utils';
 
 type CreateEmailInput = {
   name: string;
@@ -50,15 +50,13 @@ export async function getEmailById(id: string, companyId: string) {
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 /**
- * Creates Email + Subscription + Invoice atomically.
+ * Creates Email + Subscription atomically.
  */
 export async function createEmail(input: CreateEmailInput) {
   try {
     const company = await prisma.company.findUnique({ where: { id: input.companyId } });
-    const taxRate = input.taxRate ?? company?.taxRate ?? 0;
     const currency = input.currency ?? company?.currency ?? 'USD';
     const planName = input.planName ?? 'Email Hosting';
-    const invoiceNumber = await generateNextInvoiceNumber(input.companyId);
 
     const result = await prisma.$transaction(async (tx) => {
       const startDate = new Date();
@@ -101,37 +99,7 @@ export async function createEmail(input: CreateEmailInput) {
         data: { serviceId: email.id },
       });
 
-      const vatAmount = input.price * (taxRate / 100);
-
-      const invoice = await tx.invoice.create({
-        data: {
-          number: invoiceNumber,
-          issueDate: startDate,
-          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          status: 'pending',
-          paymentStatus: 'unpaid',
-          currency,
-          notes: `Email: ${planName} — ${input.name}@${input.domain}`,
-          subtotal: input.price,
-          discountAmount: 0,
-          vatAmount,
-          total: input.price + vatAmount,
-          clientId: input.clientId,
-          companyId: input.companyId,
-          subscriptionId: subscription.id,
-          items: {
-            create: {
-              description: `${planName} — ${input.name}@${input.domain}`,
-              quantity: 1,
-              price: input.price,
-              discount: 0,
-              vat: taxRate,
-            },
-          },
-        },
-      });
-
-      return { email, subscription, invoice };
+      return { email, subscription };
     });
 
     return { success: true as const, data: result };
