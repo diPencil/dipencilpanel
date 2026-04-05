@@ -29,6 +29,8 @@ import {
 import { REGISTRAR_NAMESERVERS } from '@/lib/constants';
 import { toast } from 'sonner';
 import { RenewDomainDialog } from '@/components/domains/renew-domain-dialog';
+import { EditDomainDialog } from '@/components/domains/edit-domain-dialog';
+import { EditDomainDNSDialog } from '@/components/domains/edit-domain-dns-dialog';
 import { SendReminderDialog } from '@/components/reminders/send-reminder-dialog';
 import { sendReminderEmail, type ReminderItem } from '@/app/actions/reminder-emails';
 
@@ -55,6 +57,8 @@ export default function DomainsPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [reminderTarget, setReminderTarget] = useState<ReminderItem | null>(null);
   const [isSendingReminder, setIsSendingReminder] = useState(false);
+  const [editTarget, setEditTarget] = useState<string | null>(null);
+  const [dnsTarget, setDnsTarget] = useState<string | null>(null);
 
   const domainRows = useMemo(() => {
     return (domains || []).map((domain) => {
@@ -310,7 +314,7 @@ export default function DomainsPage() {
                             <PopoverContent className="w-80 p-0 overflow-hidden shadow-xl border-border/50" align="center">
                               <div className="bg-primary/5 p-4 border-b border-border/50 flex justify-between items-center">
                                 <h4 className="font-bold text-sm tracking-tight">DNS/Nameservers</h4>
-                                <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase font-bold text-primary hover:bg-primary/10">Edit</Button>
+                                <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase font-bold text-primary hover:bg-primary/10" onClick={() => setDnsTarget(domain.id)}>Edit</Button>
                               </div>
                               <div className="p-4 space-y-3">
                                 {domain.nameservers && domain.nameservers.length > 0 ? (
@@ -354,6 +358,10 @@ export default function DomainsPage() {
                           <Link href={`/dashboard/domains/${domain.id}`}>
                             <Button variant="outline" size="sm">Manage</Button>
                           </Link>
+                          <Button variant="outline" size="sm" onClick={() => setEditTarget(domain.id)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </Button>
                           <Button variant="outline" size="sm" onClick={() => handleRenew(domain)}>
                             <RotateCcw className="mr-2 h-4 w-4" />
                             Renew
@@ -420,7 +428,7 @@ export default function DomainsPage() {
                             <PopoverContent className="w-[calc(100vw-2rem)] mx-4 sm:w-80 p-0 overflow-hidden shadow-xl border-border/50">
                                <div className="bg-primary/5 p-4 border-b border-border/50 flex justify-between items-center">
                                 <h4 className="font-bold text-sm tracking-tight">DNS/Nameservers</h4>
-                                <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase font-bold text-primary hover:bg-primary/10">Edit</Button>
+                                <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase font-bold text-primary hover:bg-primary/10" onClick={() => setDnsTarget(domain.id)}>Edit</Button>
                               </div>
                               <div className="p-4 space-y-3">
                                 {domain.nameservers && domain.nameservers.length > 0 ? (
@@ -454,6 +462,7 @@ export default function DomainsPage() {
                         <Link href={`/dashboard/domains/${domain.id}`}>
                           <Button variant="outline" size="sm">Manage</Button>
                         </Link>
+                        <Button variant="outline" size="sm" onClick={() => setEditTarget(domain.id)}>Edit</Button>
                         <Button variant="outline" size="sm" onClick={() => handleRenew(domain)}>Renew</Button>
                         <Button variant="outline" size="sm" onClick={() => handleSendReminder(domain)}>
                           <Send className="mr-1.5 h-3.5 w-3.5" />
@@ -469,6 +478,20 @@ export default function DomainsPage() {
           )}
         </div>
       </Card>
+
+      {/* Edit domain dialog */}
+      <EditDomainDialog
+        open={!!editTarget}
+        onOpenChange={(open) => { if (!open) setEditTarget(null); }}
+        domainId={editTarget}
+      />
+
+      {/* Edit DNS nameservers dialog */}
+      <EditDomainDNSDialog
+        open={!!dnsTarget}
+        onOpenChange={(open) => { if (!open) setDnsTarget(null); }}
+        domainId={dnsTarget}
+      />
 
       {/* Renew domain dialog */}
       <RenewDomainDialog

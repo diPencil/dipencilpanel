@@ -186,20 +186,41 @@ export async function updateDomain(
     expiryDate: Date | string;
     autoRenew: boolean;
     status: string;
-    nameservers: string;
+    /** Accept either a JSON string or a string array — both are handled. */
+    nameservers: string | string[];
     notes: string;
     reminderDays: number;
+    clientId: string;
   }>,
 ) {
   try {
     const existing = await prisma.domain.findFirst({ where: { id, companyId } });
     if (!existing) return { success: false as const, error: 'Domain not found' };
 
+    // Normalise nameservers: always persist as JSON string
+    let nameservers: string | undefined;
+    if (input.nameservers !== undefined) {
+      nameservers = Array.isArray(input.nameservers)
+        ? JSON.stringify(input.nameservers)
+        : input.nameservers;
+    }
+
+    const { nameservers: _ignored, expiryDate, ...rest } = input as Record<string, unknown>;
+    void _ignored;
+
+    // Only pass known DB fields to prisma (strip any client-side-only fields like planName, price)
+    const safeFields: Record<string, unknown> = {};
+    const allowedKeys = ['name', 'tld', 'registrar', 'autoRenew', 'status', 'notes', 'reminderDays', 'clientId'];
+    for (const key of allowedKeys) {
+      if (key in rest && rest[key] !== undefined) safeFields[key] = rest[key];
+    }
+
     const data = await prisma.domain.update({
       where: { id },
       data: {
-        ...input,
-        expiryDate: input.expiryDate ? new Date(input.expiryDate) : undefined,
+        ...safeFields,
+        expiryDate: expiryDate ? new Date(expiryDate as string) : undefined,
+        ...(nameservers !== undefined ? { nameservers } : {}),
       },
     });
     return { success: true as const, data };
