@@ -216,10 +216,12 @@ export function CreateWebsiteWizard({ initialType }: CreateWebsiteWizardProps) {
         status: form.status,
         linkedDomain: form.domain.trim(),
         companyId: form.selectedCompanyId,
+        // Pass domain DB ID so InvoiceContext can auto-link after real website is created
+        linkedDomainId: form.domainId || undefined,
       });
       
       toast.success(`${form.name} has been created!`, {
-        description: 'Website added to portfolio.',
+        description: form.domainId ? 'Website added and linked to domain.' : 'Website added to portfolio.',
       });
       router.push('/dashboard/websites');
     } catch {

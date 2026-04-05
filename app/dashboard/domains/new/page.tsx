@@ -103,6 +103,15 @@ export default function NewDomainPage() {
   }, [vpsId]);
 
   const filteredWebsites = websites.filter(w => w.clientId === clientId);
+  const websitesByType = useMemo(() => {
+    const types: Record<string, typeof filteredWebsites> = {};
+    filteredWebsites.forEach(w => {
+      const label = w.type === 'wordpress' ? 'WordPress' : w.type === 'node' ? 'Node.js' : w.type === 'php' ? 'PHP / Laravel' : 'Static HTML';
+      if (!types[label]) types[label] = [];
+      types[label].push(w);
+    });
+    return types;
+  }, [filteredWebsites]);
   const filteredVPS = vps.filter(v => v.clientId === clientId);
   const filteredEmails = emails.filter(e => e.clientId === clientId);
 
@@ -363,17 +372,16 @@ export default function NewDomainPage() {
                   <SelectTrigger className="w-full"><SelectValue placeholder="None" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {filteredWebsites.length > 0 && (
-                      <>
-                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Active Websites</div>
-                        {filteredWebsites.map((website) => (
-                          <SelectItem key={website.id} value={website.id}>{website.name}</SelectItem>
-                        ))}
-                      </>
+                    {filteredWebsites.length === 0 && (
+                      <div className="px-3 py-2 text-xs text-muted-foreground">No websites for this client</div>
                     )}
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{filteredWebsites.length > 0 ? 'Available Plans' : 'Hosting Plans'}</div>
-                    {hostingPlans.map((plan) => (
-                      <SelectItem key={`plan-${plan.id}`} value={`plan-${plan.id}`}>{plan.name} - {formatCurrency(plan.price.monthly, 'USD')}/mo</SelectItem>
+                    {Object.entries(websitesByType).map(([type, sites]) => (
+                      <React.Fragment key={type}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{type}</div>
+                        {sites.map((website) => (
+                          <SelectItem key={website.id} value={website.id}>{website.name} — {website.domain}</SelectItem>
+                        ))}
+                      </React.Fragment>
                     ))}
                   </SelectContent>
                 </Select>

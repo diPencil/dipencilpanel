@@ -133,7 +133,7 @@ interface InvoiceContextType {
   markAsPaid: (id: string, method: Payment['method']) => void;
 
   // Website actions
-  addWebsite: (website: Omit<Website, 'id' | 'createdAt' | 'renewalDate' | 'companyId'> & { companyId?: string }) => void;
+  addWebsite: (website: Omit<Website, 'id' | 'createdAt' | 'renewalDate' | 'companyId'> & { companyId?: string; linkedDomainId?: string }) => void;
   updateWebsite: (id: string, website: Partial<Website>) => void;
   deleteWebsite: (id: string) => void;
   getWebsite: (id: string) => Website | undefined;
@@ -1201,7 +1201,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   // ─── Website Actions ───────────────────────────────────────────────────────
 
-  const addWebsite = (data: Omit<Website, 'id' | 'createdAt' | 'renewalDate' | 'companyId'> & { companyId?: string }) => {
+  const addWebsite = (data: Omit<Website, 'id' | 'createdAt' | 'renewalDate' | 'companyId'> & { companyId?: string; linkedDomainId?: string }) => {
     const id = tempId();
     const now = new Date().toISOString();
     const renewalDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -1229,6 +1229,26 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         setSubscriptions((prev) => [...prev, sub]);
         const inv = mapDbInvoice(res.data.invoice as unknown as Record<string, unknown>);
         setInvoices((prev) => [...prev, inv]);
+        // Auto-link domain bidirectionally after real website ID is known
+        if (data.linkedDomainId) {
+          setDomains((prev) => prev.map((d) => {
+            if (d.id !== data.linkedDomainId) return d;
+            const existing = d.linkedServices?.websiteIds ?? [];
+            if (existing.includes(real.id)) return d;
+            return { ...d, linkedServices: { ...d.linkedServices, websiteIds: [...existing, real.id], emailIds: d.linkedServices?.emailIds ?? [], vpsIds: d.linkedServices?.vpsIds ?? [] } };
+          }));
+          updateDomainAction(data.linkedDomainId, tenantId, {
+            linkedServices: {
+              websiteIds: (() => {
+                const d = domains.find(x => x.id === data.linkedDomainId);
+                const existing = d?.linkedServices?.websiteIds ?? [];
+                return existing.includes(real.id) ? existing : [...existing, real.id];
+              })(),
+              emailIds: domains.find(x => x.id === data.linkedDomainId)?.linkedServices?.emailIds ?? [],
+              vpsIds: domains.find(x => x.id === data.linkedDomainId)?.linkedServices?.vpsIds ?? [],
+            },
+          } as Parameters<typeof updateDomainAction>[2]).catch(console.error);
+        }
       } else {
         setWebsites((prev) => prev.filter((w) => w.id !== id));
       }
