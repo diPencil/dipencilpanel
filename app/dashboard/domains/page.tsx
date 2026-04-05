@@ -354,23 +354,22 @@ export default function DomainsPage() {
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1">
                           <Link href={`/dashboard/domains/${domain.id}`}>
-                            <Button variant="outline" size="sm">Manage</Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" title="Manage">
+                              <Monitor className="h-4 w-4" />
+                            </Button>
                           </Link>
-                          <Button variant="outline" size="sm" onClick={() => setEditTarget(domain.id)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                          <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit" onClick={() => setEditTarget(domain.id)}>
+                            <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleRenew(domain)}>
-                            <RotateCcw className="mr-2 h-4 w-4" />
-                            Renew
+                          <Button variant="ghost" size="icon" className="h-8 w-8" title="Renew" onClick={() => handleRenew(domain)}>
+                            <RotateCcw className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleSendReminder(domain)}>
-                            <Send className="mr-2 h-4 w-4" />
-                            Reminder
+                          <Button variant="ghost" size="icon" className="h-8 w-8" title="Send Reminder" onClick={() => handleSendReminder(domain)}>
+                            <Send className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(domain.id)} className="text-destructive hover:text-destructive">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="Delete" onClick={() => handleDelete(domain.id)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
