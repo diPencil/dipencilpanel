@@ -138,7 +138,7 @@ export default function DomainTransferPage() {
     toast({
       title: status === 'completed' ? 'Transfer completed' : 'Transfer added',
       description: status === 'completed'
-        ? `${normalizedName}${domainRecord.tld} was added to the domain portfolio and billing.`
+        ? `${normalizedName}${domainRecord.tld} was added to the domain portfolio.`
         : `${normalizedName}${domainRecord.tld} is now tracked as a transfer request.`,
     });
 

@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { generateNextInvoiceNumber, computeEndDate } from '@/lib/billing-utils';
+import { computeEndDate } from '@/lib/billing-utils';
 
 type CreateTransferInput = {
   domainName: string;
@@ -113,9 +113,10 @@ export async function deleteTransfer(id: string, companyId: string) {
  * Completes a domain transfer:
  * 1. Marks transfer as "completed"
  * 2. Creates a Domain record
- * 3. Creates a Subscription
- * 4. Generates an Invoice
  * — All in a single transaction.
+ *
+ * NOTE: This action intentionally does NOT create subscriptions or invoices.
+ * Subscription/invoice records are created manually from Billing screens.
  */
 export async function completeDomainTransfer(
   transferId: string,
@@ -133,14 +134,11 @@ export async function completeDomainTransfer(
       return { success: false as const, error: 'Transfer is already completed' };
     }
 
-    const company = await prisma.company.findUnique({ where: { id: companyId } });
-    const taxRate = company?.taxRate ?? 0;
-    const currency = company?.currency ?? 'USD';
     const price = transfer.price ?? 0;
-    const invoiceNumber = await generateNextInvoiceNumber(companyId);
 
     const expiryDate = transfer.expiryDate ?? computeEndDate(new Date(), 'yearly');
-    const vatAmount = price * (taxRate / 100);
+    const company = await prisma.company.findUnique({ where: { id: companyId } });
+    const currency = company?.currency ?? 'USD';
 
     const result = await prisma.$transaction(async (tx) => {
       // 1. Mark transfer as completed
@@ -149,26 +147,7 @@ export async function completeDomainTransfer(
         data: { status: 'completed' },
       });
 
-      // 2. Create Subscription
-      const subscription = await tx.subscription.create({
-        data: {
-          serviceType: 'domain',
-          serviceId: 'pending',
-          serviceName: `${transfer.domainName}${transfer.tld}`,
-          planName: 'Domain Transfer',
-          price,
-          currency,
-          billingCycle: 'yearly',
-          startDate: new Date(),
-          endDate: expiryDate,
-          autoRenew: transfer.autoRenew,
-          status: 'active',
-          clientId: transfer.clientId,
-          companyId,
-        },
-      });
-
-      // 3. Create Domain
+      // 2. Create Domain
       const domain = await tx.domain.create({
         data: {
           name: transfer.domainName,
@@ -178,48 +157,15 @@ export async function completeDomainTransfer(
           autoRenew: transfer.autoRenew,
           nameservers,
           notes: `Transferred from ${transfer.previousProvider}`,
-          clientId: transfer.clientId,
-          companyId,
-          subscriptionId: subscription.id,
-        },
-      });
-
-      // 4. Update subscription serviceId
-      await tx.subscription.update({
-        where: { id: subscription.id },
-        data: { serviceId: domain.id },
-      });
-
-      // 5. Create Invoice
-      const invoice = await tx.invoice.create({
-        data: {
-          number: invoiceNumber,
-          issueDate: new Date(),
-          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          status: 'pending',
-          paymentStatus: 'unpaid',
+          price,
           currency,
-          notes: `Domain transfer: ${transfer.domainName}${transfer.tld} from ${transfer.previousProvider}`,
-          subtotal: price,
-          discountAmount: 0,
-          vatAmount,
-          total: price + vatAmount,
+          billingCycle: 'yearly',
           clientId: transfer.clientId,
           companyId,
-          subscriptionId: subscription.id,
-          items: {
-            create: {
-              description: `Domain Transfer — ${transfer.domainName}${transfer.tld}`,
-              quantity: 1,
-              price,
-              discount: 0,
-              vat: taxRate,
-            },
-          },
         },
       });
 
-      return { domain, subscription, invoice };
+      return { domain };
     });
 
     return { success: true as const, data: result };

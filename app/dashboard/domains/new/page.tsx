@@ -229,7 +229,7 @@ export default function NewDomainPage() {
 
       toast({
         title: 'Domain created',
-        description: `${created.name}${created.tld} was linked to billing and client records.`,
+        description: `${created.name}${created.tld} was added to client records.`,
       });
       router.push('/dashboard/domains');
     } catch (err) {
@@ -249,7 +249,7 @@ export default function NewDomainPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Create a Domain</h1>
-          <p className="text-muted-foreground mt-1">Create a domain, attach it to a client, and generate the billing records automatically.</p>
+          <p className="text-muted-foreground mt-1">Create a domain and attach it to a client. Billing and subscriptions are added manually.</p>
         </div>
       </div>
 
