@@ -343,6 +343,7 @@ export default function CreateSubscriptionPage() {
         autoRenew: formData.autoRenew,
         status: formData.status,
         notes: formData.notes.trim() || undefined,
+        domainId: formData.domainId || undefined,
       });
 
       toast({

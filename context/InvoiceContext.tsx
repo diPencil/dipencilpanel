@@ -398,6 +398,7 @@ function mapDbSubscription(s: Record<string, unknown>): Subscription {
     autoRenew: s.autoRenew as boolean,
     status: (s.status as Subscription['status']) ?? 'active',
     notes: (s.notes as string) ?? undefined,
+    domainId: (s.domainId as string) ?? undefined,
   };
 }
 
@@ -1379,6 +1380,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       endDate: data.expiryDate,
       autoRenew: data.autoRenew,
       notes: data.notes,
+      domainId: data.domainId,
       companyId: tenantId,
     }).then((res) => {
       if (res.success && res.data) {

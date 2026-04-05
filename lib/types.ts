@@ -341,6 +341,8 @@ export interface Subscription {
   invoiceId?: string; // Last generated invoice
   notes?: string;
   companyId: string;
+  /** Optional domain linked to this subscription (for manual subscriptions) */
+  domainId?: string;
 }
 
 

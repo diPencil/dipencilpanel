@@ -388,6 +388,9 @@ model Subscription {
   status       String   @default("active") // "active" | "cancelled" | "expired" | "suspended"
   notes        String?
 
+  /// Optional linked domain ID (for manually created subscriptions referencing a domain)
+  domainId     String?
+
   clientId String
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 

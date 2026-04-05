@@ -48,7 +48,7 @@ import { RenewSubscriptionDialog } from '@/components/subscriptions/renew-subscr
 
 export default function SubscriptionsPage() {
   const router = useRouter();
-  const { subscriptions, clients, company, getClient, cancelSubscription, updateSubscription, renewSubscription, deleteSubscription } = useInvoiceData();
+  const { subscriptions, clients, company, domains = [], getClient, cancelSubscription, updateSubscription, renewSubscription, deleteSubscription } = useInvoiceData();
   const [searchTerm, setSearchTerm] = useState('');
   const [invoiceConfirmTarget, setInvoiceConfirmTarget] = useState<Subscription | null>(null);
   const [renewScheduleTarget, setRenewScheduleTarget] = useState<Subscription | null>(null);
@@ -185,6 +185,14 @@ export default function SubscriptionsPage() {
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-1">
                           <span className="text-sm font-medium">{sub.serviceName}</span>
+                          {(() => {
+                            const linked = sub.domainId
+                              ? domains.find((d) => d.id === sub.domainId)
+                              : domains.find((d) => d.subscriptionId === sub.id);
+                            return linked ? (
+                              <span className="text-xs text-muted-foreground">{linked.name}{linked.tld}</span>
+                            ) : null;
+                          })()}
                           {getServiceTypeBadge(sub.serviceType)}
                         </div>
                       </td>

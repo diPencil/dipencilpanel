@@ -17,6 +17,7 @@ type CreateSubscriptionInput = {
   endDate: Date | string;
   autoRenew?: boolean;
   notes?: string;
+  domainId?: string;
   clientId: string;
   companyId: string;
 };
@@ -128,6 +129,7 @@ export async function createSubscription(input: CreateSubscriptionInput) {
         endDate: new Date(input.endDate),
         autoRenew: input.autoRenew ?? true,
         notes: input.notes,
+        domainId: input.domainId,
         status: 'active',
         clientId: input.clientId,
         companyId: input.companyId,
@@ -225,6 +227,22 @@ export async function renewSubscription(id: string, companyId: string) {
     });
     if (!subscription) return { success: false as const, error: 'Subscription not found' };
 
+    // Look up linked domain name for the description
+    let linkedDomainName: string | null = null;
+    if (subscription.domainId) {
+      const dom = await prisma.domain.findFirst({ where: { id: subscription.domainId }, select: { name: true, tld: true } });
+      if (dom) linkedDomainName = `${dom.name}${dom.tld}`;
+    } else {
+      const dom = await prisma.domain.findFirst({ where: { subscriptionId: id }, select: { name: true, tld: true } });
+      if (dom) linkedDomainName = `${dom.name}${dom.tld}`;
+    }
+
+    function buildDescription(prefix: string) {
+      const base = subscriptionInvoiceLineName(subscription!);
+      const label = prefix ? `${prefix} ${base}` : base;
+      return linkedDomainName ? `${label}\n${linkedDomainName}` : label;
+    }
+
     const company = await prisma.company.findUnique({ where: { id: companyId } });
     const taxRate = company?.taxRate ?? 0;
     const invoiceNumber = await generateNextInvoiceNumber(companyId);
@@ -274,8 +292,8 @@ export async function renewSubscription(id: string, companyId: string) {
           items: {
             create: {
               description: isFirstInvoice
-                ? subscriptionInvoiceLineName(subscription)
-                : `Renewal ${subscriptionInvoiceLineName(subscription)}`,
+                ? buildDescription('')
+                : buildDescription('Renewal'),
               quantity: 1,
               price: subscription.price,
               discount: 0,
