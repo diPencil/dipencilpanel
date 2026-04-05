@@ -168,6 +168,7 @@ export async function createMobileApp(input: CreateMobileAppInput) {
     });
 
     return { success: true as const, data: { app } };
+  } catch (error) {
     return { success: false as const, error: String(error) };
   }
 }
