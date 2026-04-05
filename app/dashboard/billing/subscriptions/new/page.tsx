@@ -406,12 +406,13 @@ export default function CreateSubscriptionPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="rounded-lg border border-border bg-card p-6 space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          {/* Client */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5 items-start">
+
+          {/* Row 1 — Client | Service Type */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Client</label>
-            <Select 
-              value={formData.clientId} 
+            <Select
+              value={formData.clientId}
               onValueChange={(value) => updateField('clientId', value)}
               key={`client-${formData.clientId}`}
             >
@@ -429,7 +430,6 @@ export default function CreateSubscriptionPage() {
             {errors.clientId && <p className="text-xs text-red-600 mt-1">{errors.clientId}</p>}
           </div>
 
-          {/* Service Type */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Service Type</label>
             <Select
@@ -442,11 +442,7 @@ export default function CreateSubscriptionPage() {
                   serviceId: generateSubscriptionServiceId(t),
                 }));
                 if (errors.serviceType) {
-                  setErrors((prev) => {
-                    const next = { ...prev };
-                    delete next.serviceType;
-                    return next;
-                  });
+                  setErrors((prev) => { const next = { ...prev }; delete next.serviceType; return next; });
                 }
               }}
               key={`type-${formData.serviceType}`}
@@ -464,9 +460,16 @@ export default function CreateSubscriptionPage() {
             </Select>
           </div>
 
-          {/* Service Name */}
+          {/* Row 2 — Service Name (Add) | Service ID */}
           <div>
-            <label className="block text-sm font-medium mb-1.5">Service Name</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-sm font-medium">Service Name</label>
+              {!showAddServiceName && (
+                <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1" onClick={() => setShowAddServiceName(true)}>
+                  <Plus className="h-3 w-3" /> Add
+                </Button>
+              )}
+            </div>
             <Select
               value={formData.serviceName || ''}
               onValueChange={(value) => updateField('serviceName', value)}
@@ -483,10 +486,27 @@ export default function CreateSubscriptionPage() {
                 ))}
               </SelectContent>
             </Select>
+            {showAddServiceName && (
+              <div className="mt-2 flex gap-2">
+                <Input
+                  value={newServiceNameInput}
+                  onChange={(e) => setNewServiceNameInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); handleAddCustomServiceName(); }
+                    if (e.key === 'Escape') { setShowAddServiceName(false); setNewServiceNameInput(''); }
+                  }}
+                  placeholder="Enter service name..."
+                  className="flex-1 h-8 text-sm"
+                  autoFocus
+                />
+                <Button type="button" size="sm" onClick={handleAddCustomServiceName} disabled={!newServiceNameInput.trim()}>Save</Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => { setShowAddServiceName(false); setNewServiceNameInput(''); }}>Cancel</Button>
+              </div>
+            )}
             {customServiceNames.length > 0 && (
               <div className="mt-2 rounded-md border border-border divide-y divide-border">
                 {customServiceNames.map((name, index) => (
-                  <div key={index} className="flex items-center gap-2 px-3 py-2">
+                  <div key={index} className="flex items-center gap-2 px-3 py-1.5">
                     {editingServiceName?.index === index ? (
                       <>
                         <Input
@@ -499,53 +519,35 @@ export default function CreateSubscriptionPage() {
                           className="h-7 text-sm flex-1"
                           autoFocus
                         />
-                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleSaveEditServiceName}>
-                          <Check className="h-3.5 w-3.5 text-green-600" />
-                        </Button>
-                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingServiceName(null)}>
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
+                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleSaveEditServiceName}><Check className="h-3.5 w-3.5 text-green-600" /></Button>
+                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingServiceName(null)}><X className="h-3.5 w-3.5" /></Button>
                       </>
                     ) : (
                       <>
-                        <span className="text-sm flex-1">{name}</span>
-                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingServiceName({ index, value: name })}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteCustomServiceName(index)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <span className="text-sm flex-1 truncate">{name}</span>
+                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingServiceName({ index, value: name })}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteCustomServiceName(index)}><Trash2 className="h-3.5 w-3.5" /></Button>
                       </>
                     )}
                   </div>
                 ))}
               </div>
             )}
-            {showAddServiceName ? (
-              <div className="mt-2 flex gap-2">
-                <Input
-                  value={newServiceNameInput}
-                  onChange={(e) => setNewServiceNameInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') { e.preventDefault(); handleAddCustomServiceName(); }
-                    if (e.key === 'Escape') { setShowAddServiceName(false); setNewServiceNameInput(''); }
-                  }}
-                  placeholder="Enter service name..."
-                  className="flex-1"
-                  autoFocus
-                />
-                <Button type="button" onClick={handleAddCustomServiceName} disabled={!newServiceNameInput.trim()}>Save</Button>
-                <Button type="button" variant="outline" onClick={() => { setShowAddServiceName(false); setNewServiceNameInput(''); }}>Cancel</Button>
-              </div>
-            ) : (
-              <Button type="button" variant="outline" size="sm" className="mt-2 text-xs" onClick={() => setShowAddServiceName(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add custom service name
-              </Button>
-            )}
             {errors.serviceName && <p className="text-xs text-red-600 mt-1">{errors.serviceName}</p>}
           </div>
 
-          {/* Domain */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Service ID</label>
+            <Input
+              value={formData.serviceId}
+              onChange={(event) => updateField('serviceId', event.target.value)}
+              placeholder="e.g. D-17750697"
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Auto-generated from service type. Change type to regenerate.</p>
+          </div>
+
+          {/* Row 3 — Domain | Plan Name (Add) */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Domain (optional)</label>
             <Select
@@ -566,23 +568,15 @@ export default function CreateSubscriptionPage() {
             </Select>
           </div>
 
-          {/* Service ID */}
           <div>
-            <label className="block text-sm font-medium mb-1.5">Service ID</label>
-            <Input
-              value={formData.serviceId}
-              onChange={(event) => updateField('serviceId', event.target.value)}
-              placeholder="e.g. D-17750697"
-              className="font-mono text-sm"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Auto-generated from service type. Change type to regenerate.
-            </p>
-          </div>
-
-          {/* Plan Name */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Plan Name</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-sm font-medium">Plan Name</label>
+              {!showAddPlan && (
+                <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1" onClick={() => setShowAddPlan(true)}>
+                  <Plus className="h-3 w-3" /> Add
+                </Button>
+              )}
+            </div>
             <Select
               value={formData.planName || ''}
               onValueChange={(value) => updateField('planName', value)}
@@ -599,10 +593,27 @@ export default function CreateSubscriptionPage() {
                 ))}
               </SelectContent>
             </Select>
+            {showAddPlan && (
+              <div className="mt-2 flex gap-2">
+                <Input
+                  value={newPlanInput}
+                  onChange={(e) => setNewPlanInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); handleAddCustomPlan(); }
+                    if (e.key === 'Escape') { setShowAddPlan(false); setNewPlanInput(''); }
+                  }}
+                  placeholder="Enter plan name..."
+                  className="flex-1 h-8 text-sm"
+                  autoFocus
+                />
+                <Button type="button" size="sm" onClick={handleAddCustomPlan} disabled={!newPlanInput.trim()}>Save</Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => { setShowAddPlan(false); setNewPlanInput(''); }}>Cancel</Button>
+              </div>
+            )}
             {customPlans.length > 0 && (
               <div className="mt-2 rounded-md border border-border divide-y divide-border">
                 {customPlans.map((plan, index) => (
-                  <div key={index} className="flex items-center gap-2 px-3 py-2">
+                  <div key={index} className="flex items-center gap-2 px-3 py-1.5">
                     {editingPlan?.index === index ? (
                       <>
                         <Input
@@ -615,53 +626,70 @@ export default function CreateSubscriptionPage() {
                           className="h-7 text-sm flex-1"
                           autoFocus
                         />
-                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleSaveEditPlan}>
-                          <Check className="h-3.5 w-3.5 text-green-600" />
-                        </Button>
-                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingPlan(null)}>
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
+                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleSaveEditPlan}><Check className="h-3.5 w-3.5 text-green-600" /></Button>
+                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingPlan(null)}><X className="h-3.5 w-3.5" /></Button>
                       </>
                     ) : (
                       <>
-                        <span className="text-sm flex-1">{plan}</span>
-                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingPlan({ index, value: plan })}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteCustomPlan(index)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <span className="text-sm flex-1 truncate">{plan}</span>
+                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingPlan({ index, value: plan })}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteCustomPlan(index)}><Trash2 className="h-3.5 w-3.5" /></Button>
                       </>
                     )}
                   </div>
                 ))}
               </div>
             )}
-            {showAddPlan ? (
-              <div className="mt-2 flex gap-2">
-                <Input
-                  value={newPlanInput}
-                  onChange={(e) => setNewPlanInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') { e.preventDefault(); handleAddCustomPlan(); }
-                    if (e.key === 'Escape') { setShowAddPlan(false); setNewPlanInput(''); }
-                  }}
-                  placeholder="Enter plan name..."
-                  className="flex-1"
-                  autoFocus
-                />
-                <Button type="button" onClick={handleAddCustomPlan} disabled={!newPlanInput.trim()}>Save</Button>
-                <Button type="button" variant="outline" onClick={() => { setShowAddPlan(false); setNewPlanInput(''); }}>Cancel</Button>
-              </div>
-            ) : (
-              <Button type="button" variant="outline" size="sm" className="mt-2 text-xs" onClick={() => setShowAddPlan(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Create custom plan
-              </Button>
-            )}
             {errors.planName && <p className="text-xs text-red-600 mt-1">{errors.planName}</p>}
           </div>
 
-          {/* Billing Cycle */}
+          {/* Row 4 — Price | Provider Price */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Price (client)</label>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={formData.price}
+              onChange={(event) => updateField('price', event.target.value)}
+              placeholder="0.00"
+            />
+            {errors.price && <p className="text-xs text-red-600 mt-1">{errors.price}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Provider price (internal)</label>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={formData.providerPrice}
+              onChange={(event) => updateField('providerPrice', event.target.value)}
+              placeholder="Your cost from vendor (optional)"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Not shown on invoices — used only for margin in Financial Summary.</p>
+            {errors.providerPrice && <p className="text-xs text-red-600 mt-1">{errors.providerPrice}</p>}
+          </div>
+
+          {/* Row 5 — Currency | Billing Cycle */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Currency</label>
+            <Select
+              value={formData.currency}
+              onValueChange={handleCurrencyChange}
+              key={`currency-${formData.currency}`}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((curr) => (
+                  <SelectItem key={curr} value={curr}>{curr}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-1.5">Billing Cycle</label>
             <Select
@@ -681,59 +709,7 @@ export default function CreateSubscriptionPage() {
             </Select>
           </div>
 
-          {/* Price */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Price (client)</label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.price}
-              onChange={(event) => updateField('price', event.target.value)}
-              placeholder="0.00"
-            />
-            {errors.price && <p className="text-xs text-red-600 mt-1">{errors.price}</p>}
-          </div>
-
-          {/* Provider Price */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Provider price (internal)</label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.providerPrice}
-              onChange={(event) => updateField('providerPrice', event.target.value)}
-              placeholder="Your cost from vendor (optional)"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Not shown on invoices — used only for margin in Financial Summary.
-            </p>
-            {errors.providerPrice && <p className="text-xs text-red-600 mt-1">{errors.providerPrice}</p>}
-          </div>
-
-          {/* Currency */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Currency</label>
-            <Select
-              value={formData.currency}
-              onValueChange={handleCurrencyChange}
-              key={`currency-${formData.currency}`}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map((curr) => (
-                  <SelectItem key={curr} value={curr}>
-                    {curr}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Start Date */}
+          {/* Row 6 — Start Date | Expiry Date */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Start Date</label>
             <Input
@@ -744,7 +720,6 @@ export default function CreateSubscriptionPage() {
             {errors.startDate && <p className="text-xs text-red-600 mt-1">{errors.startDate}</p>}
           </div>
 
-          {/* Expiry Date */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Expiry Date</label>
             <Input
@@ -755,7 +730,7 @@ export default function CreateSubscriptionPage() {
             {errors.expiryDate && <p className="text-xs text-red-600 mt-1">{errors.expiryDate}</p>}
           </div>
 
-          {/* Status */}
+          {/* Row 7 — Status | Auto-renew */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Status</label>
             <Select
@@ -775,8 +750,7 @@ export default function CreateSubscriptionPage() {
             </Select>
           </div>
 
-          {/* Auto-renew */}
-          <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5 self-end">
             <div>
               <p className="text-sm font-medium">Auto-renew</p>
               <p className="text-xs text-muted-foreground">Automatically renew this subscription</p>
