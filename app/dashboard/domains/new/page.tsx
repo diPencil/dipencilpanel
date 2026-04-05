@@ -157,46 +157,57 @@ export default function NewDomainPage() {
 
     const expiry = new Date(expiryDate);
 
-    const created = addDomain({
-      name: domainName.trim().toLowerCase().replace(/\s+/g, '-'),
-      tld: tld.startsWith('.') ? tld.trim() : `.${tld.trim()}`,
-      clientId,
-      companyId: currentCompany.id,
-      registrar,
-      expiryDate: expiry.toISOString(),
-      autoRenew,
-    reminderDays: reminderDays ?? null,
-      price: Number(price),
-      billingCycle: 'yearly',
-      status: 'active',
-      planName: selectedHost.label,
-      host: {
-        type: selectedHost.type as any,
-        name: selectedHost.label,
-        planName: selectedHost.label,
-        price: selectedHost.price,
-      },
-      linkedServices: {
-        websiteIds: websiteId ? [websiteId] : [],
-        emailIds: emailId ? [emailId] : [],
-        vpsIds: vpsId ? [vpsId] : [],
-      },
-      dnsRecords: [
-        { id: 'dns-a', type: 'A', host: '@', value: '76.76.21.21', ttl: '3600' },
-        { id: 'dns-cname', type: 'CNAME', host: 'www', value: fullDomain, ttl: '3600' },
-        { id: 'dns-mx', type: 'MX', host: '@', value: `mail.${fullDomain}`, ttl: '3600' },
-        { id: 'dns-txt', type: 'TXT', host: '@', value: 'v=spf1 include:_spf.google.com ~all', ttl: '3600' },
-      ],
-      nameservers: ['ns1.hostinger.com', 'ns2.hostinger.com'],
-      nextInvoiceDate: expiry.toISOString(),
-      notes: selectedClient ? `Registered for ${selectedClient.name}` : undefined,
-    });
+    try {
+      const companyId = currentCompany?.id || selectedCompanyId;
+      if (!companyId) {
+        toast({ title: 'Error', description: 'No company found. Please refresh and try again.', variant: 'destructive' });
+        return;
+      }
 
-    toast({
-      title: 'Domain created',
-      description: `${created.name}${created.tld} was linked to billing and client records.`,
-    });
-    router.push('/dashboard/domains');
+      const created = addDomain({
+        name: domainName.trim().toLowerCase().replace(/\s+/g, '-'),
+        tld: tld.startsWith('.') ? tld.trim() : `.${tld.trim()}`,
+        clientId,
+        companyId,
+        registrar,
+        expiryDate: expiry.toISOString(),
+        autoRenew,
+        reminderDays: reminderDays ?? null,
+        price: Number(price),
+        billingCycle: 'yearly',
+        status: 'active',
+        planName: selectedHost.label,
+        host: {
+          type: selectedHost.type as any,
+          name: selectedHost.label,
+          planName: selectedHost.label,
+          price: selectedHost.price,
+        },
+        linkedServices: {
+          websiteIds: websiteId ? [websiteId] : [],
+          emailIds: emailId ? [emailId] : [],
+          vpsIds: vpsId ? [vpsId] : [],
+        },
+        dnsRecords: [
+          { id: 'dns-a', type: 'A', host: '@', value: '76.76.21.21', ttl: '3600' },
+          { id: 'dns-cname', type: 'CNAME', host: 'www', value: fullDomain, ttl: '3600' },
+          { id: 'dns-mx', type: 'MX', host: '@', value: `mail.${fullDomain}`, ttl: '3600' },
+          { id: 'dns-txt', type: 'TXT', host: '@', value: 'v=spf1 include:_spf.google.com ~all', ttl: '3600' },
+        ],
+        nameservers: ['ns1.hostinger.com', 'ns2.hostinger.com'],
+        nextInvoiceDate: expiry.toISOString(),
+        notes: selectedClient ? `Registered for ${selectedClient.name}` : undefined,
+      });
+
+      toast({
+        title: 'Domain created',
+        description: `${created.name}${created.tld} was linked to billing and client records.`,
+      });
+      router.push('/dashboard/domains');
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to create domain. Please try again.', variant: 'destructive' });
+      console.error('[CreateDomain]', err);
+    }
   };
 
   return (
@@ -272,6 +283,22 @@ export default function NewDomainPage() {
                     {allCompanies.map((com) => (
                       <SelectItem key={com.id} value={com.id}>{com.name}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Select Client</label>
+                <Select value={clientId} onValueChange={setClientId}>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Choose a client" /></SelectTrigger>
+                  <SelectContent>
+                    {filteredClients.length === 0 ? (
+                      <div className="px-3 py-2 text-xs text-muted-foreground">No clients for this company</div>
+                    ) : (
+                      filteredClients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
