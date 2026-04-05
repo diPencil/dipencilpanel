@@ -51,6 +51,13 @@ export default function NewDomainPage() {
   const [customTld, setCustomTld] = useState('');
   
   const [selectedCompanyId, setSelectedCompanyId] = useState(currentCompany?.id || allCompanies[0]?.id || '');
+
+  // Sync selectedCompanyId when context finishes loading (currentCompany arrives after first render)
+  useEffect(() => {
+    if (!selectedCompanyId && currentCompany?.id) {
+      setSelectedCompanyId(currentCompany.id);
+    }
+  }, [currentCompany?.id, selectedCompanyId]);
   const [clientId, setClientId] = useState('');
   const [hostId, setHostId] = useState(HOST_OPTIONS[0].id);
   const [expiryDate, setExpiryDate] = useState(formatInputDate(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)));
@@ -82,7 +89,11 @@ export default function NewDomainPage() {
     return clients.filter(c => c.companyId === selectedCompanyId);
   }, [clients, selectedCompanyId]);
 
-  // Sync clientId if not set
+  // Sync clientId if not set or if company changed (reset to avoid stale client from another company)
+  useEffect(() => {
+    setClientId('');
+  }, [selectedCompanyId]);
+
   useEffect(() => {
     if (!clientId && filteredClients.length > 0) {
       setClientId(filteredClients[0].id);
