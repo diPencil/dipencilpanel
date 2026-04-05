@@ -25,6 +25,7 @@ export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
     phone: client?.phone || '',
     address: client?.address || '',
     companyName: client?.companyName || '',
+    companyId: client?.companyId || '',
     groupId: initialGroupId
   });
 
@@ -70,6 +71,7 @@ export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
       phone: '',
       address: '',
       companyName: '',
+      companyId: '',
       groupId: 'none'
     });
   };
@@ -134,9 +136,14 @@ export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
             Company
           </label>
           <Select
-            value={formData.companyName || 'none'}
+            value={formData.companyId || 'none'}
             onValueChange={(value) => {
-              setFormData((prev) => ({ ...prev, companyName: value === 'none' ? '' : value }));
+              const selected = allCompanies.find(co => co.id === value);
+              setFormData((prev) => ({
+                ...prev,
+                companyId: value === 'none' ? '' : value,
+                companyName: selected ? selected.name : (value === 'none' ? '' : prev.companyName),
+              }));
               if (errors.companyName) setErrors((prev) => ({ ...prev, companyName: undefined }));
             }}
             disabled={isLoading}
@@ -149,7 +156,7 @@ export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
                 <span className="text-muted-foreground">No company</span>
               </SelectItem>
               {allCompanies.map((co) => (
-                <SelectItem key={co.id} value={co.name}>
+                <SelectItem key={co.id} value={co.id}>
                   <div className="flex items-center gap-2">
                     <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <span>{co.name}</span>

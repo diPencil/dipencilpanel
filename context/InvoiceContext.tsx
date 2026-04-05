@@ -985,9 +985,10 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
   const addClient = (data: Omit<Client, 'id' | 'createdAt'> & { groupId?: string }) => {
     if (!requireTenantId()) return;
     const { groupId, ...clientData } = data as Client & { groupId?: string };
-    const temp: Client = { ...clientData, id: tempId(), createdAt: new Date().toISOString(), companyId: tenantId };
+    const effectiveCompanyId = clientData.companyId || tenantId;
+    const temp: Client = { ...clientData, id: tempId(), createdAt: new Date().toISOString(), companyId: effectiveCompanyId };
     setClients((prev) => [...prev, temp]);
-    createClient({ ...clientData, companyId: tenantId }).then((res) => {
+    createClient({ ...clientData, companyId: effectiveCompanyId }).then((res) => {
       if (res.success && res.data) {
         const d = res.data;
         const real: Client = { id: d.id, name: d.name, email: d.email, phone: d.phone ?? '', address: d.address ?? '', companyName: d.companyName ?? '', companyId: d.companyId, createdAt: d.createdAt.toString() };
