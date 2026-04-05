@@ -54,7 +54,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your company information and invoice defaults</p>
+        <p className="text-muted-foreground">System configuration — invoice sender info, logos, currency, and tax defaults. This is separate from the client companies list.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

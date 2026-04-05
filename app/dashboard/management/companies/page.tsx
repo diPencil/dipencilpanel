@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function CompaniesPage() {
-  const { allCompanies, addTenantCompany, updateTenantCompany, deleteTenantCompany, users } = useInvoiceData();
+  const { allCompanies, addTenantCompany, updateTenantCompany, deleteTenantCompany, users, currentCompany } = useInvoiceData();
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
@@ -31,7 +31,10 @@ export default function CompaniesPage() {
     status: 'active' as 'active' | 'suspended',
   });
 
-  const filtered = allCompanies.filter(c =>
+  // Exclude the system tenant company — it is managed from Settings, not here
+  const clientCompanies = allCompanies.filter(c => c.id !== currentCompany?.id);
+
+  const filtered = clientCompanies.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     (c.ownerName?.toLowerCase() || '').includes(search.toLowerCase()) ||
     c.email.toLowerCase().includes(search.toLowerCase())
@@ -160,9 +163,9 @@ export default function CompaniesPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: 'Total Companies', value: allCompanies.length, colorClass: 'text-foreground' },
-          { label: 'Active', value: allCompanies.filter(c => c.status === 'active').length, colorClass: 'text-emerald-500' },
-          { label: 'Suspended', value: allCompanies.filter(c => c.status === 'suspended').length, colorClass: 'text-red-500' },
+          { label: 'Total Companies', value: clientCompanies.length, colorClass: 'text-foreground' },
+          { label: 'Active', value: clientCompanies.filter(c => c.status === 'active').length, colorClass: 'text-emerald-500' },
+          { label: 'Suspended', value: clientCompanies.filter(c => c.status === 'suspended').length, colorClass: 'text-red-500' },
         ].map(stat => (
           <Card key={stat.label} className="p-6 border-border/50 shadow-sm bg-card">
             <div className={`text-4xl font-bold ${stat.colorClass}`}>{stat.value}</div>
