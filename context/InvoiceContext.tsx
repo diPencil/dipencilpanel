@@ -276,7 +276,7 @@ function mapDbDomain(d: Record<string, unknown>): Domain {
     reminderDays: (d.reminderDays as number | undefined) ?? undefined,
     price: (d.price as number) ?? 0,
     billingCycle: ((d.billingCycle as Domain['billingCycle']) ?? 'yearly'),
-    planName: ((d.planName as string | undefined) ?? ''),,
+    planName: ((d.planName as string | undefined) ?? ''),
     clientId: d.clientId as string,
     companyId: d.companyId as string,
     subscriptionId: d.subscriptionId as string | undefined,
