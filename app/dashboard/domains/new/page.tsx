@@ -86,8 +86,14 @@ export default function NewDomainPage() {
   const selectedHost = combinedHostingPlans.find((h) => h.id === hostId) ?? combinedHostingPlans[0];
 
   const filteredClients = useMemo(() => {
-    return clients.filter(c => c.companyId === selectedCompanyId);
-  }, [clients, selectedCompanyId]);
+    if (!selectedCompanyId) return clients;
+    const selectedCompany = allCompanies.find(c => c.id === selectedCompanyId);
+    if (!selectedCompany) return clients;
+    return clients.filter(c =>
+      c.companyId === selectedCompanyId ||
+      c.companyName?.toLowerCase() === selectedCompany.name?.toLowerCase()
+    );
+  }, [clients, selectedCompanyId, allCompanies]);
 
   // Sync clientId if not set or if company changed (reset to avoid stale client from another company)
   useEffect(() => {
