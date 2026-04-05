@@ -139,6 +139,13 @@ export function CreateWebsiteWizard({ initialType }: CreateWebsiteWizardProps) {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData | 'infra', string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Sync selectedCompanyId when currentCompany loads after initial render
+  React.useEffect(() => {
+    if (currentCompany?.id && !form.selectedCompanyId) {
+      setForm(prev => ({ ...prev, selectedCompanyId: currentCompany.id }));
+    }
+  }, [currentCompany?.id]);
+
   const allAvailablePlans = [...hostingPlans, ...cloudHostingPlans];
 
   const handlePlanSelect = (planId: string) => {
@@ -197,11 +204,11 @@ export function CreateWebsiteWizard({ initialType }: CreateWebsiteWizardProps) {
 
   // ─── Submit ────────────────────────────────────────────────────────────────
 
-  const submit = () => {
+  const submit = async () => {
     if (!validate(6)) return;
     setIsSubmitting(true);
     try {
-      addWebsite({
+      const result = await addWebsite({
         name: form.name.trim(),
         domain: form.domain.trim(),
         clientId: form.clientId,
@@ -219,11 +226,14 @@ export function CreateWebsiteWizard({ initialType }: CreateWebsiteWizardProps) {
         // Pass domain DB ID so InvoiceContext can auto-link after real website is created
         linkedDomainId: form.domainId || undefined,
       });
-      
-      toast.success(`${form.name} has been created!`, {
-        description: form.domainId ? 'Website added and linked to domain.' : 'Website added to portfolio.',
-      });
-      router.push('/dashboard/websites');
+
+      if (result.success) {
+        toast.success(`${form.name} has been created!`, {
+          description: form.domainId ? 'Website added and linked to domain.' : 'Website added to portfolio.',
+        });
+        router.push('/dashboard/websites');
+      }
+      // Error toast is already shown inside addWebsite on failure
     } catch {
       toast.error('Failed to create website');
     } finally {

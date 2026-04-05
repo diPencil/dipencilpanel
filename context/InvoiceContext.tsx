@@ -133,7 +133,7 @@ interface InvoiceContextType {
   markAsPaid: (id: string, method: Payment['method']) => void;
 
   // Website actions
-  addWebsite: (website: Omit<Website, 'id' | 'createdAt' | 'renewalDate' | 'companyId'> & { companyId?: string; linkedDomainId?: string }) => void;
+  addWebsite: (website: Omit<Website, 'id' | 'createdAt' | 'renewalDate' | 'companyId'> & { companyId?: string; linkedDomainId?: string }) => Promise<{ success: boolean; error?: string }>;
   updateWebsite: (id: string, website: Partial<Website>) => void;
   deleteWebsite: (id: string) => void;
   getWebsite: (id: string) => Website | undefined;
@@ -1203,7 +1203,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   // ─── Website Actions ───────────────────────────────────────────────────────
 
-  const addWebsite = (data: Omit<Website, 'id' | 'createdAt' | 'renewalDate' | 'companyId'> & { companyId?: string; linkedDomainId?: string }) => {
+  const addWebsite = async (data: Omit<Website, 'id' | 'createdAt' | 'renewalDate' | 'companyId'> & { companyId?: string; linkedDomainId?: string }): Promise<{ success: boolean; error?: string }> => {
     const id = tempId();
     const now = new Date().toISOString();
     const renewalDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -1211,19 +1211,21 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     const temp: Website = { ...data, id, createdAt: now, renewalDate, companyId: cid };
     setWebsites((prev) => [...prev, temp]);
 
-    createWebsite({
-      name: data.name,
-      domain: data.domain,
-      type: data.type,
-      storage: data.storage,
-      bandwidth: data.bandwidth,
-      linkedDomain: data.linkedDomain,
-      clientId: data.clientId,
-      companyId: cid,
-      planName: data.plan.name,
-      planPrice: data.plan.price,
-      billingCycle: data.plan.billingCycle,
-    }).then((res) => {
+    try {
+      const res = await createWebsite({
+        name: data.name,
+        domain: data.domain,
+        type: data.type,
+        storage: data.storage,
+        bandwidth: data.bandwidth,
+        linkedDomain: data.linkedDomain,
+        clientId: data.clientId,
+        companyId: cid,
+        planName: data.plan.name,
+        planPrice: data.plan.price,
+        billingCycle: data.plan.billingCycle,
+      });
+
       if (res.success && res.data) {
         const real = mapDbWebsite(res.data.website as unknown as Record<string, unknown>);
         setWebsites((prev) => prev.map((w) => (w.id === id ? real : w)));
@@ -1251,10 +1253,21 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
             },
           } as Parameters<typeof updateDomainAction>[2]).catch(console.error);
         }
+        return { success: true };
       } else {
         setWebsites((prev) => prev.filter((w) => w.id !== id));
+        const errMsg = res.error ?? 'Failed to create website';
+        console.error('[addWebsite] Server error:', errMsg);
+        toast.error(`Failed to create website: ${errMsg}`);
+        return { success: false, error: errMsg };
       }
-    });
+    } catch (err) {
+      setWebsites((prev) => prev.filter((w) => w.id !== id));
+      const errMsg = String(err);
+      console.error('[addWebsite] Unexpected error:', errMsg);
+      toast.error(`Failed to create website: ${errMsg}`);
+      return { success: false, error: errMsg };
+    }
   };
 
   const updateWebsite = (id: string, updates: Partial<Website>) => {
