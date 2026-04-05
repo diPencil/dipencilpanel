@@ -39,7 +39,7 @@ import type {
 // ─── Server Actions ────────────────────────────────────────────────────────────
 import { getCompanies, createCompany, updateCompany as updateCompanyAction, deleteCompany } from '@/app/actions/company';
 import { getAllClients, createClient, updateClient as updateClientAction, deleteClient as deleteClientAction, getAllClientGroups, createClientGroup, updateClientGroup as updateClientGroupAction, deleteClientGroup as deleteClientGroupAction, toggleClientInGroup as toggleClientInGroupAction } from '@/app/actions/clients';
-import { getAllDomains, createDomain, updateDomain as updateDomainAction, deleteDomain as deleteDomainAction, renewDomain as renewDomainAction } from '@/app/actions/domains';
+import { getAllDomains, createDomain, updateDomain as updateDomainAction, deleteDomain as deleteDomainAction, renewDomain as renewDomainAction, renewDomainWithSchedule as renewDomainWithScheduleAction } from '@/app/actions/domains';
 import { getAllHosting, createHosting, updateHosting as updateHostingAction, deleteHosting as deleteHostingAction, suspendHosting as suspendHostingAction, renewHosting as renewHostingAction } from '@/app/actions/hosting';
 import { getAllVPS, createVPS, updateVPS as updateVPSAction, deleteVPS as deleteVPSAction } from '@/app/actions/vps';
 import { getAllEmails, createEmail, updateEmail as updateEmailAction, deleteEmail as deleteEmailAction } from '@/app/actions/emails';
@@ -144,6 +144,7 @@ interface InvoiceContextType {
   deleteDomain: (id: string) => void;
   getDomain: (id: string) => Domain | undefined;
   renewDomain: (id: string) => Domain | undefined;
+  renewDomainWithSchedule: (id: string, input: import('@/app/actions/domains').DomainRenewalScheduleInput) => Promise<boolean>;
 
   // Subscription actions
   addSubscription: (subscription: Omit<Subscription, 'id' | 'companyId'>) => Subscription;
@@ -1333,6 +1334,23 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     return optimistic;
   };
 
+  const renewDomainWithSchedule = async (
+    id: string,
+    input: import('@/app/actions/domains').DomainRenewalScheduleInput,
+  ): Promise<boolean> => {
+    if (!requireTenantId()) return false;
+    const res = await renewDomainWithScheduleAction(id, tenantId, input);
+    if (res.success && res.data) {
+      const inv = mapDbInvoice(res.data.invoice as unknown as Record<string, unknown>);
+      setInvoices((prev) => [...prev, inv]);
+      updateDomain(id, { expiryDate: new Date(input.expiryDate).toISOString(), status: 'active' });
+      toast.success('Renewal invoice created and domain updated.');
+      return true;
+    }
+    toast.error(res.success === false ? res.error : 'Failed to renew domain');
+    return false;
+  };
+
   // ─── Subscription Actions ──────────────────────────────────────────────────
 
   const addSubscription = (data: Omit<Subscription, 'id' | 'companyId'>) => {
@@ -1761,7 +1779,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     addClientGroup, updateClientGroup, deleteClientGroup, toggleClientInGroup,
     addInvoice, updateInvoice, deleteInvoice, getInvoice, duplicateInvoice, markAsPaid,
     addWebsite, updateWebsite, deleteWebsite, getWebsite,
-    addDomain, updateDomain, deleteDomain, getDomain, renewDomain,
+    addDomain, updateDomain, deleteDomain, getDomain, renewDomain, renewDomainWithSchedule,
     addSubscription, updateSubscription, deleteSubscription, getSubscription, cancelSubscription, renewSubscription,
     renewSubscriptionWithSchedule,
     addPayment,

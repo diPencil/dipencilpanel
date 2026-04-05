@@ -290,3 +290,81 @@ export async function renewDomain(id: string, companyId: string) {
     return { success: false as const, error: String(error) };
   }
 }
+
+export interface DomainRenewalScheduleInput {
+  billingCycle: 'monthly' | 'yearly';
+  issueDate: string;
+  dueDate: string;
+  expiryDate: string;
+}
+
+export async function renewDomainWithSchedule(
+  id: string,
+  companyId: string,
+  input: DomainRenewalScheduleInput,
+) {
+  try {
+    const domain = await prisma.domain.findFirst({
+      where: { id, companyId },
+      include: { subscription: true, client: true },
+    });
+    if (!domain) return { success: false as const, error: 'Domain not found' };
+
+    const company = await prisma.company.findUnique({ where: { id: companyId } });
+    const taxRate = company?.taxRate ?? 0;
+    const currency = domain.subscription?.currency ?? company?.currency ?? 'USD';
+    const price = domain.subscription?.price ?? 0;
+    const invoiceNumber = await generateNextInvoiceNumber(companyId);
+
+    const newExpiry = new Date(input.expiryDate);
+    const vatAmount = price * (taxRate / 100);
+
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedDomain = await tx.domain.update({
+        where: { id },
+        data: { expiryDate: newExpiry, status: 'active' },
+      });
+
+      if (domain.subscriptionId) {
+        await tx.subscription.update({
+          where: { id: domain.subscriptionId },
+          data: { endDate: newExpiry, status: 'active', billingCycle: input.billingCycle },
+        });
+      }
+
+      const invoice = await tx.invoice.create({
+        data: {
+          number: invoiceNumber,
+          issueDate: new Date(input.issueDate),
+          dueDate: new Date(input.dueDate),
+          status: 'pending',
+          paymentStatus: 'unpaid',
+          currency,
+          notes: `Domain renewal: ${domain.name}${domain.tld}`,
+          subtotal: price,
+          discountAmount: 0,
+          vatAmount,
+          total: price + vatAmount,
+          clientId: domain.clientId,
+          companyId,
+          subscriptionId: domain.subscriptionId,
+          items: {
+            create: {
+              description: `Domain Renewal — ${domain.name}${domain.tld}`,
+              quantity: 1,
+              price,
+              discount: 0,
+              vat: taxRate,
+            },
+          },
+        },
+      });
+
+      return { domain: updatedDomain, invoice };
+    });
+
+    return { success: true as const, data: result };
+  } catch (error) {
+    return { success: false as const, error: String(error) };
+  }
+}

@@ -8,16 +8,29 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Globe, Plus, Search, Trash2, RotateCcw, Monitor, Mail, Server, Info, Edit, Copy } from 'lucide-react';
+import { Globe, Plus, Search, Trash2, RotateCcw, Monitor, Mail, Server, Info, Edit, Copy, Send } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/formatting';
 import { cn } from '@/lib/utils';
-import { 
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { REGISTRAR_NAMESERVERS } from '@/lib/constants';
 import { toast } from 'sonner';
+import { RenewDomainDialog } from '@/components/domains/renew-domain-dialog';
+import { SendReminderDialog } from '@/components/reminders/send-reminder-dialog';
+import { sendReminderEmail, type ReminderItem } from '@/app/actions/reminder-emails';
 
 type DomainFilter = 'all' | 'active' | 'expired' | 'expiring';
 
@@ -35,9 +48,13 @@ function getDomainStatus(expiryDate: string, status: string) {
 }
 
 export default function DomainsPage() {
-  const { domains = [], clients = [], websites = [], emails = [], vps = [], deleteDomain, updateDomain, renewDomain } = useInvoiceData();
+  const { domains = [], clients = [], websites = [], emails = [], vps = [], deleteDomain, updateDomain, currentCompany } = useInvoiceData();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<DomainFilter>('all');
+  const [renewTarget, setRenewTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [reminderTarget, setReminderTarget] = useState<ReminderItem | null>(null);
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
 
   const domainRows = useMemo(() => {
     return (domains || []).map((domain) => {
@@ -80,8 +97,51 @@ export default function DomainsPage() {
     expiring: domainRows.filter((domain) => domain.computedStatus === 'expiring').length,
   }), [domainRows]);
 
-  const handleRenew = (id: string) => {
-    renewDomain(id);
+  const handleRenew = (domain: typeof domainRows[0]) => {
+    setRenewTarget({ id: domain.id, name: `${domain.name}${domain.tld}` });
+  };
+
+  const handleDelete = (id: string) => {
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteDomain(deleteTarget);
+    setDeleteTarget(null);
+    toast.success('Domain deleted');
+  };
+
+  const handleSendReminder = (domain: typeof domainRows[0]) => {
+    const client = clients.find((c) => c.id === domain.clientId);
+    const item: ReminderItem = {
+      serviceId: domain.id,
+      serviceType: 'domain',
+      serviceName: `${domain.name}${domain.tld}`,
+      clientId: domain.clientId ?? '',
+      clientName: client?.name ?? domain.clientName,
+      clientEmail: client?.email ?? '',
+      expiryDate: domain.expiryDate,
+      daysLeft: getDaysUntilExpiry(domain.expiryDate),
+      price: domain.price ?? 0,
+      currency: 'USD',
+      subscriptionId: domain.subscriptionId ?? null,
+      lastSentAt: null,
+    };
+    setReminderTarget(item);
+  };
+
+  const handleSendReminderConfirm = async (item: ReminderItem, ccEmails: string[]) => {
+    setIsSendingReminder(true);
+    try {
+      await sendReminderEmail(currentCompany?.id ?? '', item, undefined, ccEmails);
+      toast.success('Reminder sent');
+      setReminderTarget(null);
+    } catch {
+      toast.error('Failed to send reminder');
+    } finally {
+      setIsSendingReminder(false);
+    }
   };
 
   const renderStatusBadge = (status: string) => {
@@ -294,11 +354,15 @@ export default function DomainsPage() {
                           <Link href={`/dashboard/domains/${domain.id}`}>
                             <Button variant="outline" size="sm">Manage</Button>
                           </Link>
-                          <Button variant="outline" size="sm" onClick={() => handleRenew(domain.id)}>
+                          <Button variant="outline" size="sm" onClick={() => handleRenew(domain)}>
                             <RotateCcw className="mr-2 h-4 w-4" />
                             Renew
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => deleteDomain(domain.id)} className="text-destructive hover:text-destructive">
+                          <Button variant="outline" size="sm" onClick={() => handleSendReminder(domain)}>
+                            <Send className="mr-2 h-4 w-4" />
+                            Reminder
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(domain.id)} className="text-destructive hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -390,8 +454,12 @@ export default function DomainsPage() {
                         <Link href={`/dashboard/domains/${domain.id}`}>
                           <Button variant="outline" size="sm">Manage</Button>
                         </Link>
-                        <Button variant="outline" size="sm" onClick={() => handleRenew(domain.id)}>Renew</Button>
-                        <Button variant="ghost" size="sm" onClick={() => deleteDomain(domain.id)} className="text-destructive hover:text-destructive">Delete</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleRenew(domain)}>Renew</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleSendReminder(domain)}>
+                          <Send className="mr-1.5 h-3.5 w-3.5" />
+                          Reminder
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(domain.id)} className="text-destructive hover:text-destructive">Delete</Button>
                       </div>
                     </div>
                   </div>
@@ -401,6 +469,41 @@ export default function DomainsPage() {
           )}
         </div>
       </Card>
+
+      {/* Renew domain dialog */}
+      <RenewDomainDialog
+        open={!!renewTarget}
+        onOpenChange={(open) => { if (!open) setRenewTarget(null); }}
+        domainId={renewTarget?.id ?? null}
+        domainName={renewTarget?.name ?? ''}
+      />
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete domain?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the domain and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Send reminder dialog */}
+      <SendReminderDialog
+        item={reminderTarget}
+        open={!!reminderTarget}
+        onOpenChange={(open) => { if (!open) setReminderTarget(null); }}
+        onSend={handleSendReminderConfirm}
+        isSending={isSendingReminder}
+      />
     </div>
   );
 }
