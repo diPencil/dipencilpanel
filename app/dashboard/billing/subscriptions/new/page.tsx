@@ -25,6 +25,17 @@ import { convertCurrency } from '@/lib/currency-utils';
 const SERVICE_TYPES: Subscription['serviceType'][] = ['website', 'domain', 'hosting', 'email', 'vps', 'mobile_app'];
 const BILLING_CYCLES: Subscription['billingCycle'][] = ['monthly', 'yearly'];
 const STATUSES: Subscription['status'][] = ['active', 'suspended', 'expired'];
+const DEFAULT_SERVICE_NAMES = [
+  'Business Web Hosting (billed every year)',
+  'SSL Certificate (billed includes every year)',
+  'Business Email (billed every year)',
+  '.COM Domain (billed every year)',
+  '.NET Domain (billed every year)',
+  'Domain WHOIS Privacy Protection',
+  'CANN fee (billed every year)',
+  'Single Web Hosting (billed every year)',
+  'Cloud Web Hosting (billed every year)',
+];
 const PLAN_OPTIONS = [
   'Website Service',
   'Domain Protection',
@@ -37,6 +48,7 @@ const PLAN_OPTIONS = [
 ];
 
 const CUSTOM_PLANS_KEY = 'pencil_custom_plans';
+const CUSTOM_SERVICE_NAMES_KEY = 'pencil_custom_service_names';
 
 const toInputDate = (date: Date) => {
   const t = date.getTime();
@@ -80,7 +92,7 @@ const addBillingCycle = (dateValue: string, cycle: Subscription['billingCycle'])
 export default function CreateSubscriptionPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { clients, company, addSubscription } = useInvoiceData();
+  const { clients, company, domains = [], addSubscription } = useInvoiceData();
   const [isLoading, setIsLoading] = useState(false);
 
   const today = useMemo(() => toInputDate(new Date()), []);
@@ -89,6 +101,7 @@ export default function CreateSubscriptionPage() {
     clientId: '',
     serviceType: 'hosting' as Subscription['serviceType'],
     serviceName: '',
+    domainId: '',
     serviceId: generateSubscriptionServiceId('hosting'),
     planName: '',
     billingCycle: 'monthly' as Subscription['billingCycle'],
@@ -104,11 +117,21 @@ export default function CreateSubscriptionPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // ─── Custom Plans ──────────────────────────────────────────────────────────
+
   const [customPlans, setCustomPlans] = useState<string[]>([]);
   const [showAddPlan, setShowAddPlan] = useState(false);
   const [newPlanInput, setNewPlanInput] = useState('');
   const [editingPlan, setEditingPlan] = useState<{ index: number; value: string } | null>(null);
   const customPlansFirstRender = useRef(true);
+
+  // ─── Custom Service Names ──────────────────────────────────────────────────
+
+  const [customServiceNames, setCustomServiceNames] = useState<string[]>([]);
+  const [showAddServiceName, setShowAddServiceName] = useState(false);
+  const [newServiceNameInput, setNewServiceNameInput] = useState('');
+  const [editingServiceName, setEditingServiceName] = useState<{ index: number; value: string } | null>(null);
+  const customServiceNamesFirstRender = useRef(true);
 
   useEffect(() => {
     if (customPlansFirstRender.current) {
@@ -121,6 +144,18 @@ export default function CreateSubscriptionPage() {
     }
     localStorage.setItem(CUSTOM_PLANS_KEY, JSON.stringify(customPlans));
   }, [customPlans]);
+
+  useEffect(() => {
+    if (customServiceNamesFirstRender.current) {
+      customServiceNamesFirstRender.current = false;
+      try {
+        const stored = localStorage.getItem(CUSTOM_SERVICE_NAMES_KEY);
+        if (stored) setCustomServiceNames(JSON.parse(stored));
+      } catch {}
+      return;
+    }
+    localStorage.setItem(CUSTOM_SERVICE_NAMES_KEY, JSON.stringify(customServiceNames));
+  }, [customServiceNames]);
 
   const updateField = <K extends keyof typeof formData>(key: K, value: (typeof formData)[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -213,6 +248,37 @@ export default function CreateSubscriptionPage() {
     const deleted = customPlans[index];
     setCustomPlans((prev) => prev.filter((_, i) => i !== index));
     if (formData.planName === deleted) updateField('planName', '');
+  };
+
+  // ─── Service Name Handlers ────────────────────────────────────────────────
+
+  const handleAddCustomServiceName = () => {
+    const trimmed = newServiceNameInput.trim();
+    if (!trimmed) return;
+    if (DEFAULT_SERVICE_NAMES.includes(trimmed) || customServiceNames.includes(trimmed)) {
+      toast({ title: 'Service name already exists', description: 'Choose a different name.', variant: 'destructive' });
+      return;
+    }
+    setCustomServiceNames((prev) => [...prev, trimmed]);
+    updateField('serviceName', trimmed);
+    setNewServiceNameInput('');
+    setShowAddServiceName(false);
+  };
+
+  const handleSaveEditServiceName = () => {
+    if (!editingServiceName) return;
+    const trimmed = editingServiceName.value.trim();
+    if (!trimmed) return;
+    const oldValue = customServiceNames[editingServiceName.index];
+    setCustomServiceNames((prev) => prev.map((s, i) => (i === editingServiceName.index ? trimmed : s)));
+    if (formData.serviceName === oldValue) updateField('serviceName', trimmed);
+    setEditingServiceName(null);
+  };
+
+  const handleDeleteCustomServiceName = (index: number) => {
+    const deleted = customServiceNames[index];
+    setCustomServiceNames((prev) => prev.filter((_, i) => i !== index));
+    if (formData.serviceName === deleted) updateField('serviceName', '');
   };
 
   const validate = () => {
@@ -340,7 +406,8 @@ export default function CreateSubscriptionPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="rounded-lg border border-border bg-card p-6 space-y-6">
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          {/* Client */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Client</label>
             <Select 
@@ -362,6 +429,7 @@ export default function CreateSubscriptionPage() {
             {errors.clientId && <p className="text-xs text-red-600 mt-1">{errors.clientId}</p>}
           </div>
 
+          {/* Service Type */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Service Type</label>
             <Select
@@ -396,16 +464,109 @@ export default function CreateSubscriptionPage() {
             </Select>
           </div>
 
+          {/* Service Name */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Service Name</label>
-            <Input
-              value={formData.serviceName}
-              onChange={(event) => updateField('serviceName', event.target.value)}
-              placeholder="e.g. example.com or VPS-01"
-            />
+            <Select
+              value={formData.serviceName || ''}
+              onValueChange={(value) => updateField('serviceName', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a service name" />
+              </SelectTrigger>
+              <SelectContent>
+                {DEFAULT_SERVICE_NAMES.map((name) => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                ))}
+                {customServiceNames.map((name) => (
+                  <SelectItem key={`custom-${name}`} value={name}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {customServiceNames.length > 0 && (
+              <div className="mt-2 rounded-md border border-border divide-y divide-border">
+                {customServiceNames.map((name, index) => (
+                  <div key={index} className="flex items-center gap-2 px-3 py-2">
+                    {editingServiceName?.index === index ? (
+                      <>
+                        <Input
+                          value={editingServiceName.value}
+                          onChange={(e) => setEditingServiceName((prev) => prev ? { ...prev, value: e.target.value } : null)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); handleSaveEditServiceName(); }
+                            if (e.key === 'Escape') setEditingServiceName(null);
+                          }}
+                          className="h-7 text-sm flex-1"
+                          autoFocus
+                        />
+                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleSaveEditServiceName}>
+                          <Check className="h-3.5 w-3.5 text-green-600" />
+                        </Button>
+                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingServiceName(null)}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-sm flex-1">{name}</span>
+                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingServiceName({ index, value: name })}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteCustomServiceName(index)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {showAddServiceName ? (
+              <div className="mt-2 flex gap-2">
+                <Input
+                  value={newServiceNameInput}
+                  onChange={(e) => setNewServiceNameInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); handleAddCustomServiceName(); }
+                    if (e.key === 'Escape') { setShowAddServiceName(false); setNewServiceNameInput(''); }
+                  }}
+                  placeholder="Enter service name..."
+                  className="flex-1"
+                  autoFocus
+                />
+                <Button type="button" onClick={handleAddCustomServiceName} disabled={!newServiceNameInput.trim()}>Save</Button>
+                <Button type="button" variant="outline" onClick={() => { setShowAddServiceName(false); setNewServiceNameInput(''); }}>Cancel</Button>
+              </div>
+            ) : (
+              <Button type="button" variant="outline" size="sm" className="mt-2 text-xs" onClick={() => setShowAddServiceName(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add custom service name
+              </Button>
+            )}
             {errors.serviceName && <p className="text-xs text-red-600 mt-1">{errors.serviceName}</p>}
           </div>
 
+          {/* Domain */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Domain (optional)</label>
+            <Select
+              value={formData.domainId || 'none'}
+              onValueChange={(value) => updateField('domainId', value === 'none' ? '' : value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a domain" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— None —</SelectItem>
+                {domains.map((domain) => (
+                  <SelectItem key={domain.id} value={domain.id}>
+                    {domain.name}{domain.tld}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Service ID */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Service ID</label>
             <Input
@@ -415,10 +576,11 @@ export default function CreateSubscriptionPage() {
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Filled automatically from service type (letter + random number). Change service type to regenerate.
+              Auto-generated from service type. Change type to regenerate.
             </p>
           </div>
 
+          {/* Plan Name */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Plan Name</label>
             <Select
@@ -499,6 +661,7 @@ export default function CreateSubscriptionPage() {
             {errors.planName && <p className="text-xs text-red-600 mt-1">{errors.planName}</p>}
           </div>
 
+          {/* Billing Cycle */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Billing Cycle</label>
             <Select
@@ -518,6 +681,7 @@ export default function CreateSubscriptionPage() {
             </Select>
           </div>
 
+          {/* Price */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Price (client)</label>
             <Input
@@ -531,6 +695,7 @@ export default function CreateSubscriptionPage() {
             {errors.price && <p className="text-xs text-red-600 mt-1">{errors.price}</p>}
           </div>
 
+          {/* Provider Price */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Provider price (internal)</label>
             <Input
@@ -542,11 +707,12 @@ export default function CreateSubscriptionPage() {
               placeholder="Your cost from vendor (optional)"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Not shown on invoices or payments — used only in Financial Summary for margin.
+              Not shown on invoices — used only for margin in Financial Summary.
             </p>
             {errors.providerPrice && <p className="text-xs text-red-600 mt-1">{errors.providerPrice}</p>}
           </div>
 
+          {/* Currency */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Currency</label>
             <Select
@@ -567,6 +733,7 @@ export default function CreateSubscriptionPage() {
             </Select>
           </div>
 
+          {/* Start Date */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Start Date</label>
             <Input
@@ -577,6 +744,7 @@ export default function CreateSubscriptionPage() {
             {errors.startDate && <p className="text-xs text-red-600 mt-1">{errors.startDate}</p>}
           </div>
 
+          {/* Expiry Date */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Expiry Date</label>
             <Input
@@ -587,6 +755,7 @@ export default function CreateSubscriptionPage() {
             {errors.expiryDate && <p className="text-xs text-red-600 mt-1">{errors.expiryDate}</p>}
           </div>
 
+          {/* Status */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Status</label>
             <Select
@@ -606,6 +775,7 @@ export default function CreateSubscriptionPage() {
             </Select>
           </div>
 
+          {/* Auto-renew */}
           <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
             <div>
               <p className="text-sm font-medium">Auto-renew</p>
@@ -618,6 +788,7 @@ export default function CreateSubscriptionPage() {
           </div>
         </div>
 
+        {/* Notes — full width */}
         <div>
           <label className="block text-sm font-medium mb-1.5">Notes (optional)</label>
           <Textarea

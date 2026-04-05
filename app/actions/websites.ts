@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { generateNextInvoiceNumber, computeEndDate } from '@/lib/billing-utils';
+import { computeEndDate } from '@/lib/billing-utils';
 
 type CreateWebsiteInput = {
   name: string;
@@ -54,9 +54,7 @@ export async function getWebsiteById(id: string, companyId: string) {
 export async function createWebsite(input: CreateWebsiteInput) {
   try {
     const company = await prisma.company.findUnique({ where: { id: input.companyId } });
-    const taxRate = input.taxRate ?? company?.taxRate ?? 0;
     const currency = input.currency ?? company?.currency ?? 'USD';
-    const invoiceNumber = await generateNextInvoiceNumber(input.companyId);
 
     const result = await prisma.$transaction(async (tx) => {
       const startDate = new Date();
@@ -103,37 +101,7 @@ export async function createWebsite(input: CreateWebsiteInput) {
         data: { serviceId: website.id },
       });
 
-      const vatAmount = input.planPrice * (taxRate / 100);
-
-      const invoice = await tx.invoice.create({
-        data: {
-          number: invoiceNumber,
-          issueDate: startDate,
-          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          status: 'pending',
-          paymentStatus: 'unpaid',
-          currency,
-          notes: `Website hosting: ${input.planName} — ${input.domain}`,
-          subtotal: input.planPrice,
-          discountAmount: 0,
-          vatAmount,
-          total: input.planPrice + vatAmount,
-          clientId: input.clientId,
-          companyId: input.companyId,
-          subscriptionId: subscription.id,
-          items: {
-            create: {
-              description: `${input.planName} Website — ${input.domain}`,
-              quantity: 1,
-              price: input.planPrice,
-              discount: 0,
-              vat: taxRate,
-            },
-          },
-        },
-      });
-
-      return { website, subscription, invoice };
+      return { website, subscription };
     });
 
     return { success: true as const, data: result };

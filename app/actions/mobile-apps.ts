@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { generateNextInvoiceNumber, computeEndDate } from '@/lib/billing-utils';
+import { computeEndDate } from '@/lib/billing-utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -137,14 +137,12 @@ export async function getMobileAppStats(companyId: string) {
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 /**
- * Creates a MobileApp + Subscription + Invoice atomically in one transaction.
+ * Creates a MobileApp + Subscription atomically in one transaction.
  */
 export async function createMobileApp(input: CreateMobileAppInput) {
   try {
     const company = await prisma.company.findUnique({ where: { id: input.companyId } });
-    const taxRate = input.taxRate ?? company?.taxRate ?? 0;
     const currency = input.currency ?? company?.currency ?? 'USD';
-    const invoiceNumber = await generateNextInvoiceNumber(input.companyId);
     const planLabel = input.plan.charAt(0).toUpperCase() + input.plan.slice(1);
 
     const result = await prisma.$transaction(async (tx) => {
@@ -201,37 +199,7 @@ export async function createMobileApp(input: CreateMobileAppInput) {
         data: { serviceId: app.id },
       });
 
-      // 4. Create Invoice
-      const vatAmount = input.price * (taxRate / 100);
-      const invoice = await tx.invoice.create({
-        data: {
-          number: invoiceNumber,
-          issueDate: startDate,
-          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          status: 'pending',
-          paymentStatus: 'unpaid',
-          currency,
-          notes: `Mobile App: ${planLabel} Plan — ${input.name}`,
-          subtotal: input.price,
-          discountAmount: 0,
-          vatAmount,
-          total: input.price + vatAmount,
-          clientId: input.clientId,
-          companyId: input.companyId,
-          subscriptionId: subscription.id,
-          items: {
-            create: {
-              description: `${planLabel} Mobile App Plan — ${input.name} (${input.appType})`,
-              quantity: 1,
-              price: input.price,
-              discount: 0,
-              vat: taxRate,
-            },
-          },
-        },
-      });
-
-      return { app, subscription, invoice };
+      return { app, subscription };
     });
 
     return { success: true as const, data: result };

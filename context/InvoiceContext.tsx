@@ -1231,8 +1231,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         setWebsites((prev) => prev.map((w) => (w.id === id ? real : w)));
         const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
         setSubscriptions((prev) => [...prev, sub]);
-        const inv = mapDbInvoice(res.data.invoice as unknown as Record<string, unknown>);
-        setInvoices((prev) => [...prev, inv]);
         // Auto-link domain bidirectionally after real website ID is known
         if (data.linkedDomainId) {
           setDomains((prev) => prev.map((d) => {
@@ -1309,8 +1307,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         setDomains((prev) => prev.map((d) => (d.id === id ? real : d)));
         const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
         setSubscriptions((prev) => [...prev.filter((s) => s.id !== subId), sub]);
-        const inv = mapDbInvoice(res.data.invoice as unknown as Record<string, unknown>);
-        setInvoices((prev) => [...prev, inv]);
       } else {
         setDomains((prev) => prev.filter((d) => d.id !== id));
       }
@@ -1537,8 +1533,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         setEmails((prev) => prev.map((e) => (e.id === id ? real : e)));
         const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
         setSubscriptions((prev) => [...prev, sub]);
-        const inv = mapDbInvoice(res.data.invoice as unknown as Record<string, unknown>);
-        setInvoices((prev) => [...prev, inv]);
       } else {
         setEmails((prev) => prev.filter((e) => e.id !== id));
       }
@@ -1584,8 +1578,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         setVPS((prev) => prev.map((v) => (v.id === id ? real : v)));
         const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
         setSubscriptions((prev) => [...prev, sub]);
-        const inv = mapDbInvoice(res.data.invoice as unknown as Record<string, unknown>);
-        setInvoices((prev) => [...prev, inv]);
       } else {
         setVPS((prev) => prev.filter((v) => v.id !== id));
         toast.error(res.success === false ? res.error : 'Failed to create VPS');
@@ -1629,8 +1621,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         setHosting((prev) => prev.map((h) => (h.id === id ? real : h)));
         const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
         setSubscriptions((prev) => [...prev, sub]);
-        const inv = mapDbInvoice(res.data.invoice as unknown as Record<string, unknown>);
-        setInvoices((prev) => [...prev, inv]);
       } else {
         setHosting((prev) => prev.filter((h) => h.id !== id));
       }
@@ -1705,8 +1695,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         setMobileApps((prev) => prev.map((a) => (a.id === id ? real : a)));
         const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
         setSubscriptions((prev) => [...prev, sub]);
-        const inv = mapDbInvoice(res.data.invoice as unknown as Record<string, unknown>);
-        setInvoices((prev) => [...prev, inv]);
       } else {
         setMobileApps((prev) => prev.filter((a) => a.id !== id));
         toast.error(res.error || 'Could not save mobile app');
