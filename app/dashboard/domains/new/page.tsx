@@ -50,14 +50,15 @@ export default function NewDomainPage() {
   const [showAddTld, setShowAddTld] = useState(false);
   const [customTld, setCustomTld] = useState('');
   
-  const [selectedCompanyId, setSelectedCompanyId] = useState(currentCompany?.id || allCompanies[0]?.id || '');
+  const [selectedCompanyId, setSelectedCompanyId] = useState('');
 
-  // Sync selectedCompanyId when context finishes loading (currentCompany arrives after first render)
+  // Sync selectedCompanyId to first non-system company once context loads
   useEffect(() => {
-    if (!selectedCompanyId && currentCompany?.id) {
-      setSelectedCompanyId(currentCompany.id);
+    if (!selectedCompanyId && allCompanies.length > 0 && currentCompany?.id) {
+      const firstClient = allCompanies.find(c => c.id !== currentCompany.id);
+      if (firstClient) setSelectedCompanyId(firstClient.id);
     }
-  }, [currentCompany?.id, selectedCompanyId]);
+  }, [allCompanies, currentCompany?.id, selectedCompanyId]);
   const [clientId, setClientId] = useState('');
   const [hostId, setHostId] = useState(HOST_OPTIONS[0].id);
   const [expiryDate, setExpiryDate] = useState(formatInputDate(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)));
@@ -87,8 +88,14 @@ export default function NewDomainPage() {
 
   const filteredClients = useMemo(() => {
     if (!selectedCompanyId) return clients;
-    return clients.filter(c => c.companyId === selectedCompanyId);
-  }, [clients, selectedCompanyId]);
+    const selectedCompany = allCompanies.find(c => c.id === selectedCompanyId);
+    if (!selectedCompany) return clients;
+    // Match by companyId FK (new clients) OR by companyName string (existing/legacy clients)
+    return clients.filter(c =>
+      c.companyId === selectedCompanyId ||
+      (c.companyName && c.companyName.toLowerCase() === selectedCompany.name.toLowerCase())
+    );
+  }, [clients, selectedCompanyId, allCompanies]);
 
   // Sync clientId if not set or if company changed (reset to avoid stale client from another company)
   useEffect(() => {
@@ -294,16 +301,16 @@ export default function NewDomainPage() {
                 <label className="text-sm font-medium">Select Company</label>
                 <Select value={selectedCompanyId} onValueChange={(val) => {
                   setSelectedCompanyId(val);
-                  const firstOfNew = clients.find(c => c.companyId === val);
-                  setClientId(firstOfNew?.id || '');
                   setWebsiteId('');
                   setVpsId('');
                 }}>
                   <SelectTrigger className="w-full"><SelectValue placeholder="Choose a company" /></SelectTrigger>
                   <SelectContent>
-                    {allCompanies.map((com) => (
-                      <SelectItem key={com.id} value={com.id}>{com.name}</SelectItem>
-                    ))}
+                    {allCompanies
+                      .filter(com => com.id !== currentCompany?.id)
+                      .map((com) => (
+                        <SelectItem key={com.id} value={com.id}>{com.name}</SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
