@@ -73,7 +73,8 @@ export async function getExpiringDomains(companyId: string, withinDays = 30) {
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 /**
- * Creates a Domain + Subscription atomically in a single transaction.
+ * Creates a Domain record. No subscription or invoice is created here;
+ * those are managed separately from the Billing > Subscriptions page.
  */
 export async function createDomain(input: CreateDomainInput) {
   try {
@@ -82,56 +83,25 @@ export async function createDomain(input: CreateDomainInput) {
     });
     const currency = input.currency ?? company?.currency ?? 'USD';
 
-    const result = await prisma.$transaction(async (tx) => {
-      const startDate = new Date();
-      const endDate = new Date(input.expiryDate);
-
-      // 1. Create Subscription
-      const subscription = await tx.subscription.create({
-        data: {
-          serviceType: 'domain',
-          serviceId: 'pending',
-          serviceName: `${input.name}${input.tld}`,
-          planName: input.planName ?? 'Domain Registration',
-          price: input.price,
-          currency,
-          billingCycle: 'yearly',
-          startDate,
-          endDate,
-          autoRenew: input.autoRenew ?? true,
-          status: 'active',
-          clientId: input.clientId,
-          companyId: input.companyId,
-        },
-      });
-
-      // 2. Create Domain linked to Subscription
-      const domain = await tx.domain.create({
-        data: {
-          name: input.name,
-          tld: input.tld,
-          registrar: input.registrar,
-          expiryDate: new Date(input.expiryDate),
-          autoRenew: input.autoRenew ?? true,
-          nameservers: input.nameservers,
-          notes: input.notes,
-          reminderDays: input.reminderDays,
-          clientId: input.clientId,
-          companyId: input.companyId,
-          subscriptionId: subscription.id,
-        },
-      });
-
-      // 3. Update subscription with real serviceId
-      await tx.subscription.update({
-        where: { id: subscription.id },
-        data: { serviceId: domain.id },
-      });
-
-      return { domain, subscription };
+    const domain = await prisma.domain.create({
+      data: {
+        name: input.name,
+        tld: input.tld,
+        registrar: input.registrar,
+        expiryDate: new Date(input.expiryDate),
+        autoRenew: input.autoRenew ?? true,
+        nameservers: input.nameservers,
+        notes: input.notes,
+        reminderDays: input.reminderDays,
+        price: input.price,
+        currency,
+        billingCycle: 'yearly',
+        clientId: input.clientId,
+        companyId: input.companyId,
+      },
     });
 
-    return { success: true as const, data: result };
+    return { success: true as const, data: { domain } };
   } catch (error) {
     return { success: false as const, error: String(error) };
   }
@@ -215,8 +185,8 @@ export async function renewDomain(id: string, companyId: string) {
 
     const company = await prisma.company.findUnique({ where: { id: companyId } });
     const taxRate = company?.taxRate ?? 0;
-    const currency = domain.subscription?.currency ?? company?.currency ?? 'USD';
-    const price = domain.subscription?.price ?? 0;
+    const currency = domain.currency || company?.currency || 'USD';
+    const price = domain.price ?? 0;
     const invoiceNumber = await generateNextInvoiceNumber(companyId);
 
     const newExpiry = new Date(domain.expiryDate);
@@ -294,8 +264,8 @@ export async function renewDomainWithSchedule(
 
     const company = await prisma.company.findUnique({ where: { id: companyId } });
     const taxRate = company?.taxRate ?? 0;
-    const currency = domain.subscription?.currency ?? company?.currency ?? 'USD';
-    const price = domain.subscription?.price ?? 0;
+    const currency = domain.currency || company?.currency || 'USD';
+    const price = domain.price ?? 0;
     const invoiceNumber = await generateNextInvoiceNumber(companyId);
 
     const newExpiry = new Date(input.expiryDate);

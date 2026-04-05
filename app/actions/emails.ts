@@ -50,59 +50,33 @@ export async function getEmailById(id: string, companyId: string) {
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 /**
- * Creates Email + Subscription atomically.
+ * Creates an Email record. No subscription or invoice is created here;
+ * those are managed separately from the Billing > Subscriptions page.
  */
 export async function createEmail(input: CreateEmailInput) {
   try {
     const company = await prisma.company.findUnique({ where: { id: input.companyId } });
     const currency = input.currency ?? company?.currency ?? 'USD';
-    const planName = input.planName ?? 'Email Hosting';
 
-    const result = await prisma.$transaction(async (tx) => {
-      const startDate = new Date();
-      const endDate = input.expiryDate
-        ? new Date(input.expiryDate)
-        : computeEndDate(startDate, input.billingCycle);
+    const endDate = input.expiryDate
+      ? new Date(input.expiryDate)
+      : computeEndDate(new Date(), input.billingCycle);
 
-      const subscription = await tx.subscription.create({
-        data: {
-          serviceType: 'email',
-          serviceId: 'pending',
-          serviceName: `${input.name}@${input.domain}`,
-          planName,
-          price: input.price,
-          currency,
-          billingCycle: input.billingCycle,
-          startDate,
-          endDate,
-          autoRenew: true,
-          status: 'active',
-          clientId: input.clientId,
-          companyId: input.companyId,
-        },
-      });
-
-      const email = await tx.email.create({
-        data: {
-          name: input.name,
-          domain: input.domain,
-          storage: input.storage,
-          expiryDate: endDate,
-          clientId: input.clientId,
-          companyId: input.companyId,
-          subscriptionId: subscription.id,
-        },
-      });
-
-      await tx.subscription.update({
-        where: { id: subscription.id },
-        data: { serviceId: email.id },
-      });
-
-      return { email, subscription };
+    const email = await prisma.email.create({
+      data: {
+        name: input.name,
+        domain: input.domain,
+        storage: input.storage,
+        expiryDate: endDate,
+        price: input.price,
+        currency,
+        billingCycle: input.billingCycle,
+        clientId: input.clientId,
+        companyId: input.companyId,
+      },
     });
 
-    return { success: true as const, data: result };
+    return { success: true as const, data: { email } };
   } catch (error) {
     return { success: false as const, error: String(error) };
   }

@@ -53,58 +53,27 @@ export async function getWebsiteById(id: string, companyId: string) {
 
 export async function createWebsite(input: CreateWebsiteInput) {
   try {
-    const company = await prisma.company.findUnique({ where: { id: input.companyId } });
-    const currency = input.currency ?? company?.currency ?? 'USD';
+    const startDate = new Date();
+    const endDate = computeEndDate(startDate, input.billingCycle);
 
-    const result = await prisma.$transaction(async (tx) => {
-      const startDate = new Date();
-      const endDate = computeEndDate(startDate, input.billingCycle);
-
-      const subscription = await tx.subscription.create({
-        data: {
-          serviceType: 'website',
-          serviceId: 'pending',
-          serviceName: input.domain,
-          planName: input.planName,
-          price: input.planPrice,
-          currency,
-          billingCycle: input.billingCycle,
-          startDate,
-          endDate,
-          autoRenew: true,
-          status: 'active',
-          clientId: input.clientId,
-          companyId: input.companyId,
-        },
-      });
-
-      const website = await tx.website.create({
-        data: {
-          name: input.name,
-          domain: input.domain,
-          type: input.type,
-          storage: input.storage ?? 0,
-          bandwidth: input.bandwidth ?? 0,
-          linkedDomain: input.linkedDomain,
-          planName: input.planName,
-          planPrice: input.planPrice,
-          billingCycle: input.billingCycle,
-          renewalDate: endDate,
-          clientId: input.clientId,
-          companyId: input.companyId,
-          subscriptionId: subscription.id,
-        },
-      });
-
-      await tx.subscription.update({
-        where: { id: subscription.id },
-        data: { serviceId: website.id },
-      });
-
-      return { website, subscription };
+    const website = await prisma.website.create({
+      data: {
+        name: input.name,
+        domain: input.domain,
+        type: input.type,
+        storage: input.storage ?? 0,
+        bandwidth: input.bandwidth ?? 0,
+        linkedDomain: input.linkedDomain,
+        planName: input.planName,
+        planPrice: input.planPrice,
+        billingCycle: input.billingCycle,
+        renewalDate: endDate,
+        clientId: input.clientId,
+        companyId: input.companyId,
+      },
     });
 
-    return { success: true as const, data: result };
+    return { success: true as const, data: { website } };
   } catch (error) {
     return { success: false as const, error: String(error) };
   }

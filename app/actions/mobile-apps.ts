@@ -137,73 +137,37 @@ export async function getMobileAppStats(companyId: string) {
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 /**
- * Creates a MobileApp + Subscription atomically in one transaction.
+ * Creates a MobileApp record. No subscription or invoice is created here;
+ * those are managed separately from the Billing > Subscriptions page.
  */
 export async function createMobileApp(input: CreateMobileAppInput) {
   try {
-    const company = await prisma.company.findUnique({ where: { id: input.companyId } });
-    const currency = input.currency ?? company?.currency ?? 'USD';
-    const planLabel = input.plan.charAt(0).toUpperCase() + input.plan.slice(1);
+    const endDate = input.expiryDate
+      ? new Date(input.expiryDate)
+      : computeEndDate(new Date(), input.billingCycle);
 
-    const result = await prisma.$transaction(async (tx) => {
-      const startDate = new Date();
-      const endDate = input.expiryDate
-        ? new Date(input.expiryDate)
-        : computeEndDate(startDate, input.billingCycle);
-
-      // 1. Create Subscription
-      const subscription = await tx.subscription.create({
-        data: {
-          serviceType: 'mobile_app',
-          serviceId: 'pending',
-          serviceName: input.name,
-          planName: `${planLabel} Plan`,
-          price: input.price,
-          currency,
-          billingCycle: input.billingCycle,
-          startDate,
-          endDate,
-          autoRenew: input.autoRenew ?? true,
-          status: 'active',
-          clientId: input.clientId,
-          companyId: input.companyId,
-        },
-      });
-
-      // 2. Create MobileApp
-      const app = await tx.mobileApp.create({
-        data: {
-          name: input.name,
-          appType: input.appType,
-          framework: input.framework ?? 'native',
-          description: input.description,
-          status: 'development',
-          plan: input.plan,
-          price: input.price,
-          billingCycle: input.billingCycle,
-          autoRenew: input.autoRenew ?? true,
-          expiryDate: endDate,
-          domainId: input.domainId,
-          hostingId: input.hostingId,
-          vpsId: input.vpsId,
-          emailIds: JSON.stringify(input.emailIds ?? []),
-          clientId: input.clientId,
-          companyId: input.companyId,
-          subscriptionId: subscription.id,
-        },
-      });
-
-      // 3. Update subscription with real serviceId
-      await tx.subscription.update({
-        where: { id: subscription.id },
-        data: { serviceId: app.id },
-      });
-
-      return { app, subscription };
+    const app = await prisma.mobileApp.create({
+      data: {
+        name: input.name,
+        appType: input.appType,
+        framework: input.framework ?? 'native',
+        description: input.description,
+        status: 'development',
+        plan: input.plan,
+        price: input.price,
+        billingCycle: input.billingCycle,
+        autoRenew: input.autoRenew ?? true,
+        expiryDate: endDate,
+        domainId: input.domainId,
+        hostingId: input.hostingId,
+        vpsId: input.vpsId,
+        emailIds: JSON.stringify(input.emailIds ?? []),
+        clientId: input.clientId,
+        companyId: input.companyId,
+      },
     });
 
-    return { success: true as const, data: result };
-  } catch (error) {
+    return { success: true as const, data: { app } };
     return { success: false as const, error: String(error) };
   }
 }

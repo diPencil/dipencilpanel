@@ -274,9 +274,9 @@ function mapDbDomain(d: Record<string, unknown>): Domain {
     nameservers: d.nameservers ? JSON.parse(d.nameservers as string) : [],
     notes: (d.notes as string | undefined) ?? undefined,
     reminderDays: (d.reminderDays as number | undefined) ?? undefined,
-    price: (d.subscription as Record<string, unknown> | null)?.price as number ?? 0,
-    billingCycle: ((d.subscription as Record<string, unknown> | null)?.billingCycle as Domain['billingCycle']) ?? 'yearly',
-    planName: ((d.subscription as Record<string, unknown> | null)?.planName as string) ?? '',
+    price: (d.price as number) ?? 0,
+    billingCycle: ((d.billingCycle as Domain['billingCycle']) ?? 'yearly'),
+    planName: ((d.planName as string | undefined) ?? ''),,
     clientId: d.clientId as string,
     companyId: d.companyId as string,
     subscriptionId: d.subscriptionId as string | undefined,
@@ -310,7 +310,6 @@ function mapDbWebsite(w: Record<string, unknown>): Website {
 }
 
 function mapDbEmail(e: Record<string, unknown>): Email {
-  const sub = e.subscription as Record<string, unknown> | null;
   return {
     id: e.id as string,
     name: e.name as string,
@@ -320,8 +319,8 @@ function mapDbEmail(e: Record<string, unknown>): Email {
     clientId: e.clientId as string,
     companyId: e.companyId as string,
     plan: {
-      price: (sub?.price as number) ?? 0,
-      billingCycle: (sub?.billingCycle as 'monthly' | 'yearly') ?? 'monthly',
+      price: (e.price as number) ?? 0,
+      billingCycle: (e.billingCycle as 'monthly' | 'yearly') ?? 'monthly',
     },
     createdAt: (e.createdAt as Date | string)?.toString() ?? '',
     renewalDate: (e.expiryDate as Date | string)?.toString() ?? new Date().toISOString(),
@@ -329,7 +328,6 @@ function mapDbEmail(e: Record<string, unknown>): Email {
 }
 
 function mapDbVPS(v: Record<string, unknown>): VPS {
-  const sub = v.subscription as Record<string, unknown> | null;
   return {
     id: v.id as string,
     name: v.name as string,
@@ -338,8 +336,8 @@ function mapDbVPS(v: Record<string, unknown>): VPS {
     storage: v.storage as number,
     cpu: v.cpu as number,
     status: (v.status as VPS['status']) ?? 'active',
-    price: (sub?.price as number) ?? 0,
-    billingCycle: (sub?.billingCycle as 'monthly' | 'yearly') ?? 'monthly',
+    price: (v.price as number) ?? 0,
+    billingCycle: (v.billingCycle as 'monthly' | 'yearly') ?? 'monthly',
     clientId: v.clientId as string,
     companyId: v.companyId as string,
     subscriptionId: v.subscriptionId as string | undefined,
@@ -350,7 +348,6 @@ function mapDbVPS(v: Record<string, unknown>): VPS {
 }
 
 function mapDbHosting(h: Record<string, unknown>): Hosting {
-  const sub = h.subscription as Record<string, unknown> | null;
   const resources = h.resources ? JSON.parse(h.resources as string) : { cpu: '', ram: '', storage: '', bandwidth: '' };
   return {
     id: h.id as string,
@@ -363,8 +360,8 @@ function mapDbHosting(h: Record<string, unknown>): Hosting {
     clientId: h.clientId as string,
     companyId: h.companyId as string,
     domainId: '',
-    price: (sub?.price as number) ?? 0,
-    billingCycle: (sub?.billingCycle as 'monthly' | 'yearly') ?? 'monthly',
+    price: (h.price as number) ?? 0,
+    billingCycle: (h.billingCycle as 'monthly' | 'yearly') ?? 'monthly',
     subscriptionId: h.subscriptionId as string | undefined,
     createdAt: (h.createdAt as Date | string)?.toString() ?? '',
     linkedServices: { emailIds: [], vpsIds: [] },
@@ -1230,8 +1227,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       if (res.success && res.data) {
         const real = mapDbWebsite(res.data.website as unknown as Record<string, unknown>);
         setWebsites((prev) => prev.map((w) => (w.id === id ? real : w)));
-        const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
-        setSubscriptions((prev) => [...prev, sub]);
         // Auto-link domain bidirectionally after real website ID is known
         if (data.linkedDomainId) {
           setDomains((prev) => prev.map((d) => {
@@ -1285,9 +1280,8 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   const addDomain = (data: Omit<Domain, 'id' | 'createdAt' | 'renewalDate' | 'subscriptionId'>) => {
     const id = tempId();
-    const subId = tempId();
     const now = new Date().toISOString();
-    const temp: Domain = { ...data, id, createdAt: now, renewalDate: data.expiryDate, subscriptionId: subId, companyId: tenantId };
+    const temp: Domain = { ...data, id, createdAt: now, renewalDate: data.expiryDate, companyId: tenantId };
     setDomains((prev) => [...prev, temp]);
 
     createDomain({
@@ -1306,8 +1300,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       if (res.success && res.data) {
         const real = mapDbDomain(res.data.domain as unknown as Record<string, unknown>);
         setDomains((prev) => prev.map((d) => (d.id === id ? real : d)));
-        const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
-        setSubscriptions((prev) => [...prev.filter((s) => s.id !== subId), sub]);
       } else {
         setDomains((prev) => prev.filter((d) => d.id !== id));
       }
@@ -1533,8 +1525,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       if (res.success && res.data) {
         const real = mapDbEmail(res.data.email as unknown as Record<string, unknown>);
         setEmails((prev) => prev.map((e) => (e.id === id ? real : e)));
-        const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
-        setSubscriptions((prev) => [...prev, sub]);
       } else {
         setEmails((prev) => prev.filter((e) => e.id !== id));
       }
@@ -1578,8 +1568,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       if (res.success && res.data) {
         const real = mapDbVPS(res.data.vps as unknown as Record<string, unknown>);
         setVPS((prev) => prev.map((v) => (v.id === id ? real : v)));
-        const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
-        setSubscriptions((prev) => [...prev, sub]);
       } else {
         setVPS((prev) => prev.filter((v) => v.id !== id));
         toast.error(res.success === false ? res.error : 'Failed to create VPS');
@@ -1621,8 +1609,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       if (res.success && res.data) {
         const real = mapDbHosting(res.data.hosting as unknown as Record<string, unknown>);
         setHosting((prev) => prev.map((h) => (h.id === id ? real : h)));
-        const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
-        setSubscriptions((prev) => [...prev, sub]);
       } else {
         setHosting((prev) => prev.filter((h) => h.id !== id));
       }
@@ -1695,8 +1681,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       if (res.success && res.data) {
         const real = mapDbMobileApp(res.data.app as unknown as Record<string, unknown>);
         setMobileApps((prev) => prev.map((a) => (a.id === id ? real : a)));
-        const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
-        setSubscriptions((prev) => [...prev, sub]);
       } else {
         setMobileApps((prev) => prev.filter((a) => a.id !== id));
         toast.error(res.error || 'Could not save mobile app');

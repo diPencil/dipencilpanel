@@ -52,61 +52,36 @@ export async function getVPSById(id: string, companyId: string) {
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 /**
- * Creates VPS + Subscription atomically.
+ * Creates a VPS record. No subscription or invoice is created here;
+ * those are managed separately from the Billing > Subscriptions page.
  */
 export async function createVPS(input: CreateVPSInput) {
   try {
     const company = await prisma.company.findUnique({ where: { id: input.companyId } });
     const currency = input.currency ?? company?.currency ?? 'USD';
 
-    const result = await prisma.$transaction(async (tx) => {
-      const startDate = new Date();
-      const endDate = input.expiryDate
-        ? new Date(input.expiryDate)
-        : computeEndDate(startDate, input.billingCycle);
+    const endDate = input.expiryDate
+      ? new Date(input.expiryDate)
+      : computeEndDate(new Date(), input.billingCycle);
 
-      const subscription = await tx.subscription.create({
-        data: {
-          serviceType: 'vps',
-          serviceId: 'pending',
-          serviceName: input.name,
-          planName: input.planName,
-          price: input.price,
-          currency,
-          billingCycle: input.billingCycle,
-          startDate,
-          endDate,
-          autoRenew: true,
-          status: 'active',
-          clientId: input.clientId,
-          companyId: input.companyId,
-        },
-      });
-
-      const vps = await tx.vPS.create({
-        data: {
-          name: input.name,
-          planName: input.planName,
-          ram: input.ram,
-          storage: input.storage,
-          cpu: input.cpu,
-          expiryDate: endDate,
-          notes: input.notes,
-          clientId: input.clientId,
-          companyId: input.companyId,
-          subscriptionId: subscription.id,
-        },
-      });
-
-      await tx.subscription.update({
-        where: { id: subscription.id },
-        data: { serviceId: vps.id },
-      });
-
-      return { vps, subscription };
+    const vps = await prisma.vPS.create({
+      data: {
+        name: input.name,
+        planName: input.planName,
+        ram: input.ram,
+        storage: input.storage,
+        cpu: input.cpu,
+        expiryDate: endDate,
+        notes: input.notes,
+        price: input.price,
+        currency,
+        billingCycle: input.billingCycle,
+        clientId: input.clientId,
+        companyId: input.companyId,
+      },
     });
 
-    return { success: true as const, data: result };
+    return { success: true as const, data: { vps } };
   } catch (error) {
     return { success: false as const, error: String(error) };
   }

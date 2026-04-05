@@ -173,6 +173,9 @@ model Domain {
   nameservers  String?  // JSON array
   notes        String?
   reminderDays Int?
+  price        Float    @default(0)
+  currency     String   @default("USD")
+  billingCycle String   @default("yearly")
 
   clientId String
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -225,6 +228,9 @@ model Hosting {
   status     String    @default("active") // "active" | "suspended" | "expired"
   expiryDate DateTime?
   resources  String?   // JSON: { cpu, ram, storage, bandwidth }
+  price      Float     @default(0)
+  currency   String    @default("USD")
+  billingCycle String  @default("monthly")
 
   clientId String
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -253,6 +259,9 @@ model VPS {
   status     String    @default("active")
   expiryDate DateTime?
   notes      String?
+  price      Float     @default(0)
+  currency   String    @default("USD")
+  billingCycle String  @default("monthly")
 
   clientId String
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -278,6 +287,9 @@ model Email {
   storage    Int
   status     String    @default("active")
   expiryDate DateTime?
+  price      Float     @default(0)
+  currency   String    @default("USD")
+  billingCycle String  @default("monthly")
 
   clientId String
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
