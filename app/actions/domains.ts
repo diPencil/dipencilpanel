@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { generateNextInvoiceNumber } from '@/lib/billing-utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
