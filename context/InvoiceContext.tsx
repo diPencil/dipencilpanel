@@ -985,15 +985,21 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     if (!requireTenantId()) return;
     const { groupId, ...clientData } = data as Client & { groupId?: string };
     const effectiveCompanyId = clientData.companyId || tenantId;
+    const shouldAppearInCurrentList = effectiveCompanyId === tenantId;
     const temp: Client = { ...clientData, id: tempId(), createdAt: new Date().toISOString(), companyId: effectiveCompanyId };
-    setClients((prev) => [...prev, temp]);
+    if (shouldAppearInCurrentList) {
+      setClients((prev) => [...prev, temp]);
+    }
     createClient({ ...clientData, companyId: effectiveCompanyId }).then((res) => {
       if (res.success && res.data) {
         const d = res.data;
         const real: Client = { id: d.id, name: d.name, email: d.email, phone: d.phone ?? '', address: d.address ?? '', companyName: d.companyName ?? '', companyId: d.companyId, createdAt: d.createdAt.toString() };
-        setClients((prev) => prev.map((c) => (c.id === temp.id ? real : c)));
+        if (shouldAppearInCurrentList) {
+          setClients((prev) => prev.map((c) => (c.id === temp.id ? real : c)));
+        }
+        toast.success(shouldAppearInCurrentList ? 'Client added successfully' : 'Client added to the selected company');
         // Assign to group if selected
-        if (groupId && groupId !== 'none') {
+        if (shouldAppearInCurrentList && groupId && groupId !== 'none') {
           setClientGroups((prev) =>
             prev.map((g) =>
               g.id === groupId && !g.clientIds.includes(real.id)
@@ -1004,9 +1010,16 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
           toggleClientInGroupAction(groupId, real.id, tenantId).catch(console.error);
         }
       } else {
-        setClients((prev) => prev.filter((c) => c.id !== temp.id));
+        if (shouldAppearInCurrentList) {
+          setClients((prev) => prev.filter((c) => c.id !== temp.id));
+        }
         toast.error(res.error || 'Could not save client');
       }
+    }).catch(() => {
+      if (shouldAppearInCurrentList) {
+        setClients((prev) => prev.filter((c) => c.id !== temp.id));
+      }
+      toast.error('Network error: client could not be saved');
     });
   };
 

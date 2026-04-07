@@ -31,13 +31,7 @@ export function ClientDialog({
   const handleSubmit = async (data: Omit<Client, 'id' | 'createdAt'>) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 300));
       onSubmit(data);
-      toast({
-        title: 'Success',
-        description: client ? 'Client updated successfully' : 'Client added successfully',
-      });
       onOpenChange(false);
     } catch (error) {
       toast({

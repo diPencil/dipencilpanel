@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Client } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,21 +16,27 @@ interface ClientFormProps {
 }
 
 export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
-  const { clientGroups, allCompanies } = useInvoiceData();
+  const { clientGroups, allCompanies, currentCompany } = useInvoiceData();
   const initialGroupId = clientGroups.find(g => g.clientIds.includes(client?.id || ''))?.id || 'none';
-  
-  const [formData, setFormData] = useState({
+
+  const buildFormData = () => ({
     name: client?.name || '',
     email: client?.email || '',
     phone: client?.phone || '',
     address: client?.address || '',
-    companyName: client?.companyName || '',
-    companyId: client?.companyId || '',
-    groupId: initialGroupId
+    companyName: client?.companyName || currentCompany?.name || '',
+    companyId: client?.companyId || currentCompany?.id || '',
+    groupId: initialGroupId,
   });
+
+  const [formData, setFormData] = useState(buildFormData);
 
   const { toast } = useToast();
   const [errors, setErrors] = useState<Partial<typeof formData>>({});
+
+  useEffect(() => {
+    setFormData(buildFormData());
+  }, [client, currentCompany?.id, currentCompany?.name, initialGroupId]);
 
   const validateForm = () => {
     const newErrors: Partial<typeof formData> = {};
@@ -70,8 +76,8 @@ export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
       email: '',
       phone: '',
       address: '',
-      companyName: '',
-      companyId: '',
+      companyName: currentCompany?.name || '',
+      companyId: currentCompany?.id || '',
       groupId: 'none'
     });
   };
