@@ -13,10 +13,9 @@ interface ClientFormProps {
   client?: Client;
   onSubmit: (data: Omit<Client, 'id' | 'createdAt'>) => void;
   isLoading?: boolean;
-  lockToCurrentCompany?: boolean;
 }
 
-export function ClientForm({ client, onSubmit, isLoading, lockToCurrentCompany = false }: ClientFormProps) {
+export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
   const { clientGroups, allCompanies, currentCompany } = useInvoiceData();
   const initialGroupId = clientGroups.find(g => g.clientIds.includes(client?.id || ''))?.id || 'none';
 
@@ -71,15 +70,7 @@ export function ClientForm({ client, onSubmit, isLoading, lockToCurrentCompany =
     e.preventDefault();
     if (!validateForm()) return;
 
-    const submitData = lockToCurrentCompany && !client
-      ? {
-          ...formData,
-          companyId: currentCompany?.id || formData.companyId,
-          companyName: currentCompany?.name || formData.companyName,
-        }
-      : formData;
-
-    onSubmit(submitData as any);
+    onSubmit(formData as any);
     setFormData({
       name: '',
       email: '',
@@ -150,13 +141,7 @@ export function ClientForm({ client, onSubmit, isLoading, lockToCurrentCompany =
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
             Company
           </label>
-          {lockToCurrentCompany && !client ? (
-            <div className="flex h-10 items-center rounded-md border border-input bg-muted/40 px-3 text-sm">
-              <Building2 className="mr-2 h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span>{currentCompany?.name || 'Current company'}</span>
-            </div>
-          ) : (
-            <Select
+          <Select
               value={formData.companyId || 'none'}
               onValueChange={(value) => {
                 const selected = allCompanies.find(co => co.id === value);
@@ -186,7 +171,6 @@ export function ClientForm({ client, onSubmit, isLoading, lockToCurrentCompany =
                 ))}
               </SelectContent>
             </Select>
-          )}
           {errors.companyName && (
             <p className="text-xs text-red-600 mt-1">{errors.companyName}</p>
           )}

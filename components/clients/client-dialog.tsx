@@ -17,7 +17,6 @@ interface ClientDialogProps {
   onOpenChange: (open: boolean) => void;
   client?: Client;
   onSubmit: (data: Omit<Client, 'id' | 'createdAt'>) => void;
-  lockToCurrentCompany?: boolean;
 }
 
 export function ClientDialog({
@@ -25,7 +24,6 @@ export function ClientDialog({
   onOpenChange,
   client,
   onSubmit,
-  lockToCurrentCompany = false,
 }: ClientDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -61,7 +59,6 @@ export function ClientDialog({
           client={client}
           onSubmit={handleSubmit}
           isLoading={isLoading}
-          lockToCurrentCompany={lockToCurrentCompany}
         />
       </DialogContent>
     </Dialog>

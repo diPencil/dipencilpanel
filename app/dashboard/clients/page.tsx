@@ -135,7 +135,6 @@ export default function ClientsPage() {
           setIsDialogOpen(false);
         }}
         client={selectedClient}
-        lockToCurrentCompany
       />
 
       <ConfirmDeleteDialog
