@@ -80,7 +80,8 @@ export async function exportElementToPdf(element: HTMLElement, filename: string)
   let canvas: HTMLCanvasElement;
   try {
     canvas = await html2canvas(element, {
-      scale: 1.75,
+      // Lower scale keeps text readable while drastically reducing file size.
+      scale: 1.25,
       width: renderWidth,
       height: renderHeight,
       windowWidth: renderWidth,
@@ -113,9 +114,9 @@ export async function exportElementToPdf(element: HTMLElement, filename: string)
     element.style.maxWidth = prevInline.maxWidth;
   }
 
-  // PNG keeps invoice text sharper vs JPEG (Hostinger PDFs are vector; this is the closest raster match)
-  const imgData = canvas.toDataURL('image/png');
-  const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  // JPEG compression cuts PDF size significantly compared to PNG screenshots.
+  const imgData = canvas.toDataURL('image/jpeg', 0.86);
+  const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
   const scale = Math.min(pageW / canvas.width, pageH / canvas.height);
@@ -124,7 +125,7 @@ export async function exportElementToPdf(element: HTMLElement, filename: string)
   const offsetX = (pageW - pdfWidth) / 2;
   const offsetY = (pageH - pdfHeight) / 2;
 
-  pdf.addImage(imgData, 'PNG', offsetX, offsetY, pdfWidth, pdfHeight);
+  pdf.addImage(imgData, 'JPEG', offsetX, offsetY, pdfWidth, pdfHeight);
 
   pdf.save(filename);
 }
