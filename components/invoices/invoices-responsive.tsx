@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Invoice, Client } from '@/lib/types';
-import { formatCurrency, formatDate } from '@/lib/formatting';
+import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/formatting';
 import { StatusBadge } from './status-badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -57,7 +57,7 @@ export function InvoicesResponsive({
                 key={invoice.id}
                 className="border-b border-border hover:bg-muted/50 transition-colors"
               >
-                <td className="py-3 px-4 font-medium">{invoice.number}</td>
+                <td className="py-3 px-4 font-medium">{formatInvoiceNumber(invoice.number)}</td>
                 <td className="py-3 px-4">{getClientName(invoice.clientId)}</td>
                 <td className="py-3 px-4 font-medium">
                   {formatCurrency(invoice.total, invoice.currency)}
@@ -114,7 +114,7 @@ export function InvoicesResponsive({
             <div className="space-y-3">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-semibold text-sm">{invoice.number}</p>
+                  <p className="font-semibold text-sm">{formatInvoiceNumber(invoice.number)}</p>
                   <p className="text-xs text-muted-foreground">
                     {getClientName(invoice.clientId)}
                   </p>

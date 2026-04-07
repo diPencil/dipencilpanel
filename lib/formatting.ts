@@ -131,29 +131,19 @@ export function getRelativeTime(date: string | Date): string {
 }
 
 /**
- * Format invoice number (strip extra hyphens if they are in the INV-YYYY-XXXX pattern)
+ * Format invoice number for display without changing the underlying sequence.
+ * Supports both stored forms:
+ * - INV-YYYY-XXXX
+ * - INV-YYYYXXXX
  */
 export function formatInvoiceNumber(num: string): string {
   if (!num) return '';
-  
-  // 1. Handle Old Format: INV-YYYY-XXXX -> INV-YYYYXXXX
-  let normalized = num.replace(/^INV-(\d{4})-(\d{4,8})$/, 'INV-$1$2');
 
-  // 2. Randomize Sequential Display: If it's a short sequence (e.g., 0001), make it look random (deterministic)
-  const match = normalized.match(/^INV-(\d{4})(\d{4,8})$/);
-  if (match) {
-    const year = match[1];
-    const seqStr = match[2];
-    const seq = parseInt(seqStr, 10);
-    
-    // If it looks like a sequential number (starts with zeros or very small)
-    if (seq < 10000 && seqStr.length <= 4) {
-      // Create a deterministic "random" number based on the sequence
-      // Use a hash to map 1, 2, 3... to a consistent 4-digit range (1000-9999)
-      const hash = ((seq * 7919) % 9000 + 1000).toString();
-      return `INV-${year}${hash}`;
-    }
+  const compactMatch = num.match(/^INV-(\d{4})(\d{4,8})$/);
+  if (compactMatch) {
+    const [, year, sequence] = compactMatch;
+    return `INV-${year}-${sequence}`;
   }
-  
-  return normalized;
+
+  return num;
 }

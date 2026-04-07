@@ -407,7 +407,7 @@ export function AppDetail({ app }: AppDetailProps) {
                     <div className="flex items-center gap-2">
                       {invoiceStatusIcon(inv.status)}
                       <div>
-                        <p className="text-sm font-medium">#{inv.number}</p>
+                        <p className="text-sm font-medium">#{formatInvoiceNumber(inv.number)}</p>
                         <p className="text-xs text-muted-foreground">{new Date(inv.issueDate).toLocaleDateString()}</p>
                       </div>
                     </div>

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Invoice, Client } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/invoices/status-badge';
-import { formatCurrency, formatDate } from '@/lib/formatting';
+import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/formatting';
 import { ArrowRight } from 'lucide-react';
 
 interface RecentInvoicesProps {
@@ -57,7 +57,7 @@ export function RecentInvoices({ invoices = [], clients = [] }: RecentInvoicesPr
                       href={`/dashboard/invoices/${invoice.id}`}
                       className="font-medium text-primary hover:underline"
                     >
-                      {invoice.number}
+                      {formatInvoiceNumber(invoice.number)}
                     </Link>
                   </td>
                   <td className="py-3 px-3">{getClientName(invoice.clientId)}</td>

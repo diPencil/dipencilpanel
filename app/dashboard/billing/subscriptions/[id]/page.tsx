@@ -30,7 +30,7 @@ import {
   ExternalLink,
   Edit2
 } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/formatting';
+import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/formatting';
 import { SubscriptionStatusBadge } from '@/components/subscriptions/subscription-status-badge';
 
 /** Calendar month before expiry (same day-of-month in UTC). Window: that day through and after expiry. */
@@ -192,7 +192,7 @@ export default function SubscriptionDetailsPage() {
                   <tbody className="divide-y divide-border/50">
                     {subInvoices.map((inv) => (
                       <tr key={inv.id} className="hover:bg-muted/10 transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/billing/invoices/${inv.id}`)}>
-                        <td className="px-6 py-4 text-sm font-mono font-medium">{inv.number}</td>
+                        <td className="px-6 py-4 text-sm font-mono font-medium">{formatInvoiceNumber(inv.number)}</td>
                         <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(inv.issueDate)}</td>
                         <td className="px-6 py-4 text-sm font-mono text-right font-medium">{formatCurrency(inv.total, inv.currency)}</td>
                         <td className="px-6 py-4 text-right">

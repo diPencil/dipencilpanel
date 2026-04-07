@@ -6,7 +6,7 @@ import { Invoice, Client } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from './status-badge';
-import { formatCurrency, formatDate } from '@/lib/formatting';
+import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/formatting';
 import { Plus, Search, Eye, Trash2, Copy } from 'lucide-react';
 import {
   AlertDialog,
@@ -130,7 +130,7 @@ export function InvoicesTable({
                       key={invoice.id}
                       className="border-b border-border hover:bg-muted/50 transition-colors"
                     >
-                      <td className="py-3 px-4 font-medium">{invoice.number}</td>
+                      <td className="py-3 px-4 font-medium">{formatInvoiceNumber(invoice.number)}</td>
                       <td className="py-3 px-4">{getClientName(invoice.clientId)}</td>
                       <td className="py-3 px-4 font-semibold">
                         {formatCurrency(invoice.total, invoice.currency)}
