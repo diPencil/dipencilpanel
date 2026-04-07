@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import {
   Send, Search, RefreshCw, Globe, HardDrive,
   Server, Mail, Monitor, Smartphone, AlertTriangle,
-  Clock, CheckCircle, Filter,
+  Clock, CheckCircle, Filter, X,
 } from 'lucide-react';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -70,6 +70,11 @@ export default function RemindersPage() {
 
   const [renewTarget, setRenewTarget] = useState<ReminderItem | null>(null);
   const [sendReminderItem, setSendReminderItem] = useState<ReminderItem | null>(null);
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+
+  const dismissItem = useCallback((item: ReminderItem) => {
+    setDismissed((prev) => new Set([...prev, `${item.serviceType}-${item.serviceId}`]));
+  }, []);
 
   const load = useCallback(async () => {
     if (!company.id) return;
@@ -78,12 +83,14 @@ export default function RemindersPage() {
     if (res.success) setItems(res.data);
     else toast.error('Failed to load reminders');
     setLoading(false);
+    setDismissed(new Set());
   }, [company.id]);
 
   useEffect(() => { void load(); }, [load]);
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
+      if (dismissed.has(`${item.serviceType}-${item.serviceId}`)) return false;
       if (filterType !== 'all' && item.serviceType !== filterType) return false;
       if (filterUrgency === 'expired' && item.daysLeft >= 0) return false;
       if (filterUrgency === 'today' && item.daysLeft !== 0) return false;
@@ -322,6 +329,21 @@ export default function RemindersPage() {
                             <TooltipContent side="left">Renewal needs a linked subscription</TooltipContent>
                           </Tooltip>
                         )}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => dismissItem(item)}
+                              aria-label="Dismiss reminder"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">Dismiss</TooltipContent>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>
