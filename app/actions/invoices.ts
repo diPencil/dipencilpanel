@@ -146,6 +146,9 @@ export async function updateInvoice(
     const existing = await prisma.invoice.findFirst({ where: { id, companyId } });
     if (!existing) return { success: false as const, error: 'Invoice not found' };
 
+    let normalizedItems:
+      | Array<{ description: string; quantity: number; price: number; discount: number; vat: number }>
+      | null = null;
     let totalsPatch: Partial<{
       subtotal: number;
       discountAmount: number;
@@ -155,19 +158,14 @@ export async function updateInvoice(
 
     const rawItems = input.items;
     if (Array.isArray(rawItems) && rawItems.length > 0) {
-      const normalized = rawItems.map((row: Record<string, unknown>) => ({
+      normalizedItems = rawItems.map((row: Record<string, unknown>) => ({
         description: String(row.description ?? ''),
         quantity: Math.max(1, Math.round(Number(row.quantity) || 1)),
         price: Number(row.price) || 0,
         discount: Number(row.discount) || 0,
         vat: Number(row.vat) || 0,
       }));
-      totalsPatch = calcTotals(normalized);
-
-      await prisma.invoiceItem.deleteMany({ where: { invoiceId: id } });
-      await prisma.invoiceItem.createMany({
-        data: normalized.map((item) => ({ ...item, invoiceId: id })),
-      });
+      totalsPatch = calcTotals(normalizedItems);
     }
 
     // Never spread arbitrary client fields (e.g. serviceType / serviceId from subscription UI)
@@ -213,13 +211,37 @@ export async function updateInvoice(
           : String(input.subscriptionId);
     }
 
-    const updated = await prisma.invoice.update({
-      where: { id },
-      data,
-      include: {
-        items: true,
-        subscription: { select: { id: true, serviceType: true, serviceName: true } },
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      if (normalizedItems) {
+        await tx.invoiceItem.deleteMany({ where: { invoiceId: id } });
+        await tx.invoiceItem.createMany({
+          data: normalizedItems.map((item) => ({ ...item, invoiceId: id })),
+        });
+      }
+
+      const updatedInvoice = await tx.invoice.update({
+        where: { id },
+        data,
+        include: {
+          items: true,
+          subscription: { select: { id: true, serviceType: true, serviceName: true } },
+        },
+      });
+
+      // If this invoice belongs to a subscription and items were edited,
+      // sync subscription recurring price with invoice net subtotal (before VAT).
+      if (normalizedItems && updatedInvoice.subscriptionId) {
+        const recurringPrice = Math.max(
+          0,
+          (updatedInvoice.subtotal ?? 0) - (updatedInvoice.discountAmount ?? 0),
+        );
+        await tx.subscription.updateMany({
+          where: { id: updatedInvoice.subscriptionId, companyId },
+          data: { price: recurringPrice },
+        });
+      }
+
+      return updatedInvoice;
     });
     return { success: true as const, data: updated };
   } catch (error) {
