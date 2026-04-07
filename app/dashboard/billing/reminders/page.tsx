@@ -102,7 +102,7 @@ export default function RemindersPage() {
       }
       return true;
     });
-  }, [items, filterType, filterUrgency, search]);
+  }, [items, dismissed, filterType, filterUrgency, search]);
 
   // Summary counts
   const counts = useMemo(() => ({
