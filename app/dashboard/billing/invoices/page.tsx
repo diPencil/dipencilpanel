@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useLayoutEffect, useState, useCallback } from 'react';
+import React, { useLayoutEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,8 @@ import {
   Search,
   Send,
   MoreHorizontal,
-  Trash2
+  Trash2,
+  ArrowUpDown
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -65,6 +66,7 @@ export default function InvoicesPage() {
   const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
   const [deletingInvoice, setDeletingInvoice] = useState<Invoice | null>(null);
   const [sendDialogInvoice, setSendDialogInvoice] = useState<Invoice | null>(null);
+  const [serviceSort, setServiceSort] = useState<'none' | 'asc' | 'desc'>('none');
 
   const handleDeleteConfirm = useCallback(() => {
     if (!deletingInvoice) return;
@@ -138,23 +140,6 @@ export default function InvoicesPage() {
     }
   };
 
-  const filteredInvoices = invoices.filter((inv) => {
-    const client = getClient(inv.clientId);
-    const searchMatch = `${client?.name} ${formatInvoiceNumber(inv.number)}`.toLowerCase().includes(searchTerm.toLowerCase());
-    const statusMatch = filterStatus === 'all' || inv.status === filterStatus;
-    return searchMatch && statusMatch;
-  });
-
-  const companyCurrency = company.currency || 'USD';
-  const filteredTotalPricing =
-    searchTerm.trim().length > 0
-      ? filteredInvoices.reduce(
-          (sum, inv) =>
-            sum + convertCurrency(inv.total, inv.currency || companyCurrency, companyCurrency, company),
-          0
-        )
-      : null;
-
   const getServiceName = (invoice: (typeof invoices)[number]) => {
     // 1. Specific service name stored in DB
     if (invoice.serviceName) return invoice.serviceName; 
@@ -194,6 +179,50 @@ export default function InvoicesPage() {
 
     return 'General billing';
   };
+
+  const filteredInvoices = useMemo(() => {
+    const normalizedSearch = searchTerm.toLowerCase();
+    const nextInvoices = invoices.filter((inv) => {
+      const client = getClient(inv.clientId);
+      const searchMatch = `${client?.name} ${formatInvoiceNumber(inv.number)}`.toLowerCase().includes(normalizedSearch);
+      const statusMatch = filterStatus === 'all' || inv.status === filterStatus;
+      return searchMatch && statusMatch;
+    });
+
+    if (serviceSort === 'none') {
+      return nextInvoices;
+    }
+
+    return [...nextInvoices].sort((left, right) => {
+      const leftName = getServiceName(left);
+      const rightName = getServiceName(right);
+      const comparison = leftName.localeCompare(rightName, undefined, { numeric: true, sensitivity: 'base' });
+
+      if (comparison !== 0) {
+        return serviceSort === 'asc' ? comparison : -comparison;
+      }
+
+      return right.issueDate.getTime() - left.issueDate.getTime();
+    });
+  }, [filterStatus, getClient, getServiceName, invoices, searchTerm, serviceSort]);
+
+  const companyCurrency = company.currency || 'USD';
+  const filteredTotalPricing =
+    searchTerm.trim().length > 0
+      ? filteredInvoices.reduce(
+          (sum, inv) =>
+            sum + convertCurrency(inv.total, inv.currency || companyCurrency, companyCurrency, company),
+          0
+        )
+      : null;
+
+  const toggleServiceSort = useCallback(() => {
+    setServiceSort((current) => {
+      if (current === 'none') return 'asc';
+      if (current === 'asc') return 'desc';
+      return 'none';
+    });
+  }, []);
 
   const getStatusBadge = (invoice: (typeof invoices)[number]) => {
     if (invoice.paymentStatus === 'paid') {
@@ -298,7 +327,19 @@ export default function InvoicesPage() {
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Invoice Number</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Client</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Service</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">
+                  <button
+                    type="button"
+                    onClick={toggleServiceSort}
+                    className="inline-flex items-center gap-2 transition-colors hover:text-foreground"
+                    aria-label="Sort by service name"
+                  >
+                    <span>Service</span>
+                    <ArrowUpDown
+                      className={`h-4 w-4 ${serviceSort !== 'none' ? 'text-foreground' : 'text-muted-foreground'}`}
+                    />
+                  </button>
+                </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Amount</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Status</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Dates</th>
