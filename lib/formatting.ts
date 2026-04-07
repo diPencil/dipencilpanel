@@ -131,19 +131,26 @@ export function getRelativeTime(date: string | Date): string {
 }
 
 /**
- * Format invoice number for display without changing the underlying sequence.
- * Supports both stored forms:
- * - INV-YYYY-XXXX
- * - INV-YYYYXXXX
+ * Format invoice number for display.
+ * Stored sequential invoice numbers like INV-YYYY-0004 are displayed in the
+ * compact derived form used across the UI, e.g. INV-YYYY5676.
  */
 export function formatInvoiceNumber(num: string): string {
   if (!num) return '';
 
-  const compactMatch = num.match(/^INV-(\d{4})(\d{4,8})$/);
-  if (compactMatch) {
-    const [, year, sequence] = compactMatch;
-    return `INV-${year}-${sequence}`;
+  let normalized = num.replace(/^INV-(\d{4})-(\d{4,8})$/, 'INV-$1$2');
+
+  const match = normalized.match(/^INV-(\d{4})(\d{4,8})$/);
+  if (match) {
+    const year = match[1];
+    const seqStr = match[2];
+    const seq = parseInt(seqStr, 10);
+
+    if (seq < 10000 && seqStr.length <= 4) {
+      const hash = ((seq * 7919) % 9000 + 1000).toString();
+      return `INV-${year}${hash}`;
+    }
   }
 
-  return num;
+  return normalized;
 }
