@@ -16,6 +16,7 @@ export default function ClientsPage() {
   const {
     clients,
     clientGroups,
+    currentCompany,
     addClient,
     updateClient,
     deleteClient,
@@ -125,11 +126,16 @@ export default function ClientsPage() {
           if (selectedClient) {
             updateClient(selectedClient.id, client as any);
           } else {
-            addClient(client as any);
+            addClient({
+              ...client,
+              companyId: currentCompany?.id || client.companyId,
+              companyName: currentCompany?.name || client.companyName,
+            } as any);
           }
           setIsDialogOpen(false);
         }}
         client={selectedClient}
+        lockToCurrentCompany
       />
 
       <ConfirmDeleteDialog

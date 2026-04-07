@@ -13,9 +13,10 @@ interface ClientFormProps {
   client?: Client;
   onSubmit: (data: Omit<Client, 'id' | 'createdAt'>) => void;
   isLoading?: boolean;
+  lockToCurrentCompany?: boolean;
 }
 
-export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
+export function ClientForm({ client, onSubmit, isLoading, lockToCurrentCompany = false }: ClientFormProps) {
   const { clientGroups, allCompanies, currentCompany } = useInvoiceData();
   const initialGroupId = clientGroups.find(g => g.clientIds.includes(client?.id || ''))?.id || 'none';
 
@@ -70,7 +71,15 @@ export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
     e.preventDefault();
     if (!validateForm()) return;
 
-    onSubmit(formData as any);
+    const submitData = lockToCurrentCompany && !client
+      ? {
+          ...formData,
+          companyId: currentCompany?.id || formData.companyId,
+          companyName: currentCompany?.name || formData.companyName,
+        }
+      : formData;
+
+    onSubmit(submitData as any);
     setFormData({
       name: '',
       email: '',
@@ -141,36 +150,43 @@ export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
             Company
           </label>
-          <Select
-            value={formData.companyId || 'none'}
-            onValueChange={(value) => {
-              const selected = allCompanies.find(co => co.id === value);
-              setFormData((prev) => ({
-                ...prev,
-                companyId: value === 'none' ? '' : value,
-                companyName: selected ? selected.name : (value === 'none' ? '' : prev.companyName),
-              }));
-              if (errors.companyName) setErrors((prev) => ({ ...prev, companyName: undefined }));
-            }}
-            disabled={isLoading}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a company" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">
-                <span className="text-muted-foreground">No company</span>
-              </SelectItem>
-              {allCompanies.map((co) => (
-                <SelectItem key={co.id} value={co.id}>
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <span>{co.name}</span>
-                  </div>
+          {lockToCurrentCompany && !client ? (
+            <div className="flex h-10 items-center rounded-md border border-input bg-muted/40 px-3 text-sm">
+              <Building2 className="mr-2 h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span>{currentCompany?.name || 'Current company'}</span>
+            </div>
+          ) : (
+            <Select
+              value={formData.companyId || 'none'}
+              onValueChange={(value) => {
+                const selected = allCompanies.find(co => co.id === value);
+                setFormData((prev) => ({
+                  ...prev,
+                  companyId: value === 'none' ? '' : value,
+                  companyName: selected ? selected.name : (value === 'none' ? '' : prev.companyName),
+                }));
+                if (errors.companyName) setErrors((prev) => ({ ...prev, companyName: undefined }));
+              }}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a company" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">
+                  <span className="text-muted-foreground">No company</span>
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                {allCompanies.map((co) => (
+                  <SelectItem key={co.id} value={co.id}>
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span>{co.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           {errors.companyName && (
             <p className="text-xs text-red-600 mt-1">{errors.companyName}</p>
           )}
