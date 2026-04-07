@@ -1,29 +1,32 @@
 import { prisma } from './prisma';
 
 /**
- * Generates the next sequential invoice number for a company.
- * Format: INV-YYYY-XXXX
+ * Generates the next unique invoice number for a company.
+ * Format: INV-YYYYNNNN
  */
 export async function generateNextInvoiceNumber(companyId: string): Promise<string> {
   const year = new Date().getFullYear();
-  const prefix = `INV-${year}-`;
+  const prefix = `INV-${year}`;
 
-  const lastInvoice = await prisma.invoice.findFirst({
+  const existingInvoices = await prisma.invoice.findMany({
     where: {
       companyId,
       number: { startsWith: prefix },
     },
-    orderBy: { number: 'desc' },
     select: { number: true },
   });
 
-  let next = 1;
-  if (lastInvoice) {
-    const seq = parseInt(lastInvoice.number.replace(prefix, ''), 10);
-    if (!isNaN(seq)) next = seq + 1;
+  const existingNumbers = new Set(existingInvoices.map((invoice) => invoice.number));
+
+  for (let attempts = 0; attempts < 100; attempts += 1) {
+    const suffix = Math.floor(1000 + Math.random() * 9000).toString();
+    const candidate = `${prefix}${suffix}`;
+    if (!existingNumbers.has(candidate)) {
+      return candidate;
+    }
   }
 
-  return `${prefix}${String(next).padStart(4, '0')}`;
+  return `${prefix}${Date.now().toString().slice(-4)}`;
 }
 
 /**

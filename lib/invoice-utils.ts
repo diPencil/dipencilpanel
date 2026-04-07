@@ -1,7 +1,7 @@
 import { Invoice, InvoiceItem } from './types';
 
 /**
- * Generate a unique invoice number in format INV-YYYY-XXXX
+ * Generate a unique invoice number in format INV-YYYYNNNN
  */
 export function generateInvoiceNumber(existingInvoices: Invoice[]): string {
   const currentYear = new Date().getFullYear();
@@ -21,7 +21,7 @@ export function generateInvoiceNumber(existingInvoices: Invoice[]): string {
     attempts++;
   }
 
-  return fullNumber || `INV-${currentYear}${Date.now().toString().slice(-8)}`;
+  return fullNumber || `INV-${currentYear}${Date.now().toString().slice(-4)}`;
 }
 
 /**
