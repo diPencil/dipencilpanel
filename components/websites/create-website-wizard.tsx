@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/formatting';
 import type { WebsiteBillingCycle } from '@/lib/types';
+import { WEBSITE_TYPE_OPTIONS } from '@/lib/website-type-options';
 
 function planPriceForCycle(
   plan: { price: { monthly: number; yearly: number } },
@@ -317,26 +318,26 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
             <div>
               <Label>Website Type</Label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-1.5">
-                {[
-                  { value: 'wordpress', label: 'WordPress', icon: '/wordpress-139-svgrepo-com.svg', color: 'border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' },
-                  { value: 'node', label: 'Node.js', icon: '/node-js-svgrepo-com.svg', color: 'border-green-300 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' },
-                  { value: 'php', label: 'PHP', icon: '/phplaravel-svgrepo-com.svg', color: 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300' },
-                  { value: 'html', label: 'Static HTML', icon: '/html5-01-svgrepo-com.svg', color: 'border-orange-300 bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300' },
-                ].map((t) => (
+                {WEBSITE_TYPE_OPTIONS.map((t) => (
                   <button
                     key={t.value}
                     type="button"
-                    onClick={() => set('type', t.value as any)}
+                    onClick={() => set('type', t.value as FormData['type'])}
                     className={cn(
                       'rounded-xl border-2 p-3 flex flex-col items-center justify-center gap-2 transition-all min-h-[100px]',
-                      form.type === t.value ? t.color + ' ring-2 shadow-md scale-105' : 'border-border hover:border-muted-foreground/30 bg-card/40',
+                      form.type === t.value
+                        ? `${t.wizardCardClass} ring-2 shadow-md scale-105`
+                        : 'border-border hover:border-muted-foreground/30 bg-card/40',
                     )}
                   >
                     <div className="h-10 w-10 flex items-center justify-center">
-                      <img 
-                        src={t.icon} 
-                        alt={t.label} 
-                        className={cn("h-8 w-8 object-contain transition-transform", form.type === t.value ? "scale-110" : "opacity-70 group-hover:opacity-100")} 
+                      <img
+                        src={t.iconSrc}
+                        alt={t.label}
+                        className={cn(
+                          'h-8 w-8 object-contain transition-transform',
+                          form.type === t.value ? 'scale-110' : 'opacity-70 group-hover:opacity-100',
+                        )}
                       />
                     </div>
                     <span className="text-sm font-bold tracking-tight">{t.label}</span>
