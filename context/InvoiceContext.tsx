@@ -1274,10 +1274,24 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
   // ─── Website Actions ───────────────────────────────────────────────────────
 
   const addWebsite = async (data: Omit<Website, 'id' | 'createdAt' | 'renewalDate' | 'companyId'> & { companyId?: string; linkedDomainId?: string }): Promise<{ success: boolean; error?: string }> => {
+    const owningClient = clients.find((c) => c.id === data.clientId);
+    const fromClient = owningClient?.companyId?.trim();
+    const fromForm = typeof data.companyId === 'string' ? data.companyId.trim() : '';
+    // Always prefer the client's tenant — matches getAllWebsites(tenantId) on reload (dropdown could pick wrong org)
+    const cid = fromClient || fromForm || tenantId;
+
+    if (!data.clientId) {
+      toast.error('Please select a client for this website.');
+      return { success: false, error: 'Missing clientId' };
+    }
+    if (!cid) {
+      toast.error('Workspace not ready — refresh the page and try again.');
+      return { success: false, error: 'Missing companyId' };
+    }
+
     const id = tempId();
     const now = new Date().toISOString();
     const renewalDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    const cid = data.companyId || tenantId;
     const temp: Website = { ...data, id, createdAt: now, renewalDate, companyId: cid };
     setWebsites((prev) => [...prev, temp]);
 

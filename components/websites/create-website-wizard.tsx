@@ -150,12 +150,14 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
 
   React.useEffect(() => {
     if (!initialClientId) return;
-    const exists = clients.some((c) => c.id === initialClientId);
-    if (!exists) return;
-    setForm((prev) =>
-      prev.clientId === initialClientId ? prev : { ...prev, clientId: initialClientId },
-    );
-  }, [initialClientId, clients]);
+    const cl = clients.find((c) => c.id === initialClientId);
+    if (!cl) return;
+    setForm((prev) => ({
+      ...prev,
+      clientId: initialClientId,
+      selectedCompanyId: cl.companyId || prev.selectedCompanyId || currentCompany?.id || '',
+    }));
+  }, [initialClientId, clients, currentCompany?.id]);
 
   const allAvailablePlans = [...hostingPlans, ...cloudHostingPlans];
 
@@ -219,6 +221,7 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
     if (!validate(6)) return;
     setIsSubmitting(true);
     try {
+      const owner = clients.find((c) => c.id === form.clientId);
       const result = await addWebsite({
         name: form.name.trim(),
         domain: form.domain.trim(),
@@ -233,7 +236,7 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
         },
         status: form.status,
         linkedDomain: form.domain.trim(),
-        companyId: form.selectedCompanyId,
+        companyId: owner?.companyId || form.selectedCompanyId || currentCompany?.id || '',
         // Pass domain DB ID so InvoiceContext can auto-link after real website is created
         linkedDomainId: form.domainId || undefined,
       });
@@ -356,7 +359,15 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
                 <button
                   key={c.id}
                   type="button"
-                  onClick={() => { set('clientId', c.id); set('domainId', ''); set('domain', ''); set('hostingId', ''); set('vpsId', ''); set('emailIds', []); }}
+                  onClick={() => {
+                    set('clientId', c.id);
+                    if (c.companyId) set('selectedCompanyId', c.companyId);
+                    set('domainId', '');
+                    set('domain', '');
+                    set('hostingId', '');
+                    set('vpsId', '');
+                    set('emailIds', []);
+                  }}
                   className={cn(
                     'w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-all',
                     form.clientId === c.id ? 'border-primary bg-primary/5 ring-1' : 'border-border hover:bg-muted/30',
