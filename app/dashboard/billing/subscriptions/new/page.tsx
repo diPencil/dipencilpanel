@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Check, ChevronLeft, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { useToast } from '@/hooks/use-toast';
@@ -89,8 +89,9 @@ const addBillingCycle = (dateValue: string, cycle: Subscription['billingCycle'])
   return toInputDate(date);
 };
 
-export default function CreateSubscriptionPage() {
+function CreateSubscriptionPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { clients, company, domains = [], addSubscription } = useInvoiceData();
   const [isLoading, setIsLoading] = useState(false);
@@ -116,6 +117,12 @@ export default function CreateSubscriptionPage() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const cid = searchParams.get('clientId');
+    if (!cid || !clients.some((c) => c.id === cid)) return;
+    setFormData((prev) => (prev.clientId === cid ? prev : { ...prev, clientId: cid, domainId: '' }));
+  }, [searchParams, clients]);
 
   // ─── Custom Plans ──────────────────────────────────────────────────────────
 
@@ -784,5 +791,13 @@ export default function CreateSubscriptionPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function CreateSubscriptionPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-muted-foreground text-sm text-center">Loading…</div>}>
+      <CreateSubscriptionPageInner />
+    </Suspense>
   );
 }

@@ -125,9 +125,11 @@ function FieldError({ msg }: { msg?: string }) {
 
 export interface CreateWebsiteWizardProps {
   initialType?: string;
+  /** Pre-select client when opening from a client profile deep link. */
+  initialClientId?: string;
 }
 
-export function CreateWebsiteWizard({ initialType }: CreateWebsiteWizardProps) {
+export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebsiteWizardProps) {
   const router = useRouter();
   const { clients, domains = [], hosting, vps, emails, addWebsite, hostingPlans = [], cloudHostingPlans = [], allCompanies = [], currentCompany } = useInvoiceData();
   const [step, setStep] = useState(1);
@@ -145,6 +147,15 @@ export function CreateWebsiteWizard({ initialType }: CreateWebsiteWizardProps) {
       setForm(prev => ({ ...prev, selectedCompanyId: currentCompany.id }));
     }
   }, [currentCompany?.id]);
+
+  React.useEffect(() => {
+    if (!initialClientId) return;
+    const exists = clients.some((c) => c.id === initialClientId);
+    if (!exists) return;
+    setForm((prev) =>
+      prev.clientId === initialClientId ? prev : { ...prev, clientId: initialClientId },
+    );
+  }, [initialClientId, clients]);
 
   const allAvailablePlans = [...hostingPlans, ...cloudHostingPlans];
 

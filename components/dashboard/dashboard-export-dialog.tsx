@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { downloadTextFile, rowsToCsv } from '@/lib/dashboard-export';
+import { downloadTextFile, delay, rowsToCsv, safeJsonStringify } from '@/lib/dashboard-export';
 import { toast } from 'sonner';
 import type {
   Client,
@@ -82,6 +82,7 @@ export function DashboardExportDialog({
 
   const [selected, setSelected] = useState<Set<ExportKey>>(() => new Set());
   const [format, setFormat] = useState<'json' | 'csv'>('json');
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -107,11 +108,13 @@ export function DashboardExportDialog({
     setSelected(next);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (selected.size === 0) {
       toast.error('Choose at least one dataset to export.');
       return;
     }
+    if (isExporting) return;
+    setIsExporting(true);
 
     try {
       if (format === 'json') {
@@ -121,9 +124,10 @@ export function DashboardExportDialog({
         for (const key of selected) {
           payload[key] = data[key] ?? [];
         }
+        const json = safeJsonStringify(payload, 2);
         downloadTextFile(
           stampName('dashboard-export', 'json'),
-          JSON.stringify(payload, null, 2),
+          json,
           'application/json;charset=utf-8',
         );
         toast.success('Export downloaded (JSON).');
@@ -131,13 +135,18 @@ export function DashboardExportDialog({
         return;
       }
 
-      // CSV: one file per selected table
+      // CSV: one file per selected table (pause between saves — avoids browser blocking 2+ downloads)
       let files = 0;
+      let isFirstFile = true;
       for (const key of selected) {
         const rows = data[key] ?? [];
         if (rows.length === 0) continue;
         const csv = rowsToCsv(rows as unknown as Record<string, unknown>[]);
         if (!csv) continue;
+        if (!isFirstFile) {
+          await delay(280);
+        }
+        isFirstFile = false;
         downloadTextFile(
           stampName(`${String(key)}-export`, 'csv'),
           `\uFEFF${csv}`,
@@ -154,6 +163,8 @@ export function DashboardExportDialog({
     } catch (e) {
       console.error(e);
       toast.error('Export failed. Check the console for details.');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -214,11 +225,11 @@ export function DashboardExportDialog({
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isExporting}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleExport}>
-            Download
+          <Button type="button" onClick={() => void handleExport()} disabled={isExporting}>
+            {isExporting ? 'Preparing…' : 'Download'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { Suspense, useMemo, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -28,8 +28,10 @@ function formatInputDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-export default function NewDomainPage() {
+function NewDomainPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlClientApplied = useRef(false);
   const { toast } = useToast();
   const { 
     clients = [], 
@@ -97,16 +99,33 @@ export default function NewDomainPage() {
     );
   }, [clients, selectedCompanyId, allCompanies]);
 
-  // Sync clientId if not set or if company changed (reset to avoid stale client from another company)
+  // If company filter changes, drop client only when they are no longer in the filtered list
   useEffect(() => {
-    setClientId('');
-  }, [selectedCompanyId]);
+    setClientId((prev) => {
+      if (prev && filteredClients.some((c) => c.id === prev)) return prev;
+      return '';
+    });
+  }, [selectedCompanyId, filteredClients]);
 
   useEffect(() => {
-    if (!clientId && filteredClients.length > 0) {
+    if (clientId) return;
+    if (filteredClients.length > 0) {
       setClientId(filteredClients[0].id);
     }
   }, [filteredClients, clientId]);
+
+  // Deep link: /domains/new?clientId=...
+  useEffect(() => {
+    if (urlClientApplied.current) return;
+    const q = searchParams.get('clientId');
+    if (!q || !clients.some((c) => c.id === q)) return;
+    urlClientApplied.current = true;
+    const cl = clients.find((c) => c.id === q);
+    if (cl?.companyId) {
+      setSelectedCompanyId(cl.companyId);
+    }
+    setClientId(q);
+  }, [searchParams, clients]);
 
   // Logic: VPS and Host are mutually exclusive in terms of requirement but can be chosen.
   useEffect(() => {
@@ -523,5 +542,13 @@ export default function NewDomainPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function NewDomainPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-muted-foreground text-sm text-center">Loading…</div>}>
+      <NewDomainPageInner />
+    </Suspense>
   );
 }

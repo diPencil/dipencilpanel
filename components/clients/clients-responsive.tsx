@@ -1,9 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { Client } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Edit2, Trash2, Mail, Phone } from 'lucide-react';
+import { Edit2, Eye, Trash2, Mail, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useInvoiceData } from '@/context/InvoiceContext';
 
@@ -71,6 +72,11 @@ export function ClientsResponsive({
                 </td>
                 <td className="py-3 px-4">
                   <div className="flex gap-2 justify-end">
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" asChild title="View details">
+                      <Link href={`/dashboard/clients/${client.id}`}>
+                        <Eye className="h-4 w-4" />
+                      </Link>
+                    </Button>
                     {onEdit && (
                       <Button
                         size="sm"
@@ -132,6 +138,12 @@ export function ClientsResponsive({
               </div>
 
               <div className="flex gap-2 pt-2">
+                <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" asChild>
+                  <Link href={`/dashboard/clients/${client.id}`}>
+                    <Eye className="h-3 w-3 mr-1" />
+                    Details
+                  </Link>
+                </Button>
                 {onEdit && (
                   <Button
                     size="sm"

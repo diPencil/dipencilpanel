@@ -9,7 +9,8 @@ import { CreateWebsiteWizard } from '@/components/websites/create-website-wizard
 function NewWebsiteContent() {
   const searchParams = useSearchParams();
   const initialType = searchParams.get('type') || 'wordpress';
-  
+  const initialClientId = searchParams.get('clientId') || undefined;
+
   return (
     <div className="space-y-6 pb-10">
       {/* Breadcrumb */}
@@ -28,7 +29,7 @@ function NewWebsiteContent() {
         </p>
       </div>
 
-      <CreateWebsiteWizard initialType={initialType} />
+      <CreateWebsiteWizard initialType={initialType} initialClientId={initialClientId} />
     </div>
   );
 }

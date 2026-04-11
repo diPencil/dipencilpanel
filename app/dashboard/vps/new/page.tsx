@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -164,8 +164,9 @@ function buildTargetLabel(targetType: TargetType, domain?: Domain, website?: Web
   return website ? `${website.name} (${website.domain})` : '';
 }
 
-export default function AddVpsPage() {
+function AddVpsPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { clients = [], domains = [], websites = [], vpsPlans = [], addVPS, currentCompany } = useInvoiceData();
   const planOptions = useMemo(() => {
     if (vpsPlans.length > 0) return vpsPlans.map((plan) => plan.name);
@@ -191,6 +192,12 @@ export default function AddVpsPage() {
   const [cpu, setCpu] = useState(1);
   const [ram, setRam] = useState(4);
   const [storage, setStorage] = useState(50);
+
+  useEffect(() => {
+    const cid = searchParams.get('clientId');
+    if (!cid || !clients.some((c) => c.id === cid)) return;
+    setForm((prev) => (prev.clientId === cid ? prev : { ...prev, clientId: cid, targetId: '' }));
+  }, [searchParams, clients]);
 
   useEffect(() => {
     const nextPlan = planOptions.includes(form.planName) ? form.planName : planOptions[0] || 'KVM 1';
@@ -684,5 +691,13 @@ export default function AddVpsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AddVpsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-muted-foreground text-sm text-center">Loading…</div>}>
+      <AddVpsPageInner />
+    </Suspense>
   );
 }

@@ -1,12 +1,20 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useInvoiceData } from '@/context/InvoiceContext';
+import { ClientDialog } from '@/components/clients/client-dialog';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
 import { 
   Users, 
   ChevronLeft, 
@@ -20,9 +28,11 @@ import {
   FileText,
   Plus,
   ExternalLink,
-  Calendar,
   CreditCard,
-  Briefcase
+  Briefcase,
+  Pencil,
+  Check,
+  ChevronDown,
 } from 'lucide-react';
 import { 
   Table, 
@@ -43,8 +53,11 @@ export default function ClientProfilePage() {
     hosting = [], 
     emails = [], 
     vps = [], 
-    invoices = [] 
+    invoices = [],
+    updateClient,
   } = useInvoiceData();
+
+  const [editOpen, setEditOpen] = useState(false);
 
   const clientId = params.id as string;
   const client = useMemo(() => clients.find(c => c.id === clientId), [clients, clientId]);
@@ -94,15 +107,57 @@ export default function ClientProfilePage() {
              </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-           <Button variant="outline" className="rounded-xl gap-2 font-bold px-6 shadow-sm">
-              <Edit className="h-4 w-4" /> Edit Client
-           </Button>
-           <Button className="rounded-xl gap-2 font-bold px-6 shadow-lg shadow-primary/20">
-              <Plus className="h-4 w-4" /> New Service
-           </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-xl gap-2 font-bold px-6 shadow-sm"
+            onClick={() => setEditOpen(true)}
+          >
+            <Pencil className="h-4 w-4" /> Edit client
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" className="rounded-xl gap-2 font-bold px-6 shadow-lg shadow-primary/20">
+                <Plus className="h-4 w-4" /> New service
+                <ChevronDown className="h-4 w-4 opacity-80" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/domains/new?clientId=${encodeURIComponent(clientId)}`}>Add domain</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/hosting/new?clientId=${encodeURIComponent(clientId)}`}>Add hosting</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/vps/new?clientId=${encodeURIComponent(clientId)}`}>Add VPS</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/websites/new?clientId=${encodeURIComponent(clientId)}`}>Add website</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/billing/subscriptions/new?clientId=${encodeURIComponent(clientId)}`}>
+                  Add subscription
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/emails">Email accounts</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+
+      <ClientDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        client={client}
+        onSubmit={(data) => {
+          updateClient(client.id, data);
+          toast.success('Client updated');
+        }}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
          {sections.map((s, i) => (
@@ -297,43 +352,4 @@ export default function ClientProfilePage() {
       </div>
     </div>
   );
-}
-
-function Edit(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-      <path d="m15 5 4 4" />
-    </svg>
-  )
-}
-
-function Check(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  )
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { Suspense, useState, useMemo, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Card } from '@/components/ui/card';
@@ -97,8 +97,9 @@ function FieldError({ msg }: { msg?: string }) {
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
 
-export default function AddHostingPage() {
+function AddHostingPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { hostingPlans, cloudHostingPlans, clients = [], domains = [], addHosting, currentCompany } = useInvoiceData();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -129,6 +130,12 @@ export default function AddHostingPage() {
     setForm((p) => ({ ...p, [key]: value }));
     setErrors((p) => ({ ...p, [key]: '' }));
   };
+
+  useEffect(() => {
+    const cid = searchParams.get('clientId');
+    if (!cid || !clients.some((c) => c.id === cid)) return;
+    setForm((p) => (p.clientId === cid ? p : { ...p, clientId: cid, domainId: '' }));
+  }, [searchParams, clients]);
 
   const selectedPlan = useMemo(() => {
     // Search in all potential plans regardless of current hostingType to support the multi-section UI
@@ -610,5 +617,13 @@ export default function AddHostingPage() {
          </div>
       </div>
     </div>
+  );
+}
+
+export default function AddHostingPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-muted-foreground text-sm text-center">Loading…</div>}>
+      <AddHostingPageInner />
+    </Suspense>
   );
 }

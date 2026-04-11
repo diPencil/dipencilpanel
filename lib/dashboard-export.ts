@@ -1,13 +1,20 @@
 /** Escape a field for RFC-style CSV (comma-separated). */
 function csvEscape(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
+  // Leading = + - @ can be interpreted as formulas in Excel — tab prefix forces text
+  let s = value;
+  if (/^[=+\-@]/.test(s.trimStart())) {
+    s = `\t${s}`;
   }
-  return value;
+  if (/[",\n\r]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
 }
 
 function flattenCell(value: unknown): string {
   if (value === null || value === undefined) return '';
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Date) return value.toISOString();
   if (typeof value === 'object') {
     try {
       return JSON.stringify(value);
@@ -40,6 +47,21 @@ export function rowsToCsv(rows: Record<string, unknown>[]): string {
   return lines.join('\r\n');
 }
 
+/** Replacer for JSON.stringify — Dates and BigInt values from APIs/DB. */
+export function dashboardExportJsonReplacer(_key: string, value: unknown): unknown {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Date) return value.toISOString();
+  return value;
+}
+
+export function safeJsonStringify(value: unknown, space?: number): string {
+  return JSON.stringify(value, dashboardExportJsonReplacer, space);
+}
+
+/**
+ * Trigger a file download. Revokes the object URL after a short delay so the
+ * browser can start reading the blob (immediate revoke can truncate/cancel downloads).
+ */
 export function downloadTextFile(filename: string, content: string, mime: string) {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
@@ -50,5 +72,10 @@ export function downloadTextFile(filename: string, content: string, mime: string
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 2500);
+}
+
+/** Space out multiple downloads so Chrome/Safari do not block after the first file. */
+export function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
