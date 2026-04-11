@@ -400,7 +400,9 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
               <>
                 <p style={{ margin: 0 }}>Pencil for E-Marketing Ltd.</p>
                 <p style={{ margin: '3px 0 0 0' }}>
-                  If you would like assistance with renewal or have any questions, please contact our exclusive service engineer.
+                  If you would like assistance with renewal or have any questions,
+                  <br />
+                  please contact our exclusive service engineer.
                 </p>
               </>
             ) : (
