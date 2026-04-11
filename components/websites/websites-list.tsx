@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -19,6 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -53,8 +55,12 @@ function clientBusinessDisplay(client: Client | undefined): string {
   return business || client.name || '—';
 }
 
+/** Website | Client | Business | Resources | Type & plan | Status | Billing | Actions */
 const LIST_GRID =
-  'grid gap-4 border-b border-border/60 px-4 py-4 last:border-b-0 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,auto)_minmax(0,1.1fr)_minmax(0,1.35fr)] md:items-center md:gap-x-4 md:px-5 md:py-3.5 hover:bg-muted/30 transition-colors';
+  'grid gap-4 border-b border-border/60 px-4 py-4 last:border-b-0 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,auto)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1.05fr)_minmax(0,auto)] md:items-center md:gap-x-4 md:px-5 md:py-3.5 hover:bg-muted/30 transition-colors';
+
+const GRID_HEADER_COLS =
+  'hidden border-b border-border bg-muted/40 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,auto)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1.05fr)_minmax(0,auto)] md:gap-x-4';
 
 export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
   const { websites = [], clients, deleteWebsite } = useInvoiceData();
@@ -132,34 +138,27 @@ export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
   };
 
   const rowActions = (site: (typeof websites)[number]) => (
-    <div className="flex flex-wrap items-center justify-end gap-1.5">
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="h-8 px-3 text-xs font-medium"
-        onClick={() => router.push(`/dashboard/websites/${site.id}`)}
-      >
-        <Edit className="mr-1.5 h-3.5 w-3.5" />
-        Edit
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="h-8 px-3 text-xs font-medium"
-        onClick={() => router.push(`/dashboard/websites/${site.id}?view=1`)}
-      >
-        <Eye className="mr-1.5 h-3.5 w-3.5" />
-        View
-      </Button>
+    <div className="flex justify-end md:justify-end" dir="ltr">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="More actions">
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Actions">
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/websites/${site.id}`} className="flex cursor-pointer items-center">
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/websites/${site.id}?view=1`} className="flex cursor-pointer items-center">
+              <Eye className="mr-2 h-4 w-4" />
+              View
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
             onClick={() => setDeleteTarget({ id: site.id, name: site.name })}
@@ -230,16 +229,15 @@ export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
 
       {view === 'grid' && filtered.length > 0 && (
         <Card className="overflow-hidden border border-border/80 p-0 shadow-sm">
-          <div
-            className="hidden border-b border-border bg-muted/40 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,auto)_minmax(0,1.1fr)_minmax(0,1.35fr)] md:gap-x-4"
-            aria-hidden
-          >
+          <div className={GRID_HEADER_COLS} aria-hidden>
             <span>Website</span>
             <span>Client</span>
             <span>Business</span>
             <span className="text-center">Resources</span>
             <span>Type &amp; plan</span>
-            <span className="text-right">Billing &amp; actions</span>
+            <span>Status</span>
+            <span>Billing</span>
+            <span className="text-right">Actions</span>
           </div>
           {filtered.map((site) => {
             const client = clients.find((c) => c.id === site.clientId);
@@ -318,24 +316,37 @@ export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
                   </div>
                 </div>
 
-                <div className="flex min-w-0 flex-col gap-3 border-t border-border/50 pt-3 md:border-t-0 md:pt-0">
-                  <div className="flex flex-wrap items-center justify-between gap-3 md:flex-col md:items-end md:justify-center md:gap-2">
-                    <div className="flex items-center gap-2">{getStatusBadge(site.status, true)}</div>
-                    <div className="text-left md:text-right">
-                      <span className="text-sm font-bold tabular-nums text-primary">
-                        {formatCurrency(site.plan.price)}
+                <div className="min-w-0 border-t border-border/50 pt-3 md:border-t-0 md:pt-0">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
+                    Status
+                  </p>
+                  <div className="flex items-center md:items-start">{getStatusBadge(site.status, true)}</div>
+                </div>
+
+                <div className="min-w-0 border-t border-border/50 pt-3 md:border-t-0 md:pt-0">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
+                    Billing
+                  </p>
+                  <div className="text-left md:text-right">
+                    <span className="text-sm font-bold tabular-nums text-primary">
+                      {formatCurrency(site.plan.price)}
+                    </span>
+                    {site.plan.billingCycle === 'onetime' ? (
+                      <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        one-time
                       </span>
-                      {site.plan.billingCycle === 'onetime' ? (
-                        <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                          one-time
-                        </span>
-                      ) : (
-                        <span className="ml-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                          {cycleLabel}
-                        </span>
-                      )}
-                    </div>
+                    ) : (
+                      <span className="ml-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {cycleLabel}
+                      </span>
+                    )}
                   </div>
+                </div>
+
+                <div className="flex min-w-0 flex-col gap-2 border-t border-border/50 pt-3 md:flex-row md:items-center md:justify-end md:border-t-0 md:pt-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
+                    Actions
+                  </p>
                   {rowActions(site)}
                 </div>
               </div>
@@ -356,8 +367,8 @@ export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
                   <TableHead className="font-semibold">Type</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
                   <TableHead className="font-semibold">Storage</TableHead>
-                  <TableHead className="font-semibold">Price</TableHead>
-                  <TableHead className="text-right font-semibold">Actions</TableHead>
+                  <TableHead className="min-w-[100px] font-semibold">Billing</TableHead>
+                  <TableHead className="w-[52px] text-right font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
