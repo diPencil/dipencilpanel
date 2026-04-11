@@ -4,6 +4,7 @@ import React from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { WebsiteForm } from '@/components/websites/website-form';
+import { WebsiteDetailsSummary } from '@/components/websites/website-details-summary';
 import { Card } from '@/components/ui/card';
 
 export function WebsiteDetailContent() {
@@ -30,10 +31,12 @@ export function WebsiteDetailContent() {
         <h1 className="text-3xl font-bold tracking-tight">
           {isViewMode ? 'Website details' : 'Edit Website'}
         </h1>
-        <p className="text-muted-foreground mt-1">{website.name}</p>
+        <p className="text-muted-foreground mt-1">
+          {isViewMode ? 'Read-only overview — use Edit website to make changes.' : website.name}
+        </p>
       </div>
 
-      <WebsiteForm website={website} readOnly={isViewMode} />
+      {isViewMode ? <WebsiteDetailsSummary website={website} /> : <WebsiteForm website={website} />}
     </div>
   );
 }

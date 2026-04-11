@@ -55,13 +55,6 @@ function clientBusinessDisplay(client: Client | undefined): string {
   return business || client.name || '—';
 }
 
-/** Website | Client | Business | Resources | Type & plan | Status | Billing | Actions */
-const LIST_GRID =
-  'grid gap-4 border-b border-border/60 px-4 py-4 last:border-b-0 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,auto)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1.05fr)_minmax(0,auto)] md:items-center md:gap-x-4 md:px-5 md:py-3.5 hover:bg-muted/30 transition-colors';
-
-const GRID_HEADER_COLS =
-  'hidden border-b border-border bg-muted/40 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,auto)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1.05fr)_minmax(0,auto)] md:gap-x-4';
-
 export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
   const { websites = [], clients, deleteWebsite } = useInvoiceData();
   const router = useRouter();
@@ -229,129 +222,246 @@ export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
 
       {view === 'grid' && filtered.length > 0 && (
         <Card className="overflow-hidden border border-border/80 p-0 shadow-sm">
-          <div className={GRID_HEADER_COLS} aria-hidden>
-            <span>Website</span>
-            <span>Client</span>
-            <span>Business</span>
-            <span className="text-center">Resources</span>
-            <span>Type &amp; plan</span>
-            <span>Status</span>
-            <span>Billing</span>
-            <span className="text-right">Actions</span>
-          </div>
-          {filtered.map((site) => {
-            const client = clients.find((c) => c.id === site.clientId);
-            const business = clientBusinessDisplay(client);
-            const typeLabel = getWebsiteTypeOption(site.type).label;
-            const cycleLabel =
-              site.plan.billingCycle === 'onetime'
-                ? 'one-time'
-                : site.plan.billingCycle === 'yearly'
-                  ? '/yr'
-                  : '/mo';
-            return (
-              <div key={site.id} className={LIST_GRID}>
-                <div className="flex min-w-0 items-start gap-3">
-                  <WebsiteTypeIcon type={site.type} size="md" />
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-foreground leading-tight">{site.name}</p>
-                    <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
-                      <Globe className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
-                      <span className="truncate">{site.domain}</span>
+          {/* Mobile: stacked rows (no shared column widths needed) */}
+          <div className="md:hidden">
+            {filtered.map((site) => {
+              const client = clients.find((c) => c.id === site.clientId);
+              const business = clientBusinessDisplay(client);
+              const typeLabel = getWebsiteTypeOption(site.type).label;
+              const cycleLabel =
+                site.plan.billingCycle === 'onetime'
+                  ? 'one-time'
+                  : site.plan.billingCycle === 'yearly'
+                    ? '/yr'
+                    : '/mo';
+              return (
+                <div
+                  key={site.id}
+                  className="space-y-4 border-b border-border/60 px-4 py-4 last:border-b-0"
+                >
+                  <div className="flex min-w-0 items-start gap-3">
+                    <WebsiteTypeIcon type={site.type} size="md" />
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-foreground leading-tight">{site.name}</p>
+                      <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+                        <Globe className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+                        <span className="truncate">{site.domain}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Client
+                    </p>
+                    <p className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
+                      <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="truncate" title={client?.name}>
+                        {client?.name ?? '—'}
+                      </span>
                     </p>
                   </div>
-                </div>
-
-                <div className="min-w-0">
-                  <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
-                    Client
-                  </p>
-                  <p className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
-                    <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
-                    <span className="truncate" title={client?.name}>
-                      {client?.name ?? '—'}
-                    </span>
-                  </p>
-                </div>
-
-                <div className="min-w-0">
-                  <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
-                    Business
-                  </p>
-                  <p className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
-                    <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
-                    <span className="truncate" title={business}>
-                      {business}
-                    </span>
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs tabular-nums md:justify-center">
-                  <span>
-                    <span className="text-muted-foreground">Storage </span>
-                    <strong className="font-semibold text-foreground">{site.storage} GB</strong>
-                  </span>
-                  {site.bandwidth > 0 ? (
+                  <div>
+                    <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Business
+                    </p>
+                    <p className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
+                      <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="truncate" title={business}>
+                        {business}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs tabular-nums">
                     <span>
-                      <span className="text-muted-foreground">BW </span>
-                      <strong className="font-semibold text-foreground">{site.bandwidth} GB</strong>
+                      <span className="text-muted-foreground">Storage </span>
+                      <strong className="font-semibold text-foreground">{site.storage} GB</strong>
                     </span>
-                  ) : null}
+                    {site.bandwidth > 0 ? (
+                      <span>
+                        <span className="text-muted-foreground">BW </span>
+                        <strong className="font-semibold text-foreground">{site.bandwidth} GB</strong>
+                      </span>
+                    ) : null}
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Type &amp; plan
+                    </p>
+                    <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                      <Badge variant="secondary" className="h-6 w-fit shrink-0 px-2 text-[10px] font-semibold">
+                        {typeLabel}
+                      </Badge>
+                      <span
+                        className="truncate text-[11px] font-medium text-muted-foreground"
+                        title={site.plan.name}
+                      >
+                        {site.plan.name}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Status
+                    </p>
+                    <div className="flex items-center">{getStatusBadge(site.status, true)}</div>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Billing
+                    </p>
+                    <div>
+                      <span className="text-sm font-bold tabular-nums text-primary">
+                        {formatCurrency(site.plan.price)}
+                      </span>
+                      {site.plan.billingCycle === 'onetime' ? (
+                        <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          one-time
+                        </span>
+                      ) : (
+                        <span className="ml-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          {cycleLabel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Actions
+                    </p>
+                    {rowActions(site)}
+                  </div>
                 </div>
+              );
+            })}
+          </div>
 
-                <div className="min-w-0">
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
+          {/* Desktop: one HTML table so header & body columns share exact widths */}
+          <div className="hidden md:block">
+            <Table className="min-w-[920px] table-fixed">
+              <colgroup>
+                <col style={{ width: '20%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '7%' }} />
+              </colgroup>
+              <TableHeader>
+                <TableRow className="border-border/80 bg-muted/40 hover:bg-muted/40">
+                  <TableHead className="h-auto px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Website
+                  </TableHead>
+                  <TableHead className="h-auto px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Client
+                  </TableHead>
+                  <TableHead className="h-auto px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Business
+                  </TableHead>
+                  <TableHead className="h-auto px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Resources
+                  </TableHead>
+                  <TableHead className="h-auto px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Type &amp; plan
-                  </p>
-                  <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                    <Badge variant="secondary" className="h-6 w-fit shrink-0 px-2 text-[10px] font-semibold">
-                      {typeLabel}
-                    </Badge>
-                    <span
-                      className="truncate text-[11px] font-medium text-muted-foreground"
-                      title={site.plan.name}
-                    >
-                      {site.plan.name}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="min-w-0 border-t border-border/50 pt-3 md:border-t-0 md:pt-0">
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
+                  </TableHead>
+                  <TableHead className="h-auto px-2 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Status
-                  </p>
-                  <div className="flex items-center md:items-start">{getStatusBadge(site.status, true)}</div>
-                </div>
-
-                <div className="min-w-0 border-t border-border/50 pt-3 md:border-t-0 md:pt-0">
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
+                  </TableHead>
+                  <TableHead className="h-auto px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Billing
-                  </p>
-                  <div className="text-left md:text-right">
-                    <span className="text-sm font-bold tabular-nums text-primary">
-                      {formatCurrency(site.plan.price)}
-                    </span>
-                    {site.plan.billingCycle === 'onetime' ? (
-                      <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        one-time
-                      </span>
-                    ) : (
-                      <span className="ml-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {cycleLabel}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex min-w-0 flex-col gap-2 border-t border-border/50 pt-3 md:flex-row md:items-center md:justify-end md:border-t-0 md:pt-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
+                  </TableHead>
+                  <TableHead className="h-auto px-2 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Actions
-                  </p>
-                  {rowActions(site)}
-                </div>
-              </div>
-            );
-          })}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((site) => {
+                  const client = clients.find((c) => c.id === site.clientId);
+                  const business = clientBusinessDisplay(client);
+                  const typeLabel = getWebsiteTypeOption(site.type).label;
+                  const cycleLabel =
+                    site.plan.billingCycle === 'onetime'
+                      ? 'one-time'
+                      : site.plan.billingCycle === 'yearly'
+                        ? '/yr'
+                        : '/mo';
+                  return (
+                    <TableRow key={site.id} className="border-border/60 hover:bg-muted/25">
+                      <TableCell className="px-4 py-3.5 align-middle whitespace-normal">
+                        <div className="flex min-w-0 items-start gap-3">
+                          <WebsiteTypeIcon type={site.type} size="md" />
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-foreground leading-tight">{site.name}</p>
+                            <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+                              <Globe className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+                              <span className="truncate">{site.domain}</span>
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 align-middle whitespace-normal">
+                        <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                          <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                          <span className="line-clamp-2 wrap-break-word" title={client?.name}>
+                            {client?.name ?? '—'}
+                          </span>
+                        </p>
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 align-middle whitespace-normal">
+                        <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                          <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                          <span className="line-clamp-2 wrap-break-word" title={business}>
+                            {business}
+                          </span>
+                        </p>
+                      </TableCell>
+                      <TableCell className="px-2 py-3.5 text-center align-middle text-xs tabular-nums">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span>
+                            <span className="text-muted-foreground">Storage </span>
+                            <strong className="font-semibold text-foreground">{site.storage} GB</strong>
+                          </span>
+                          {site.bandwidth > 0 ? (
+                            <span>
+                              <span className="text-muted-foreground">BW </span>
+                              <strong className="font-semibold text-foreground">{site.bandwidth} GB</strong>
+                            </span>
+                          ) : null}
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 align-middle whitespace-normal">
+                        <div className="flex min-w-0 flex-col items-start gap-1">
+                          <Badge variant="secondary" className="h-6 w-fit shrink-0 px-2 text-[10px] font-semibold">
+                            {typeLabel}
+                          </Badge>
+                          <span
+                            className="line-clamp-2 text-[11px] font-medium text-muted-foreground"
+                            title={site.plan.name}
+                          >
+                            {site.plan.name}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-2 py-3.5 align-middle">
+                        {getStatusBadge(site.status, true)}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-right align-middle">
+                        <span className="text-sm font-bold tabular-nums text-primary">
+                          {formatCurrency(site.plan.price)}
+                        </span>
+                        <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          {site.plan.billingCycle === 'onetime' ? 'one-time' : cycleLabel}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-2 py-3.5 text-right align-middle">{rowActions(site)}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </Card>
       )}
 

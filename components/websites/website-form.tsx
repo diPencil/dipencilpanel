@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -30,14 +29,11 @@ interface WebsiteFormProps {
   website?: Website;
   initialType?: string;
   onSuccess?: () => void;
-  /** Read-only details mode (e.g. opened with ?view=1). */
-  readOnly?: boolean;
 }
 
-export function WebsiteForm({ website, initialType, onSuccess, readOnly = false }: WebsiteFormProps) {
+export function WebsiteForm({ website, initialType, onSuccess }: WebsiteFormProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const { addWebsite, updateWebsite, clients } = useInvoiceData();
+  const { addWebsite, updateWebsite } = useInvoiceData();
   const { register, handleSubmit, formState: { errors } } = useForm<WebsiteFormData>({
     resolver: zodResolver(websiteSchema),
     defaultValues: website ? {
@@ -61,7 +57,6 @@ export function WebsiteForm({ website, initialType, onSuccess, readOnly = false 
   });
 
   const onSubmit = (data: WebsiteFormData) => {
-    if (readOnly) return;
     if (website) {
       updateWebsite(website.id, {
         name: data.name,
@@ -100,17 +95,8 @@ export function WebsiteForm({ website, initialType, onSuccess, readOnly = false 
 
   return (
     <Card className="p-6">
-      <form
-        onSubmit={(e) => {
-          if (readOnly) {
-            e.preventDefault();
-            return;
-          }
-          handleSubmit(onSubmit)(e);
-        }}
-        className="space-y-6"
-      >
-        <fieldset disabled={readOnly} className="min-w-0 space-y-6 border-0 p-0 m-0 disabled:opacity-90">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="min-w-0 space-y-6 border-0 p-0">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium mb-2">Website Name</label>
@@ -213,31 +199,20 @@ export function WebsiteForm({ website, initialType, onSuccess, readOnly = false 
             </select>
           </div>
         </div>
-        </fieldset>
+        </div>
 
-        {readOnly && website ? (
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" asChild>
-              <Link href={pathname}>Edit website</Link>
-            </Button>
-            <Button type="button" variant="outline" onClick={() => router.push('/dashboard/websites')}>
-              Back to list
-            </Button>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <Button type="submit">
-              {website ? 'Update Website' : 'Create Website'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-            >
-              Cancel
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <Button type="submit">
+            {website ? 'Update Website' : 'Create Website'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+          >
+            Cancel
+          </Button>
+        </div>
       </form>
     </Card>
   );
