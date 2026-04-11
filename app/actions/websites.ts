@@ -54,7 +54,10 @@ export async function getWebsiteById(id: string, companyId: string) {
 export async function createWebsite(input: CreateWebsiteInput) {
   try {
     const startDate = new Date();
-    const endDate = computeEndDate(startDate, input.billingCycle);
+    const renewalDate =
+      input.billingCycle === 'onetime'
+        ? null
+        : computeEndDate(startDate, input.billingCycle);
 
     const website = await prisma.website.create({
       data: {
@@ -67,7 +70,7 @@ export async function createWebsite(input: CreateWebsiteInput) {
         planName: input.planName,
         planPrice: input.planPrice,
         billingCycle: input.billingCycle,
-        renewalDate: endDate,
+        renewalDate,
         clientId: input.clientId,
         companyId: input.companyId,
       },
@@ -93,18 +96,26 @@ export async function updateWebsite(
     planName: string;
     planPrice: number;
     billingCycle: string;
-    renewalDate: Date | string;
+    renewalDate: Date | string | null;
   }>,
 ) {
   try {
     const existing = await prisma.website.findFirst({ where: { id, companyId } });
     if (!existing) return { success: false as const, error: 'Website not found' };
 
+    const { renewalDate: rdIn, ...rest } = input;
+    let nextRenewal: Date | null | undefined;
+    if (rdIn !== undefined) {
+      nextRenewal = rdIn === null ? null : new Date(rdIn);
+    } else if (input.billingCycle === 'onetime') {
+      nextRenewal = null;
+    }
+
     const data = await prisma.website.update({
       where: { id },
       data: {
-        ...input,
-        renewalDate: input.renewalDate ? new Date(input.renewalDate) : undefined,
+        ...rest,
+        ...(nextRenewal !== undefined ? { renewalDate: nextRenewal } : {}),
       },
     });
     return { success: true as const, data };

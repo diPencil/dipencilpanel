@@ -86,6 +86,9 @@ export interface Invoice {
   companyId: string;
 }
 
+/** Website / hosting-style billing: recurring or single charge. */
+export type WebsiteBillingCycle = 'monthly' | 'yearly' | 'onetime';
+
 // Website data
 export interface Website {
   id: string;
@@ -95,7 +98,7 @@ export interface Website {
   plan: {
     name: string;
     price: number;
-    billingCycle: 'monthly' | 'yearly';
+    billingCycle: WebsiteBillingCycle;
   };
   storage: number; // in GB
   bandwidth: number; // in GB

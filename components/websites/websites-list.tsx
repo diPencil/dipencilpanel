@@ -206,7 +206,13 @@ export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
                   {getStatusBadge(site.status)}
                   <div className="text-right">
                     <span className="text-sm font-bold text-primary">{formatCurrency(site.plan.price)}</span>
-                    <span className="text-[10px] text-muted-foreground font-medium uppercase ml-0.5">/{site.plan.billingCycle === 'yearly' ? 'yr' : 'mo'}</span>
+                    {site.plan.billingCycle === 'onetime' ? (
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase ml-1">one-time</span>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase ml-0.5">
+                        /{site.plan.billingCycle === 'yearly' ? 'yr' : 'mo'}
+                      </span>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -271,7 +277,9 @@ export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="text-sm font-bold text-primary">{formatCurrency(site.plan.price)}</span>
-                        <span className="text-[10px] text-muted-foreground uppercase font-medium">{site.plan.billingCycle}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase font-medium">
+                          {site.plan.billingCycle === 'onetime' ? 'one-time' : site.plan.billingCycle}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">

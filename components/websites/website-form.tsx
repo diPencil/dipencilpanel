@@ -19,7 +19,7 @@ const websiteSchema = z.object({
   bandwidth: z.number().min(1, 'Bandwidth is required'),
   planName: z.string().min(1, 'Plan name is required'),
   price: z.number().min(0, 'Price must be positive'),
-  billingCycle: z.enum(['monthly', 'yearly']),
+  billingCycle: z.enum(['monthly', 'yearly', 'onetime']),
   status: z.enum(['active', 'inactive', 'suspended']),
 });
 
@@ -194,6 +194,7 @@ export function WebsiteForm({ website, initialType, onSuccess }: WebsiteFormProp
             >
               <option value="monthly">Monthly</option>
               <option value="yearly">Yearly</option>
+              <option value="onetime">One-time</option>
             </select>
           </div>
         </div>

@@ -23,6 +23,15 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/formatting';
+import type { WebsiteBillingCycle } from '@/lib/types';
+
+function planPriceForCycle(
+  plan: { price: { monthly: number; yearly: number } },
+  cycle: WebsiteBillingCycle,
+): number {
+  if (cycle === 'yearly' || cycle === 'onetime') return plan.price.yearly;
+  return plan.price.monthly;
+}
 
 // ─── Step Definitions ─────────────────────────────────────────────────────────
 
@@ -50,7 +59,7 @@ interface FormData {
   emailIds: string[];
   planName: string;
   price: string;
-  billingCycle: 'monthly' | 'yearly';
+  billingCycle: WebsiteBillingCycle;
   status: 'active' | 'inactive' | 'suspended';
   storage: number;
   bandwidth: number;
@@ -164,7 +173,7 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
   const handlePlanSelect = (planId: string) => {
     const plan = allAvailablePlans.find(p => p.id === planId);
     if (plan) {
-      const price = form.billingCycle === 'yearly' ? plan.price.yearly : plan.price.monthly;
+      const price = planPriceForCycle(plan, form.billingCycle);
       setForm(prev => ({
         ...prev,
         planName: plan.name,
@@ -591,7 +600,7 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
                   </div>
                   {hostingPlans.map(p => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.name} - {formatCurrency(form.billingCycle === 'yearly' ? p.price.yearly : p.price.monthly)}
+                      {p.name} - {formatCurrency(planPriceForCycle(p, form.billingCycle))}
                     </SelectItem>
                   ))}
                   <div className="p-2 text-[10px] uppercase font-bold text-muted-foreground bg-muted/30 mt-2 flex items-center gap-2">
@@ -599,7 +608,7 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
                   </div>
                   {cloudHostingPlans.map(p => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.name} - {formatCurrency(form.billingCycle === 'yearly' ? p.price.yearly : p.price.monthly)}
+                      {p.name} - {formatCurrency(planPriceForCycle(p, form.billingCycle))}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -624,19 +633,21 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Billing Cycle</Label>
-                <Select value={form.billingCycle} onValueChange={(v: any) => {
-                  set('billingCycle', v);
-                  // Refresh price if a plan was already selected
-                  const activePlan = allAvailablePlans.find(p => p.name === form.planName);
-                  if (activePlan) {
-                    const newPrice = v === 'yearly' ? activePlan.price.yearly : activePlan.price.monthly;
-                    set('price', newPrice.toString());
-                  }
-                }}>
+                <Select
+                  value={form.billingCycle}
+                  onValueChange={(v: WebsiteBillingCycle) => {
+                    set('billingCycle', v);
+                    const activePlan = allAvailablePlans.find(p => p.name === form.planName);
+                    if (activePlan) {
+                      set('price', planPriceForCycle(activePlan, v).toString());
+                    }
+                  }}
+                >
                   <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="monthly">Monthly</SelectItem>
                     <SelectItem value="yearly">Yearly</SelectItem>
+                    <SelectItem value="onetime">One-time</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -667,7 +678,13 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
                 { label: 'Type', value: form.type.toUpperCase() },
                 { label: 'Client', value: client?.name ?? '-' },
                 { label: 'Storage', value: `${form.storage} GB` },
-                { label: 'Plan', value: `${form.planName} (${formatCurrency(parseFloat(form.price))}/${form.billingCycle})` },
+                {
+                  label: 'Plan',
+                  value:
+                    form.billingCycle === 'onetime'
+                      ? `${form.planName} (${formatCurrency(parseFloat(form.price))} one-time)`
+                      : `${form.planName} (${formatCurrency(parseFloat(form.price))}/${form.billingCycle})`,
+                },
                 { label: 'Status', value: form.status.toUpperCase() },
               ].map(row => (
                 <div key={row.label} className="flex px-4 py-2 text-sm">

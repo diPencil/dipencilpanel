@@ -288,6 +288,10 @@ function mapDbDomain(d: Record<string, unknown>): Domain {
 }
 
 function mapDbWebsite(w: Record<string, unknown>): Website {
+  const rawCycle = (w.billingCycle as string) ?? 'monthly';
+  const billingCycle: Website['plan']['billingCycle'] =
+    rawCycle === 'yearly' || rawCycle === 'onetime' || rawCycle === 'monthly' ? rawCycle : 'monthly';
+  const rd = w.renewalDate;
   return {
     id: w.id as string,
     name: w.name as string,
@@ -300,12 +304,13 @@ function mapDbWebsite(w: Record<string, unknown>): Website {
     plan: {
       name: (w.planName as string) ?? '',
       price: (w.planPrice as number) ?? 0,
-      billingCycle: (w.billingCycle as 'monthly' | 'yearly') ?? 'monthly',
+      billingCycle,
     },
     clientId: w.clientId as string,
     companyId: w.companyId as string,
     createdAt: (w.createdAt as Date | string)?.toString() ?? '',
-    renewalDate: (w.renewalDate as Date | string)?.toString() ?? new Date().toISOString(),
+    renewalDate:
+      rd == null ? '' : (rd as Date | string) instanceof Date ? (rd as Date).toISOString() : String(rd),
   };
 }
 
@@ -1291,7 +1296,10 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
     const id = tempId();
     const now = new Date().toISOString();
-    const renewalDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const renewalDate =
+      data.plan.billingCycle === 'onetime'
+        ? ''
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
     const temp: Website = { ...data, id, createdAt: now, renewalDate, companyId: cid };
     setWebsites((prev) => [...prev, temp]);
 
@@ -1352,7 +1360,28 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   const updateWebsite = (id: string, updates: Partial<Website>) => {
     setWebsites((prev) => prev.map((w) => (w.id === id ? { ...w, ...updates } : w)));
-    updateWebsiteAction(id, tenantId, updates as Parameters<typeof updateWebsiteAction>[2]).catch(console.error);
+    const {
+      plan,
+      id: _wid,
+      clientId: _wc,
+      companyId: _wco,
+      createdAt: _wcr,
+      ...rest
+    } = updates;
+    const payload: Record<string, unknown> = { ...rest };
+    if (plan) {
+      payload.planName = plan.name;
+      payload.planPrice = plan.price;
+      payload.billingCycle = plan.billingCycle;
+    }
+    if (plan?.billingCycle === 'onetime') {
+      payload.renewalDate = null;
+    }
+    delete payload.id;
+    delete payload.clientId;
+    delete payload.companyId;
+    delete payload.createdAt;
+    updateWebsiteAction(id, tenantId, payload as Parameters<typeof updateWebsiteAction>[2]).catch(console.error);
   };
 
   const deleteWebsite = (id: string) => {
