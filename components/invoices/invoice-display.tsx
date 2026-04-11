@@ -396,14 +396,34 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           fontFamily: 'Arial, Helvetica, sans-serif',
         }}>
           <div style={{ maxWidth: '400px' }}>
-            <p style={{ margin: 0 }}>Hostinger International Ltd.</p>
-            <p style={{ margin: '3px 0 0 0' }}>
-              If you would like assistance with renewal or have any questions, please contact our exclusive service middle east agent.
-            </p>
+            {isDipencil ? (
+              <>
+                <p style={{ margin: 0 }}>Pencil for E-Marketing Ltd.</p>
+                <p style={{ margin: '3px 0 0 0' }}>
+                  If you would like assistance with renewal or have any questions, please contact our exclusive service engineer.
+                </p>
+              </>
+            ) : (
+              <>
+                <p style={{ margin: 0 }}>Hostinger International Ltd.</p>
+                <p style={{ margin: '3px 0 0 0' }}>
+                  If you would like assistance with renewal or have any questions, please contact our exclusive service middle east agent.
+                </p>
+              </>
+            )}
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '20px', marginTop: '13px' }}>
-            <p style={{ margin: 0 }}>Pencil for E-Marketing Ltd. · Technical Agent Provider</p>
-            <p style={{ margin: '0' }}>of Hosting &amp; Digital Systems in the Middle East.</p>
+            {isDipencil ? (
+              <>
+                <p style={{ margin: 0 }}>Mahmoud Al-Sabbagh · Technical Visual Design Engineer</p>
+                <p style={{ margin: 0 }}>Don&apos;t hesitate to reach out : +201003778273</p>
+              </>
+            ) : (
+              <>
+                <p style={{ margin: 0 }}>Pencil for E-Marketing Ltd. · Technical Agent Provider</p>
+                <p style={{ margin: '0' }}>of Hosting &amp; Digital Systems in the Middle East.</p>
+              </>
+            )}
           </div>
         </div>
       </div>
