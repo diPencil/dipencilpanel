@@ -8,9 +8,11 @@ import { formatCurrency } from '@/lib/formatting';
 interface TopClientsProps {
   clients: Client[];
   invoices: Invoice[];
+  /** Display currency for revenue totals (defaults to company default). */
+  currency?: string;
 }
 
-export function TopClients({ clients = [], invoices = [] }: TopClientsProps) {
+export function TopClients({ clients = [], invoices = [], currency = 'USD' }: TopClientsProps) {
   const clientRevenue = (clients || []).map((client) => {
     const clientInvoices = (invoices || []).filter((inv) => inv?.clientId === client?.id);
     const totalRevenue = clientInvoices.reduce((sum, inv) => sum + (inv?.total || 0), 0);
@@ -38,7 +40,7 @@ export function TopClients({ clients = [], invoices = [] }: TopClientsProps) {
           {topClients.map(({ client, totalRevenue, invoiceCount }) => (
             <Link
               key={client.id}
-              href={`/dashboard/clients#${client.id}`}
+              href={`/dashboard/clients/${client.id}`}
               className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors"
             >
               <div className="flex-1">
@@ -48,7 +50,7 @@ export function TopClients({ clients = [], invoices = [] }: TopClientsProps) {
                 </p>
               </div>
               <p className="font-semibold text-primary">
-                {formatCurrency(totalRevenue, 'USD')}
+                {formatCurrency(totalRevenue, currency)}
               </p>
             </Link>
           ))}

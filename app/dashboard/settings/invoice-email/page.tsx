@@ -41,10 +41,10 @@ export default function InvoiceEmailTemplatePage() {
     [header, body, footer, company.name],
   );
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
     try {
-      updateCompany({
+      const result = await updateCompany({
         invoiceEmailHeaderHtml: templateMatchesDefault(header, DEFAULT_INVOICE_EMAIL_HEADER_HTML)
           ? null
           : header.trim() || null,
@@ -55,7 +55,9 @@ export default function InvoiceEmailTemplatePage() {
           ? null
           : footer.trim() || null,
       });
-      toast.success('Invoice email template saved');
+      if (result.success) {
+        toast.success('Invoice email template saved');
+      }
     } finally {
       setSaving(false);
     }

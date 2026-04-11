@@ -70,7 +70,7 @@ export function InvoicesResponsive({
                 </td>
                 <td className="py-3 px-4">
                   <div className="flex gap-2 justify-end">
-                    <Link href={`/dashboard/invoices/${invoice.id}`}>
+                    <Link href={`/dashboard/billing/invoices/${invoice.id}`}>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -132,7 +132,7 @@ export function InvoicesResponsive({
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Link href={`/dashboard/invoices/${invoice.id}`} className="flex-1">
+                <Link href={`/dashboard/billing/invoices/${invoice.id}`} className="flex-1">
                   <Button
                     size="sm"
                     variant="outline"

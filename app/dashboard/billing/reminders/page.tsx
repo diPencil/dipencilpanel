@@ -21,6 +21,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { RenewSubscriptionDialog } from '@/components/subscriptions/renew-subscription-dialog';
 import { SendReminderDialog } from '@/components/reminders/send-reminder-dialog';
 import { getReminderItems, sendReminderEmail, type ReminderItem, type ServiceType } from '@/app/actions/reminder-emails';
@@ -71,9 +81,11 @@ export default function RemindersPage() {
   const [renewTarget, setRenewTarget] = useState<ReminderItem | null>(null);
   const [sendReminderItem, setSendReminderItem] = useState<ReminderItem | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [confirmDismissItem, setConfirmDismissItem] = useState<ReminderItem | null>(null);
 
   const dismissItem = useCallback((item: ReminderItem) => {
     setDismissed((prev) => new Set([...prev, `${item.serviceType}-${item.serviceId}`]));
+    setConfirmDismissItem(null);
   }, []);
 
   const load = useCallback(async () => {
@@ -336,7 +348,7 @@ export default function RemindersPage() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                              onClick={() => dismissItem(item)}
+                              onClick={() => setConfirmDismissItem(item)}
                               aria-label="Dismiss reminder"
                             >
                               <X className="h-4 w-4" />
@@ -378,6 +390,39 @@ export default function RemindersPage() {
         serviceName={renewTarget?.serviceName ?? ''}
         onSuccess={() => void load()}
       />
+
+      <AlertDialog open={!!confirmDismissItem} onOpenChange={(open) => { if (!open) setConfirmDismissItem(null); }}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30">
+                <X className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              </span>
+              Dismiss Reminder?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="pt-1">
+              {confirmDismissItem && (
+                <>
+                  سيتم إخفاء تذكير{' '}
+                  <span className="font-medium text-foreground">{confirmDismissItem.serviceName}</span>
+                  {' '}الخاص بـ{' '}
+                  <span className="font-medium text-foreground">{confirmDismissItem.clientName}</span>
+                  {' '}من القائمة حتى تقوم بالضغط على Refresh. الخدمة ستبقى موجودة في النظام.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmDismissItem && dismissItem(confirmDismissItem)}
+              className="bg-amber-500 text-white hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700"
+            >
+              تأكيد الإخفاء
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
     </TooltipProvider>
   );

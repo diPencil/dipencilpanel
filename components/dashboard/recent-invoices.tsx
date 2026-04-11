@@ -26,7 +26,7 @@ export function RecentInvoices({ invoices = [], clients = [] }: RecentInvoicesPr
           <p className="text-sm text-muted-foreground">Your latest invoice activity</p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link href="/dashboard/invoices">View All</Link>
+          <Link href="/dashboard/billing/invoices">View All</Link>
         </Button>
       </div>
 
@@ -54,7 +54,7 @@ export function RecentInvoices({ invoices = [], clients = [] }: RecentInvoicesPr
                 >
                   <td className="py-3 px-3">
                     <Link
-                      href={`/dashboard/invoices/${invoice.id}`}
+                      href={`/dashboard/billing/invoices/${invoice.id}`}
                       className="font-medium text-primary hover:underline"
                     >
                       {formatInvoiceNumber(invoice.number)}

@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
-  ReactNode,
+  type ReactNode,
 } from 'react';
 import { toast } from 'sonner';
 
@@ -99,7 +99,7 @@ interface InvoiceContextType {
   toggleClientInGroup: (groupId: string, clientId: string) => void;
 
   // Company actions
-  updateCompany: (company: Partial<SystemCompany>) => void;
+  updateCompany: (company: Partial<SystemCompany>) => Promise<{ success: boolean; error?: string }>;
   setActiveCompany: (id: string) => void;
   addTenantCompany: (company: Omit<TenantCompany, 'id' | 'createdAt' | 'userCount'>) => Promise<{ success: boolean; error?: string }>;
   updateTenantCompany: (id: string, company: Partial<TenantCompany>) => Promise<{ success: boolean; error?: string }>;
@@ -518,6 +518,40 @@ function mapDbRole(r: Record<string, unknown>): Role {
   };
 }
 
+type CompanyServerPatch = Parameters<typeof updateCompanyAction>[1];
+
+const COMPANY_DB_PATCH_KEYS = [
+  'name',
+  'ownerName',
+  'email',
+  'phone',
+  'address',
+  'vatNumber',
+  'logo',
+  'invoiceLogo',
+  'invoiceEmailHeaderHtml',
+  'invoiceEmailBodyHtml',
+  'invoiceEmailFooterHtml',
+  'reminderEmailHeaderHtml',
+  'reminderEmailBodyHtml',
+  'reminderEmailFooterHtml',
+  'currency',
+  'taxRate',
+  'status',
+] as const satisfies ReadonlyArray<keyof CompanyServerPatch>;
+
+function toCompanyDbPatch(updates: Partial<SystemCompany>): CompanyServerPatch {
+  const out: CompanyServerPatch = {};
+  for (const key of COMPANY_DB_PATCH_KEYS) {
+    const v = updates[key];
+    if (v !== undefined) (out as Record<string, unknown>)[key] = v;
+  }
+  if (typeof updates.exchangeRates === 'object' && updates.exchangeRates !== null) {
+    out.exchangeRates = JSON.stringify(updates.exchangeRates);
+  }
+  return out;
+}
+
 function mapDbCompany(c: Record<string, unknown>): TenantCompany {
   let exchangeRates: Record<string, number> = {};
   try {
@@ -807,22 +841,47 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   // ─── Company Actions ───────────────────────────────────────────────────────
 
-  const updateCompany = (updates: Partial<SystemCompany>) => {
-    setCompany((prev) => ({ ...prev, ...updates }));
-    if (tenantId) {
-      setAllCompanies((prev) =>
-        prev.map((c) => (c.id === tenantId ? { ...c, ...updates } : c)),
-      );
-      const dbUpdates: Record<string, unknown> = { ...updates };
-      if (typeof updates.exchangeRates === 'object') {
-        dbUpdates.exchangeRates = JSON.stringify(updates.exchangeRates);
+  const updateCompany = useCallback(
+    async (updates: Partial<SystemCompany>): Promise<{ success: boolean; error?: string }> => {
+      const tid = tenantId;
+      if (!tid) {
+        toast.error('Workspace not ready — wait a moment or refresh the page.');
+        return { success: false, error: 'Workspace not ready' };
       }
-      updateCompanyAction(tenantId, dbUpdates as Parameters<typeof updateCompanyAction>[1]).catch((err) => {
+
+      setCompany((prev) => ({ ...prev, ...updates }));
+      setAllCompanies((prev) =>
+        prev.map((c) => (c.id === tid ? { ...c, ...updates } : c)),
+      );
+
+      const dbPatch = toCompanyDbPatch(updates);
+      if (Object.keys(dbPatch).length === 0) {
+        return { success: true };
+      }
+
+      try {
+        const res = await updateCompanyAction(tid, dbPatch);
+        if (!res.success) {
+          console.error(res.error);
+          toast.error('Could not save company settings');
+          await loadCompanies();
+          return { success: false, error: res.error };
+        }
+        if (res.data) {
+          const fresh = mapDbCompany(res.data as unknown as Record<string, unknown>);
+          setCompany({ ...DEFAULT_COMPANY, ...fresh, userCount: fresh.userCount });
+          setAllCompanies((prev) => prev.map((c) => (c.id === tid ? fresh : c)));
+        }
+        return { success: true };
+      } catch (err) {
         console.error(err);
         toast.error('Could not save company settings');
-      });
-    }
-  };
+        await loadCompanies();
+        return { success: false, error: String(err) };
+      }
+    },
+    [tenantId, loadCompanies],
+  );
 
   const setActiveCompany = (id: string) => {
     setActiveCompanyId(id);

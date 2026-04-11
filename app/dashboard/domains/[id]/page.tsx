@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -31,11 +31,13 @@ function computeStatus(expiryDate: string, status: string) {
   return 'active';
 }
 
-export default function DomainManagePage({ params }: { params: { id: string } }) {
+export default function DomainManagePage() {
   const router = useRouter();
+  const params = useParams();
+  const domainId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
   const { toast } = useToast();
   const { getDomain, clients = [], websites = [], emails = [], vps = [], updateDomain, renewDomain, getSubscription, updateSubscription } = useInvoiceData();
-  const domain = getDomain(params.id);
+  const domain = domainId ? getDomain(domainId) : undefined;
 
   const [clientId, setClientId] = useState(domain?.clientId ?? '');
   const [registrar, setRegistrar] = useState(domain?.registrar ?? 'Hostinger');

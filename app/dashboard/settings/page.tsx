@@ -10,6 +10,7 @@ import { formatCurrency } from '@/lib/formatting';
 import { useMemo } from 'react';
 import { Mail, Database, Download, Upload, Loader2, AlertTriangle, Bell } from 'lucide-react';
 import { useConfirm } from '@/context/ConfirmationContext';
+import type { SystemCompany } from '@/lib/types';
 
 export default function SettingsPage() {
   const { company, updateCompany, invoices = [] } = useInvoiceData();
@@ -28,11 +29,14 @@ export default function SettingsPage() {
     return { totalInvoices, totalRevenue, outstanding };
   }, [invoices]);
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: Partial<SystemCompany>) => {
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      updateCompany(data);
+      const result = await updateCompany(data);
+      if (result.success) {
+        toast.success('Company settings saved.');
+      }
+      // Failures are already reported via toast inside updateCompany.
     } finally {
       setIsLoading(false);
     }
@@ -41,10 +45,10 @@ export default function SettingsPage() {
   const handleUpdateRates = async (rates: Record<string, number>) => {
     setIsLoading(true);
     try {
-      updateCompany({ exchangeRates: rates });
-      toast.success('Exchange rates saved!');
-    } catch {
-      toast.error('Failed to save exchange rates');
+      const result = await updateCompany({ exchangeRates: rates });
+      if (result.success) {
+        toast.success('Exchange rates saved!');
+      }
     } finally {
       setIsLoading(false);
     }

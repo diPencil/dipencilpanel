@@ -11,12 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
 import { CURRENCIES } from '@/lib/constants';
 
 interface CompanyInfoFormProps {
   company: Company;
-  onSubmit: (company: Partial<Company>) => void;
+  onSubmit: (company: Partial<Company>) => void | Promise<void>;
   isLoading?: boolean;
 }
 
@@ -64,7 +63,6 @@ export function CompanyInfoForm({
     company.taxRate,
   ]);
 
-  const { toast } = useToast();
   const [errors, setErrors] = useState<Partial<typeof formData>>({});
   
   const systemLogo = formData.logo && formData.logo !== '/logo.png' ? formData.logo : '/pencil-logo.png';
@@ -111,11 +109,7 @@ export function CompanyInfoForm({
         invoiceLogo: formData.invoiceLogo || '/hostinger-black.svg'
     };
 
-    onSubmit(finalData);
-    toast({
-      title: 'Success',
-      description: 'Company settings updated successfully',
-    });
+    void onSubmit(finalData);
   };
 
   const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -149,7 +149,7 @@ export function InvoicesTable({
                             size="sm"
                             className="gap-1"
                           >
-                            <Link href={`/dashboard/invoices/${invoice.id}`}>
+                            <Link href={`/dashboard/billing/invoices/${invoice.id}`}>
                               <Eye className="h-4 w-4" />
                               <span className="hidden sm:inline">View</span>
                             </Link>

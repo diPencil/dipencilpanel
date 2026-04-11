@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useLayoutEffect, useState, useCallback, useMemo } from 'react';
+import React, { Suspense, useEffect, useLayoutEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -46,7 +47,8 @@ import {
 import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/formatting';
 import { convertCurrency } from '@/lib/currency-utils';
 
-export default function InvoicesPage() {
+function InvoicesBillingPage() {
+  const searchParams = useSearchParams();
   const {
     invoices = [],
     websites = [],
@@ -62,6 +64,13 @@ export default function InvoicesPage() {
   } = useInvoiceData();
   const [filterStatus, setFilterStatus] = useState<'all' | 'paid' | 'pending' | 'overdue'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    const s = searchParams.get('status');
+    if (s === 'paid' || s === 'pending' || s === 'overdue' || s === 'all') {
+      setFilterStatus(s);
+    }
+  }, [searchParams]);
   const [pdfJob, setPdfJob] = useState<{ invoice: Invoice; client: Client } | null>(null);
   const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
   const [deletingInvoice, setDeletingInvoice] = useState<Invoice | null>(null);
@@ -185,7 +194,11 @@ export default function InvoicesPage() {
     const nextInvoices = invoices.filter((inv) => {
       const client = getClient(inv.clientId);
       const searchMatch = `${client?.name} ${formatInvoiceNumber(inv.number)}`.toLowerCase().includes(normalizedSearch);
-      const statusMatch = filterStatus === 'all' || inv.status === filterStatus;
+      const statusMatch =
+        filterStatus === 'all' ||
+        (filterStatus === 'paid'
+          ? inv.paymentStatus === 'paid'
+          : inv.status === filterStatus);
       return searchMatch && statusMatch;
     });
 
@@ -485,5 +498,13 @@ export default function InvoicesPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function InvoicesPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-muted-foreground text-sm">Loading invoices…</div>}>
+      <InvoicesBillingPage />
+    </Suspense>
   );
 }

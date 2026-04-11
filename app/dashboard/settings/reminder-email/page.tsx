@@ -49,10 +49,10 @@ export default function ReminderEmailTemplatePage() {
     [header, body, footer, company.name],
   );
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
     try {
-      updateCompany({
+      const result = await updateCompany({
         reminderEmailHeaderHtml: templateMatchesDefault(header, DEFAULT_REMINDER_EMAIL_HEADER_HTML)
           ? null
           : header.trim() || null,
@@ -63,7 +63,9 @@ export default function ReminderEmailTemplatePage() {
           ? null
           : footer.trim() || null,
       });
-      toast.success('Reminder email template saved');
+      if (result.success) {
+        toast.success('Reminder email template saved');
+      }
     } finally {
       setSaving(false);
     }
