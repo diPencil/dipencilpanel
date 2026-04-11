@@ -417,7 +417,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '20px', marginTop: '13px' }}>
             {isDipencil ? (
               <>
-                <p style={{ margin: 0 }}>Mahmoud Al-Sabbagh · Technical Visual Design Engineer</p>
+                <p style={{ margin: 0 }}>Mahmoud El-Sabbagh · Technical Visual Design Engineer</p>
                 <p style={{ margin: 0 }}>Don&apos;t hesitate to reach out : +201003778273</p>
               </>
             ) : (
