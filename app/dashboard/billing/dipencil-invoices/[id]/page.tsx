@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useInvoiceData } from '@/context/InvoiceContext';
@@ -12,8 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { exportElementToPdf, invoicePdfFilename } from '@/lib/export-invoice-pdf';
 import { formatInvoiceNumber } from '@/lib/formatting';
 import { ChevronLeft, Printer, Download, Edit } from 'lucide-react';
-import { getOrCreateDipencilInternalClient } from '@/app/actions/invoices';
-
 const LIST_HREF = '/dashboard/billing/dipencil-invoices';
 
 export default function DipencilInvoiceDetailPage() {
@@ -23,15 +21,6 @@ export default function DipencilInvoiceDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPdfExporting, setIsPdfExporting] = useState(false);
-  const [internalClientId, setInternalClientId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const cid = company?.id;
-    if (!cid || cid === 'default') return;
-    void getOrCreateDipencilInternalClient(cid).then((r) => {
-      if (r.success) setInternalClientId(r.data.id);
-    });
-  }, [company?.id]);
 
   const invoice = getInvoice(params.id as string);
 
@@ -223,7 +212,7 @@ export default function DipencilInvoiceDetailPage() {
       {isEditing ? (
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Edit diPencil Invoice</h2>
+            <h2 className="text-2xl font-bold">Edit Invoice</h2>
           </div>
           <InvoiceForm
             invoice={invoice}
@@ -231,7 +220,6 @@ export default function DipencilInvoiceDetailPage() {
             onSubmit={handleUpdate}
             isLoading={isLoading}
             variant="dipencil"
-            dipencilInternalClientId={internalClientId ?? invoice.clientId}
           />
           <div className="flex justify-end mt-6">
             <Button variant="ghost" onClick={() => setIsEditing(false)}>

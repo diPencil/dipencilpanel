@@ -21,7 +21,6 @@ type CreateInvoiceInput = {
   currency?: string;
   notes?: string;
   items: InvoiceItemInput[];
-  /** When dipencil, clientId from the client is ignored; internal system client is used. */
   invoiceKind?: 'client' | 'dipencil';
   counterpartyName?: string | null;
   counterpartyAddress?: string | null;
@@ -147,15 +146,11 @@ export async function createInvoice(input: CreateInvoiceInput) {
     const kind: InvoiceNumberKind = input.invoiceKind === 'dipencil' ? 'dipencil' : 'client';
     const invoiceNumber = await generateNextInvoiceNumber(input.companyId, kind);
 
-    let clientId = input.clientId;
-    let counterpartyName: string | null = null;
-    let counterpartyAddress: string | null = null;
-    if (kind === 'dipencil') {
-      const internal = await ensureDipencilInternalClient(input.companyId);
-      clientId = internal.id;
-      counterpartyName = input.counterpartyName?.trim() || null;
-      counterpartyAddress = input.counterpartyAddress?.trim() || null;
-    }
+    const clientId = input.clientId;
+    const counterpartyName =
+      kind === 'dipencil' ? input.counterpartyName?.trim() || null : null;
+    const counterpartyAddress =
+      kind === 'dipencil' ? input.counterpartyAddress?.trim() || null : null;
 
     const normalizedItems = input.items.map((item) => ({
       description: item.description,

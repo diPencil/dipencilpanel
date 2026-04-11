@@ -61,7 +61,6 @@ import {
   deleteInvoice as deleteInvoiceAction,
   markInvoiceAsPaid,
   duplicateInvoice as duplicateInvoiceAction,
-  getOrCreateDipencilInternalClient,
 } from '@/app/actions/invoices';
 import { getAllPayments, createPayment } from '@/app/actions/payments';
 import { getAllTransfers, createTransfer, updateTransfer as updateTransferAction, deleteTransfer as deleteTransferAction } from '@/app/actions/transfers';
@@ -1222,14 +1221,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       if (res.success && res.data) {
         const real = mapDbInvoice(res.data as unknown as Record<string, unknown>);
         setInvoices((prev) => prev.map((inv) => (inv.id === temp.id ? real : inv)));
-        if (real.invoiceKind === 'dipencil') {
-          void getOrCreateDipencilInternalClient(tenantId).then((ir) => {
-            if (!ir.success) return;
-            setClients((prev) =>
-              prev.some((c) => c.id === ir.data.id) ? prev : [...prev, { ...ir.data }],
-            );
-          });
-        }
       } else {
         setInvoices((prev) => prev.filter((inv) => inv.id !== temp.id));
         toast.error(res.error || 'Could not save invoice');
