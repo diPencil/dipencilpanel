@@ -90,9 +90,11 @@ export default function ClientGroupsPage() {
   }
 
   const assigningGroup = groups.find(g => g.id === assignDialog.groupId);
-  const filteredClients = clients.filter(c =>
-    `${c.name} ${c.companyName} ${c.email}`.toLowerCase().includes(clientSearch.toLowerCase())
-  );
+  const filteredClients = clients
+    .filter((c) => !c.isDipencilInternal)
+    .filter((c) =>
+      `${c.name} ${c.companyName} ${c.email}`.toLowerCase().includes(clientSearch.toLowerCase()),
+    );
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">

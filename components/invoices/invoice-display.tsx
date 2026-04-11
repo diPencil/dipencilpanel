@@ -3,6 +3,11 @@
 import React from 'react';
 import { Invoice, Client, Company } from '@/lib/types';
 import { formatCurrency, formatInvoiceDate, formatInvoiceNumber } from '@/lib/formatting';
+import {
+  DIPENCIL_INVOICE_LOGO_SRC,
+  DIPENCIL_INVOICE_SELLER_LINES,
+  DIPENCIL_INVOICE_SELLER_NAME,
+} from '@/lib/dipencil-invoice-branding';
 
 interface InvoiceDisplayProps {
   invoice: Invoice;
@@ -43,6 +48,11 @@ function hostingerOrderRef(invoice: Invoice): string {
   return `hb_${(charSum * 179 + 10000001).toString().slice(-8)}`;
 }
 
+function dipencilOrderRef(invoice: Invoice): string {
+  const charSum = invoice.id.split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+  return `dpc_${(charSum * 211 + 20000003).toString().slice(-8)}`;
+}
+
 function invoiceVatPercent(invoice: Invoice, companyTax: number): number {
   const net = invoice.subtotal - invoice.discountAmount;
   if (net > 0 && invoice.vatAmount > 0) return Math.round((invoice.vatAmount / net) * 1000) / 10;
@@ -63,24 +73,37 @@ function statusInfo(invoice: Invoice): { text: string; color: string } {
 export { FONT as INVOICE_FONT };
 
 export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps) {
-  const companyLogo =
-    company.invoiceLogo && company.invoiceLogo !== '/logo.png'
+  const isDipencil = invoice.invoiceKind === 'dipencil';
+
+  const companyLogo = isDipencil
+    ? DIPENCIL_INVOICE_LOGO_SRC
+    : company.invoiceLogo && company.invoiceLogo !== '/logo.png'
       ? company.invoiceLogo
       : company.logo && company.logo !== '/logo.png'
-      ? company.logo
-      : '/pencil-logo.png';
+        ? company.logo
+        : '/pencil-logo.png';
 
-  const sellerLines =
-    splitAddressLines(company.address).length > 0
+  const sellerLines = isDipencil
+    ? [...DIPENCIL_INVOICE_SELLER_LINES]
+    : splitAddressLines(company.address).length > 0
       ? splitAddressLines(company.address)
       : ['61 Lordou Vironos Street', 'Larnaca 6023', 'Cyprus'];
 
-  const clientLines  = splitAddressLines(client.address);
+  const billToName = isDipencil && invoice.counterpartyName?.trim()
+    ? invoice.counterpartyName.trim()
+    : client.name;
+
+  const clientLines = isDipencil && invoice.counterpartyAddress?.trim()
+    ? splitAddressLines(invoice.counterpartyAddress)
+    : splitAddressLines(client.address);
+
+  const hideInternalContact = client.email?.includes('internal.dipencil') ?? false;
+
   const vatPct       = invoiceVatPercent(invoice, company.taxRate ?? 0);
   const status       = statusInfo(invoice);
   const isPaid       = invoice.paymentStatus === 'paid' || invoice.status === 'paid';
   const amountDue    = isPaid ? 0 : invoice.total;
-  const orderRef     = hostingerOrderRef(invoice);
+  const orderRef     = isDipencil ? dipencilOrderRef(invoice) : hostingerOrderRef(invoice);
 
   /* ── one table row ── */
   const renderItem = (item: Invoice['items'][number]) => {
@@ -167,8 +190,8 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           <div style={{ flex: '1 1 auto', minWidth: 0, paddingRight: '40px' }}>
             <img
               src={companyLogo}
-              alt={company.name}
-              style={{ height: '24px', maxWidth: '110px', objectFit: 'contain', display: 'block', marginTop: '-1px' }}
+              alt={isDipencil ? DIPENCIL_INVOICE_SELLER_NAME : company.name}
+              style={{ height: isDipencil ? '28px' : '24px', maxWidth: '140px', objectFit: 'contain', display: 'block', marginTop: '-1px' }}
             />
           </div>
 
@@ -190,15 +213,15 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '10px' }}>
           <div style={{ flex: '1 1 auto', minWidth: 0, paddingRight: '40px', fontSize: '11px', lineHeight: '1.5', color: '#333333', fontFamily: FONT }}>
-            <p style={{ margin: 0 }}>{company.name?.trim() || 'Company'}</p>
+            <p style={{ margin: 0 }}>{isDipencil ? DIPENCIL_INVOICE_SELLER_NAME : company.name?.trim() || 'Company'}</p>
             {sellerLines.map((l) => <p key={l} style={{ margin: 0 }}>{l}</p>)}
-            {company.vatNumber?.trim() && (
+            {!isDipencil && company.vatNumber?.trim() && (
               <p style={{ margin: '4px 0 0 0' }}>
                 VAT Reg #:&nbsp;{company.vatNumber}
               </p>
             )}
-            {company.email?.trim() && <p style={{ margin: '2px 0 0 0' }}>{company.email}</p>}
-            {company.phone?.trim() && <p style={{ margin: '1px 0 0 0' }}>{company.phone}</p>}
+            {!isDipencil && company.email?.trim() && <p style={{ margin: '2px 0 0 0' }}>{company.email}</p>}
+            {!isDipencil && company.phone?.trim() && <p style={{ margin: '1px 0 0 0' }}>{company.phone}</p>}
           </div>
 
           <div style={{ flexShrink: 0, minWidth: '260px', fontSize: '11px', lineHeight: '1.7', color: C_PRIMARY, fontFamily: FONT }}>
@@ -255,10 +278,10 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           BILLED TO
         </p>
         <div style={{ fontSize: '11px', lineHeight: '1.6', color: '#222222', fontFamily: FONT }}>
-          <p style={{ margin: 0, fontWeight: 400 }}>{client.name}</p>
+          <p style={{ margin: 0, fontWeight: 400 }}>{billToName}</p>
           {clientLines.map((l) => <p key={l} style={{ margin: 0 }}>{l}</p>)}
-          <p style={{ margin: 0 }}>{client.email}</p>
-          {client.phone && <p style={{ margin: 0 }}>{client.phone}</p>}
+          {!hideInternalContact && <p style={{ margin: 0 }}>{client.email}</p>}
+          {!hideInternalContact && client.phone && <p style={{ margin: 0 }}>{client.phone}</p>}
         </div>
       </div>
 

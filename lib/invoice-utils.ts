@@ -1,27 +1,26 @@
-import { Invoice, InvoiceItem } from './types';
+import { Invoice, InvoiceItem, type InvoiceKind } from './types';
 
 /**
- * Generate a unique invoice number in format INV-YYYYNNNN
+ * Generate a unique temp invoice number (UI until server assigns the real one).
  */
-export function generateInvoiceNumber(existingInvoices: Invoice[]): string {
+export function generateInvoiceNumber(existingInvoices: Invoice[], kind: InvoiceKind = 'client'): string {
   const currentYear = new Date().getFullYear();
+  const prefix = kind === 'dipencil' ? `DPC-${currentYear}` : `INV-${currentYear}`;
   const existingNumbers = existingInvoices.map((inv) => inv.number);
-  
+
   let randomPart: string = '';
   let fullNumber: string = '';
   let isUnique = false;
 
-  // Try to generate a unique random number
   let attempts = 0;
   while (!isUnique && attempts < 100) {
-    // 4-digit random number (making it 8 digits total with year)
     randomPart = Math.floor(1000 + Math.random() * 9000).toString();
-    fullNumber = `INV-${currentYear}${randomPart}`;
+    fullNumber = `${prefix}${randomPart}`;
     isUnique = !existingNumbers.includes(fullNumber);
     attempts++;
   }
 
-  return fullNumber || `INV-${currentYear}${Date.now().toString().slice(-4)}`;
+  return fullNumber || `${prefix}${Date.now().toString().slice(-4)}`;
 }
 
 /**

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { InvoiceDisplay } from '@/components/invoices/invoice-display';
 import { InvoiceForm } from '@/components/invoices/invoice-form';
@@ -10,37 +10,61 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { exportElementToPdf, invoicePdfFilename } from '@/lib/export-invoice-pdf';
-import { formatInvoiceNumber, formatCurrency, formatInvoiceDate } from '@/lib/formatting';
+import { formatInvoiceNumber } from '@/lib/formatting';
 import { ChevronLeft, Printer, Download, Edit } from 'lucide-react';
+import { getOrCreateDipencilInternalClient } from '@/app/actions/invoices';
 
-export default function InvoiceDetailPage() {
+const LIST_HREF = '/dashboard/billing/dipencil-invoices';
+
+export default function DipencilInvoiceDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const { toast } = useToast();
-  const { invoices, clients, company, getInvoice, updateInvoice, getClient } = useInvoiceData();
+  const { clients, company, getInvoice, updateInvoice, getClient } = useInvoiceData();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPdfExporting, setIsPdfExporting] = useState(false);
-
-  const invoice = getInvoice(params.id as string);
+  const [internalClientId, setInternalClientId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (invoice?.invoiceKind === 'dipencil') {
-      router.replace(`/dashboard/billing/dipencil-invoices/${invoice.id}`);
-    }
-  }, [invoice?.id, invoice?.invoiceKind, router]);
+    const cid = company?.id;
+    if (!cid || cid === 'default') return;
+    void getOrCreateDipencilInternalClient(cid).then((r) => {
+      if (r.success) setInternalClientId(r.data.id);
+    });
+  }, [company?.id]);
+
+  const invoice = getInvoice(params.id as string);
 
   if (!invoice) {
     return (
       <div className="space-y-6">
         <Button asChild variant="ghost">
-          <Link href="/dashboard/billing/invoices" className="gap-2">
+          <Link href={LIST_HREF} className="gap-2">
             <ChevronLeft className="h-4 w-4" />
-            Back to Invoices
+            Back to diPencil Invoices
           </Link>
         </Button>
         <div className="rounded-lg border border-border bg-card p-12 text-center">
           <p className="text-muted-foreground">Invoice not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (invoice.invoiceKind !== 'dipencil') {
+    return (
+      <div className="space-y-6">
+        <Button asChild variant="ghost">
+          <Link href={LIST_HREF} className="gap-2">
+            <ChevronLeft className="h-4 w-4" />
+            Back to diPencil Invoices
+          </Link>
+        </Button>
+        <div className="rounded-lg border border-border bg-card p-12 text-center space-y-2">
+          <p className="text-muted-foreground">This invoice is a client invoice.</p>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/dashboard/billing/invoices/${invoice.id}`}>Open in Invoices</Link>
+          </Button>
         </div>
       </div>
     );
@@ -51,13 +75,13 @@ export default function InvoiceDetailPage() {
     return (
       <div className="space-y-6">
         <Button asChild variant="ghost">
-          <Link href="/dashboard/billing/invoices" className="gap-2">
+          <Link href={LIST_HREF} className="gap-2">
             <ChevronLeft className="h-4 w-4" />
-            Back to Invoices
+            Back to diPencil Invoices
           </Link>
         </Button>
         <div className="rounded-lg border border-border bg-card p-12 text-center">
-          <p className="text-muted-foreground">Client information not found</p>
+          <p className="text-muted-foreground">Client record not found</p>
         </div>
       </div>
     );
@@ -98,7 +122,6 @@ export default function InvoiceDetailPage() {
     const printWindow = window.open('', '_blank', 'width=900,height=700');
     if (!printWindow) return;
 
-    // Collect all inline styles from the current document
     const styles = Array.from(document.styleSheets)
       .map((sheet) => {
         try {
@@ -163,23 +186,18 @@ export default function InvoiceDetailPage() {
       <div className="flex items-center justify-between no-print">
         <div className="flex items-center gap-4">
           <Button asChild variant="ghost" size="sm">
-            <Link href="/dashboard/billing/invoices" className="gap-2">
+            <Link href={LIST_HREF} className="gap-2">
               <ChevronLeft className="h-4 w-4" />
-              Back to Invoices
+              Back to diPencil Invoices
             </Link>
           </Button>
-          <h1 className="text-xl font-bold tracking-tight">Invoice Details</h1>
+          <h1 className="text-xl font-bold tracking-tight">diPencil Invoice</h1>
         </div>
 
         <div className="flex items-center gap-2">
           {!isEditing && (
             <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrint}
-                className="gap-2"
-              >
+              <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2">
                 <Printer className="h-4 w-4" />
                 Print
               </Button>
@@ -193,12 +211,7 @@ export default function InvoiceDetailPage() {
                 <Download className="h-4 w-4" />
                 {isPdfExporting ? 'Preparing…' : 'Download PDF'}
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="gap-2"
-              >
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="gap-2">
                 <Edit className="h-4 w-4" />
                 Edit
               </Button>
@@ -210,38 +223,37 @@ export default function InvoiceDetailPage() {
       {isEditing ? (
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Edit Invoice</h2>
+            <h2 className="text-2xl font-bold">Edit diPencil Invoice</h2>
           </div>
           <InvoiceForm
             invoice={invoice}
             clients={clients}
             onSubmit={handleUpdate}
             isLoading={isLoading}
+            variant="dipencil"
+            dipencilInternalClientId={internalClientId ?? invoice.clientId}
           />
           <div className="flex justify-end mt-6">
-            <Button
-              variant="ghost"
-              onClick={() => setIsEditing(false)}
-            >
+            <Button variant="ghost" onClick={() => setIsEditing(false)}>
               Cancel Edit
             </Button>
           </div>
         </Card>
       ) : (
         <div className="w-full overflow-x-auto mb-12 pb-4">
-          <style dangerouslySetInnerHTML={{ __html: `
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
             @media print {
               .no-print { display: none !important; }
               body { background: white !important; }
               main { padding: 0 !important; margin: 0 !important; }
               .fixed { position: static !important; }
             }
-          `}} />
-          <InvoiceDisplay 
-            invoice={invoice} 
-            client={client} 
-            company={company} 
+          `,
+            }}
           />
+          <InvoiceDisplay invoice={invoice} client={client} company={company} />
         </div>
       )}
     </div>

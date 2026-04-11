@@ -1,12 +1,17 @@
 import { prisma } from './prisma';
 
+export type InvoiceNumberKind = 'client' | 'dipencil';
+
 /**
  * Generates the next unique invoice number for a company.
- * Format: INV-YYYYNNNN
+ * Client invoices: INV-YYYYNNNN — diPencil internal: DPC-YYYYNNNN
  */
-export async function generateNextInvoiceNumber(companyId: string): Promise<string> {
+export async function generateNextInvoiceNumber(
+  companyId: string,
+  kind: InvoiceNumberKind = 'client',
+): Promise<string> {
   const year = new Date().getFullYear();
-  const prefix = `INV-${year}`;
+  const prefix = kind === 'dipencil' ? `DPC-${year}` : `INV-${year}`;
 
   const existingInvoices = await prisma.invoice.findMany({
     where: {

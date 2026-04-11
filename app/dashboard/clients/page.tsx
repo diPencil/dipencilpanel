@@ -52,10 +52,11 @@ export default function ClientsPage() {
   };
 
   const filteredClients = useMemo(() => {
+    const pool = clients.filter((c) => !c.isDipencilInternal);
     const query = searchTerm.trim().toLowerCase();
-    if (!query) return clients;
+    if (!query) return pool;
 
-    return clients.filter((client) => {
+    return pool.filter((client) => {
       const groupName = clientGroups.find((group) => group.clientIds.includes(client.id))?.name ?? 'Ungrouped';
 
       return (

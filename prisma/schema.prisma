@@ -121,6 +121,8 @@ model Client {
   phone       String?
   address     String?
   companyName String?
+  /// Hidden system client used only for diPencil internal invoices (FK); not shown in client lists.
+  isDipencilInternal Boolean @default(false)
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -442,6 +444,10 @@ model Invoice {
   discountAmount Float   @default(0)
   vatAmount     Float    @default(0)
   total         Float
+  /// "client" = normal panel invoices; "dipencil" = company-owned invoices (same totals roll into billing).
+  invoiceKind         String  @default("client")
+  counterpartyName    String?
+  counterpartyAddress String?
 
   clientId String
   client   Client @relation(fields: [clientId], references: [id], onDelete: Restrict)

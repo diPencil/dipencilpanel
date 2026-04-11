@@ -38,6 +38,8 @@ export interface Client {
   createdAt: string;
   companyId: string;
   groupId?: string;
+  /** System row for diPencil internal invoices; hide from client pickers / lists. */
+  isDipencilInternal?: boolean;
 }
 
 export interface ClientGroup {
@@ -60,11 +62,17 @@ export interface InvoiceItem {
   vat: number; // percentage
 }
 
+export type InvoiceKind = 'client' | 'dipencil';
+
 // Invoice data
 export interface Invoice {
   id: string;
   number: string;
   clientId: string;
+  /** Normal client billing vs diPencil company invoices. */
+  invoiceKind: InvoiceKind;
+  counterpartyName?: string | null;
+  counterpartyAddress?: string | null;
   subscriptionId?: string;
   serviceType?: 'website' | 'domain' | 'email' | 'vps' | 'hosting' | 'general' | 'mobile_app';
   serviceId?: string;

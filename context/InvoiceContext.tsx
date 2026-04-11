@@ -54,7 +54,15 @@ import {
   renewSubscriptionWithSchedule as renewSubscriptionWithScheduleAction,
   runSubscriptionAutoRenewals,
 } from '@/app/actions/subscriptions';
-import { getAllInvoices, createInvoice, updateInvoice as updateInvoiceAction, deleteInvoice as deleteInvoiceAction, markInvoiceAsPaid, duplicateInvoice as duplicateInvoiceAction } from '@/app/actions/invoices';
+import {
+  getAllInvoices,
+  createInvoice,
+  updateInvoice as updateInvoiceAction,
+  deleteInvoice as deleteInvoiceAction,
+  markInvoiceAsPaid,
+  duplicateInvoice as duplicateInvoiceAction,
+  getOrCreateDipencilInternalClient,
+} from '@/app/actions/invoices';
 import { getAllPayments, createPayment } from '@/app/actions/payments';
 import { getAllTransfers, createTransfer, updateTransfer as updateTransferAction, deleteTransfer as deleteTransferAction } from '@/app/actions/transfers';
 import { getAllUsers, createUser, updateUser as updateUserAction, deleteUser as deleteUserAction } from '@/app/actions/users';
@@ -419,11 +427,18 @@ function mapDbInvoice(inv: Record<string, unknown>): Invoice {
 
   const sub = inv.subscription as { id?: string; serviceType?: string; serviceName?: string } | null | undefined;
 
+  const rawKind = (inv.invoiceKind as string) ?? 'client';
+  const invoiceKind: Invoice['invoiceKind'] =
+    rawKind === 'dipencil' ? 'dipencil' : 'client';
+
   return {
     id: inv.id as string,
     number: inv.number as string,
     clientId: inv.clientId as string,
     companyId: inv.companyId as string,
+    invoiceKind,
+    counterpartyName: (inv.counterpartyName as string | null | undefined) ?? null,
+    counterpartyAddress: (inv.counterpartyAddress as string | null | undefined) ?? null,
     subscriptionId:
       (inv.subscriptionId as string | null | undefined) ?? sub?.id ?? undefined,
     serviceType: sub?.serviceType as Invoice['serviceType'] | undefined,
@@ -750,6 +765,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
           phone: c.phone ?? '', address: c.address ?? '',
           companyName: c.companyName ?? '', companyId: c.companyId,
           createdAt: c.createdAt.toString(),
+          isDipencilInternal: Boolean((c as { isDipencilInternal?: boolean }).isDipencilInternal),
         })));
       }
       if (domainsRes.success && domainsRes.data) {
@@ -1057,7 +1073,17 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     createClient({ ...clientData, companyId: effectiveCompanyId }).then((res) => {
       if (res.success && res.data) {
         const d = res.data;
-        const real: Client = { id: d.id, name: d.name, email: d.email, phone: d.phone ?? '', address: d.address ?? '', companyName: d.companyName ?? '', companyId: d.companyId, createdAt: d.createdAt.toString() };
+        const real: Client = {
+          id: d.id,
+          name: d.name,
+          email: d.email,
+          phone: d.phone ?? '',
+          address: d.address ?? '',
+          companyName: d.companyName ?? '',
+          companyId: d.companyId,
+          createdAt: d.createdAt.toString(),
+          isDipencilInternal: Boolean((d as { isDipencilInternal?: boolean }).isDipencilInternal),
+        };
         if (shouldAppearInCurrentList) {
           setClients((prev) => prev.map((c) => (c.id === temp.id ? real : c)));
         }
@@ -1175,7 +1201,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
   const addInvoice = (data: Omit<Invoice, 'id' | 'number' | 'createdAt' | 'updatedAt'>) => {
     if (!requireTenantId()) return null;
     const now = new Date().toISOString();
-    const number = generateInvoiceNumber(invoices);
+    const number = generateInvoiceNumber(invoices, data.invoiceKind ?? 'client');
     const temp: Invoice = { ...data, id: tempId(), number, createdAt: now, updatedAt: now, companyId: tenantId };
     setInvoices((prev) => [...prev, temp]);
 
@@ -1189,10 +1215,21 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       currency: data.currency,
       notes: data.notes,
       items: data.items,
+      invoiceKind: data.invoiceKind ?? 'client',
+      counterpartyName: data.counterpartyName ?? undefined,
+      counterpartyAddress: data.counterpartyAddress ?? undefined,
     }).then((res) => {
       if (res.success && res.data) {
         const real = mapDbInvoice(res.data as unknown as Record<string, unknown>);
         setInvoices((prev) => prev.map((inv) => (inv.id === temp.id ? real : inv)));
+        if (real.invoiceKind === 'dipencil') {
+          void getOrCreateDipencilInternalClient(tenantId).then((ir) => {
+            if (!ir.success) return;
+            setClients((prev) =>
+              prev.some((c) => c.id === ir.data.id) ? prev : [...prev, { ...ir.data }],
+            );
+          });
+        }
       } else {
         setInvoices((prev) => prev.filter((inv) => inv.id !== temp.id));
         toast.error(res.error || 'Could not save invoice');
@@ -1242,6 +1279,9 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       currency: original.currency,
       items: original.items.map((item) => ({ ...item, id: tempId() })),
       notes: original.notes,
+      invoiceKind: original.invoiceKind,
+      counterpartyName: original.counterpartyName,
+      counterpartyAddress: original.counterpartyAddress,
       ...calculateInvoiceTotals(original.items),
     });
     duplicateInvoiceAction(id, tenantId).catch(console.error);

@@ -11,8 +11,6 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { InvoiceDisplay } from '@/components/invoices/invoice-display';
 import { exportElementToPdf, invoicePdfFilename } from '@/lib/export-invoice-pdf';
-import { sendInvoiceToClientEmail } from '@/app/actions/invoice-email';
-import { SendInvoiceDialog } from '@/components/invoices/send-invoice-dialog';
 import type { Client, Invoice } from '@/lib/types';
 import { 
   Download, 
@@ -22,7 +20,6 @@ import {
   Clock, 
   Plus, 
   Search,
-  Send,
   MoreHorizontal,
   Trash2,
   ArrowUpDown
@@ -72,13 +69,11 @@ function InvoicesBillingPage() {
     }
   }, [searchParams]);
   const [pdfJob, setPdfJob] = useState<{ invoice: Invoice; client: Client } | null>(null);
-  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
   const [deletingInvoice, setDeletingInvoice] = useState<Invoice | null>(null);
-  const [sendDialogInvoice, setSendDialogInvoice] = useState<Invoice | null>(null);
   const [serviceSort, setServiceSort] = useState<'none' | 'asc' | 'desc'>('none');
 
-  const clientInvoices = useMemo(
-    () => invoices.filter((inv) => (inv.invoiceKind ?? 'client') === 'client'),
+  const dipencilInvoices = useMemo(
+    () => invoices.filter((inv) => inv.invoiceKind === 'dipencil'),
     [invoices],
   );
 
@@ -128,33 +123,7 @@ function InvoicesBillingPage() {
     setPdfJob({ invoice, client });
   };
 
-  const openSendDialog = (invoice: Invoice) => {
-    const client = getClient(invoice.clientId);
-    if (!client?.email?.trim()) {
-      toast.error('Client has no email address');
-      return;
-    }
-    setSendDialogInvoice(invoice);
-  };
-
-  const handleSendConfirm = async (invoice: Invoice, ccEmails: string[]) => {
-    setSendingEmailId(invoice.id);
-    try {
-      const res = await sendInvoiceToClientEmail(invoice.id, invoice.companyId, ccEmails);
-      if (res.success) {
-        const client = getClient(invoice.clientId);
-        const ccText = ccEmails.length > 0 ? ` + ${ccEmails.length} CC` : '';
-        toast.success(`Invoice sent to ${client?.email}${ccText}`);
-        setSendDialogInvoice(null);
-      } else {
-        toast.error(res.error);
-      }
-    } finally {
-      setSendingEmailId(null);
-    }
-  };
-
-  const getServiceName = (invoice: (typeof clientInvoices)[number]) => {
+  const getServiceName = (invoice: (typeof dipencilInvoices)[number]) => {
     // 1. Specific service name stored in DB
     if (invoice.serviceName) return invoice.serviceName; 
     
@@ -196,9 +165,10 @@ function InvoicesBillingPage() {
 
   const filteredInvoices = useMemo(() => {
     const normalizedSearch = searchTerm.toLowerCase();
-    const nextInvoices = clientInvoices.filter((inv) => {
+    const nextInvoices = dipencilInvoices.filter((inv) => {
       const client = getClient(inv.clientId);
-      const searchMatch = `${client?.name} ${formatInvoiceNumber(inv.number)}`.toLowerCase().includes(normalizedSearch);
+      const billLabel = inv.counterpartyName?.trim() || client?.name || '';
+      const searchMatch = `${billLabel} ${formatInvoiceNumber(inv.number)}`.toLowerCase().includes(normalizedSearch);
       const statusMatch =
         filterStatus === 'all' ||
         (filterStatus === 'paid'
@@ -222,7 +192,7 @@ function InvoicesBillingPage() {
 
       return new Date(right.issueDate).getTime() - new Date(left.issueDate).getTime();
     });
-  }, [filterStatus, getClient, getServiceName, clientInvoices, searchTerm, serviceSort]);
+  }, [filterStatus, getClient, getServiceName, dipencilInvoices, searchTerm, serviceSort]);
 
   const companyCurrency = company.currency || 'USD';
   const filteredTotalPricing =
@@ -242,7 +212,7 @@ function InvoicesBillingPage() {
     });
   }, []);
 
-  const getStatusBadge = (invoice: (typeof clientInvoices)[number]) => {
+  const getStatusBadge = (invoice: (typeof dipencilInvoices)[number]) => {
     if (invoice.paymentStatus === 'paid') {
       return (
         <Badge className="bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20 flex items-center gap-1">
@@ -268,12 +238,14 @@ function InvoicesBillingPage() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
-          <p className="text-muted-foreground mt-1">Manage and track your client invoices</p>
+          <h1 className="text-3xl font-bold tracking-tight">diPencil Invoices</h1>
+          <p className="text-muted-foreground mt-1">
+            Company invoices (Pencil for E-Marketing Ltd.) — totals are included with main billing
+          </p>
         </div>
-        <Link href="/dashboard/billing/invoices/new">
+        <Link href="/dashboard/billing/dipencil-invoices/new">
           <Button className="shadow-lg shadow-primary/20 gap-2">
-            <Plus className="h-4 w-4" /> Create Invoice
+            <Plus className="h-4 w-4" /> Create diPencil Invoice
           </Button>
         </Link>
       </div>
@@ -377,6 +349,8 @@ function InvoicesBillingPage() {
               ) : (
                 filteredInvoices.map((invoice) => {
                   const client = getClient(invoice.clientId);
+                  const billName = invoice.counterpartyName?.trim() || client?.name || '—';
+                  const showEmail = client?.email && !client.email.includes('internal.dipencil');
                   return (
                     <tr key={invoice.id} className="hover:bg-muted/30 transition-colors group">
                       <td className="px-6 py-4 font-semibold text-sm">
@@ -384,8 +358,12 @@ function InvoicesBillingPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium">{client?.name || 'Unknown'}</span>
-                          <span className="text-xs text-muted-foreground truncate max-w-[150px]">{client?.email}</span>
+                          <span className="text-sm font-medium">{billName}</span>
+                          {showEmail ? (
+                            <span className="text-xs text-muted-foreground truncate max-w-[150px]">{client?.email}</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground truncate max-w-[180px]">Bill to</span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
@@ -408,7 +386,7 @@ function InvoicesBillingPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
-                           <Link href={`/dashboard/billing/invoices/${invoice.id}`}>
+                           <Link href={`/dashboard/billing/dipencil-invoices/${invoice.id}`}>
                             <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-500/10 hover:text-blue-600 rounded-full">
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -428,15 +406,6 @@ function InvoicesBillingPage() {
                               >
                                 <Download className="h-4 w-4" /> Download PDF
                               </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="gap-2"
-                                disabled={sendingEmailId === invoice.id}
-                                onClick={() => openSendDialog(invoice)}
-                              >
-                                <Send className="h-4 w-4" />
-                                {sendingEmailId === invoice.id ? 'Sending…' : 'Send to Client'}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
                               {invoice.paymentStatus !== 'paid' && (
                                 <DropdownMenuItem 
                                   className="gap-2 text-green-600 focus:text-green-600 focus:bg-green-50"
@@ -474,14 +443,6 @@ function InvoicesBillingPage() {
         </div>
       ) : null}
 
-      <SendInvoiceDialog
-        invoice={sendDialogInvoice}
-        open={!!sendDialogInvoice}
-        onOpenChange={(open) => !open && setSendDialogInvoice(null)}
-        onSend={handleSendConfirm}
-        isSending={!!sendingEmailId}
-      />
-
       <AlertDialog open={!!deletingInvoice} onOpenChange={(open) => !open && setDeletingInvoice(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -506,7 +467,7 @@ function InvoicesBillingPage() {
   );
 }
 
-export default function InvoicesPage() {
+export default function DipencilInvoicesPage() {
   return (
     <Suspense fallback={<div className="p-6 text-muted-foreground text-sm">Loading invoices…</div>}>
       <InvoicesBillingPage />

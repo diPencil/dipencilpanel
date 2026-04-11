@@ -23,6 +23,9 @@ interface InvoiceFormProps {
   clients: Client[];
   onSubmit: (data: Omit<Invoice, 'id' | 'number' | 'createdAt' | 'updatedAt'>) => void;
   isLoading?: boolean;
+  /** diPencil company invoices: no client picker; uses internal client id on save. */
+  variant?: 'client' | 'dipencil';
+  dipencilInternalClientId?: string | null;
 }
 
 export function InvoiceForm({
@@ -30,13 +33,19 @@ export function InvoiceForm({
   clients,
   onSubmit,
   isLoading,
+  variant = 'client',
+  dipencilInternalClientId = null,
 }: InvoiceFormProps) {
   const { company, currentCompany } = useInvoiceData();
   const sellerCompanyId = company.id && company.id !== 'default' ? company.id : currentCompany.id;
 
   const [items, setItems] = useState<InvoiceItem[]>(invoice?.items || []);
+  const pickerClients = clients.filter((c) => !c.isDipencilInternal);
+
   const [formData, setFormData] = useState({
     clientId: invoice?.clientId || '',
+    counterpartyName: invoice?.counterpartyName ?? '',
+    counterpartyAddress: invoice?.counterpartyAddress ?? '',
     issueDate: invoice?.issueDate ? invoice.issueDate.split('T')[0] : new Date().toISOString().split('T')[0],
     dueDate: invoice?.dueDate ? invoice.dueDate.split('T')[0] : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     nextBillingDate: invoice?.nextBillingDate ? invoice.nextBillingDate.split('T')[0] : '',
@@ -61,7 +70,18 @@ export function InvoiceForm({
   const validateForm = () => {
     const newErrors: Partial<typeof formData> = {};
 
-    if (!formData.clientId) newErrors.clientId = 'Client is required';
+    if (variant === 'client' && !formData.clientId) newErrors.clientId = 'Client is required';
+    if (variant === 'dipencil' && !formData.counterpartyName?.trim()) {
+      (newErrors as Record<string, string>).counterpartyName = 'Bill-to name is required';
+    }
+    if (variant === 'dipencil' && !dipencilInternalClientId && !invoice) {
+      toast({
+        title: 'Error',
+        description: 'Workspace is still loading. Please try again in a moment.',
+        variant: 'destructive',
+      });
+      return false;
+    }
     if (!formData.issueDate) newErrors.issueDate = 'Issue date is required';
     if (!formData.dueDate) newErrors.dueDate = 'Due date is required';
     if (items.length === 0) {
@@ -111,9 +131,18 @@ export function InvoiceForm({
 
     const totals = calculateInvoiceTotals(items);
 
+    const invoiceKind = variant === 'dipencil' ? 'dipencil' : 'client';
     const data: Omit<Invoice, 'id' | 'number' | 'createdAt' | 'updatedAt'> = {
-      clientId: formData.clientId,
+      clientId:
+        variant === 'dipencil'
+          ? dipencilInternalClientId || invoice?.clientId || ''
+          : formData.clientId,
       companyId: sellerCompanyId || '',
+      invoiceKind,
+      counterpartyName:
+        variant === 'dipencil' ? formData.counterpartyName.trim() || null : null,
+      counterpartyAddress:
+        variant === 'dipencil' ? formData.counterpartyAddress.trim() || null : null,
       issueDate: `${formData.issueDate}T00:00:00.000Z`,
       dueDate: `${formData.dueDate}T00:00:00.000Z`,
       nextBillingDate: formData.nextBillingDate ? `${formData.nextBillingDate}T00:00:00.000Z` : null,
@@ -134,24 +163,54 @@ export function InvoiceForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Top row: Client | Currency | Status | Payment Status */}
+      {/* Top row: Client (or Bill to) | Currency | Status | Payment Status */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1.5">Client</label>
-          <Select value={formData.clientId} onValueChange={(value) => handleSelectChange('clientId', value)}>
-            <SelectTrigger disabled={isLoading}>
-              <SelectValue placeholder="Select a client" />
-            </SelectTrigger>
-            <SelectContent>
-              {clients.map((client) => (
-                <SelectItem key={client.id} value={client.id}>
-                  {client.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.clientId && <p className="text-xs text-red-600 mt-1">{errors.clientId}</p>}
-        </div>
+        {variant === 'dipencil' ? (
+          <div className="md:col-span-2 space-y-3">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Bill to (name)</label>
+              <Input
+                name="counterpartyName"
+                value={formData.counterpartyName}
+                onChange={handleChange}
+                disabled={isLoading}
+                placeholder="Customer or entity name"
+              />
+              {(errors as Record<string, string>).counterpartyName && (
+                <p className="text-xs text-red-600 mt-1">{(errors as Record<string, string>).counterpartyName}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Bill to (address)</label>
+              <textarea
+                name="counterpartyAddress"
+                value={formData.counterpartyAddress}
+                onChange={handleChange}
+                disabled={isLoading}
+                placeholder="Address lines (optional)"
+                className="w-full min-h-[72px] p-2 rounded-lg border border-input bg-background text-foreground text-sm"
+                rows={3}
+              />
+            </div>
+          </div>
+        ) : (
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Client</label>
+            <Select value={formData.clientId} onValueChange={(value) => handleSelectChange('clientId', value)}>
+              <SelectTrigger disabled={isLoading}>
+                <SelectValue placeholder="Select a client" />
+              </SelectTrigger>
+              <SelectContent>
+                {pickerClients.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.clientId && <p className="text-xs text-red-600 mt-1">{errors.clientId}</p>}
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium mb-1.5">Currency</label>

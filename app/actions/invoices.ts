@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { generateNextInvoiceNumber, calcTotals, markOverdueInvoices } from '@/lib/billing-utils';
+import { generateNextInvoiceNumber, calcTotals, markOverdueInvoices, type InvoiceNumberKind } from '@/lib/billing-utils';
 
 type InvoiceItemInput = {
   description: string;
@@ -21,7 +21,52 @@ type CreateInvoiceInput = {
   currency?: string;
   notes?: string;
   items: InvoiceItemInput[];
+  /** When dipencil, clientId from the client is ignored; internal system client is used. */
+  invoiceKind?: 'client' | 'dipencil';
+  counterpartyName?: string | null;
+  counterpartyAddress?: string | null;
 };
+
+async function ensureDipencilInternalClient(companyId: string) {
+  const existing = await prisma.client.findFirst({
+    where: { companyId, isDipencilInternal: true },
+  });
+  if (existing) return existing;
+
+  return prisma.client.create({
+    data: {
+      companyId,
+      name: 'Pencil for E-Marketing Ltd.',
+      email: `dipencil-invoice-${companyId.replace(/[^a-z0-9]/gi, '')}@internal.dipencil`,
+      companyName: 'Pencil for E-Marketing Ltd.',
+      address:
+        'EGY: 10 A Hussein Wassef Street, Al-Masaha Square, Dokki\nKSA: Olaya, Akaria Plaza, Gate D – Level 6, Riyadh',
+      isDipencilInternal: true,
+    },
+  });
+}
+
+export async function getOrCreateDipencilInternalClient(companyId: string) {
+  try {
+    const client = await ensureDipencilInternalClient(companyId);
+    return {
+      success: true as const,
+      data: {
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        phone: client.phone ?? '',
+        address: client.address ?? '',
+        companyName: client.companyName ?? '',
+        companyId: client.companyId,
+        createdAt: client.createdAt.toISOString(),
+        isDipencilInternal: true as const,
+      },
+    };
+  } catch (error) {
+    return { success: false as const, error: String(error) };
+  }
+}
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
@@ -99,7 +144,18 @@ export async function createInvoice(input: CreateInvoiceInput) {
   try {
     const company = await prisma.company.findUnique({ where: { id: input.companyId } });
     const currency = input.currency ?? company?.currency ?? 'USD';
-    const invoiceNumber = await generateNextInvoiceNumber(input.companyId);
+    const kind: InvoiceNumberKind = input.invoiceKind === 'dipencil' ? 'dipencil' : 'client';
+    const invoiceNumber = await generateNextInvoiceNumber(input.companyId, kind);
+
+    let clientId = input.clientId;
+    let counterpartyName: string | null = null;
+    let counterpartyAddress: string | null = null;
+    if (kind === 'dipencil') {
+      const internal = await ensureDipencilInternalClient(input.companyId);
+      clientId = internal.id;
+      counterpartyName = input.counterpartyName?.trim() || null;
+      counterpartyAddress = input.counterpartyAddress?.trim() || null;
+    }
 
     const normalizedItems = input.items.map((item) => ({
       description: item.description,
@@ -123,9 +179,12 @@ export async function createInvoice(input: CreateInvoiceInput) {
         currency,
         notes: input.notes,
         ...totals,
-        clientId: input.clientId,
+        clientId,
         companyId: input.companyId,
         subscriptionId: input.subscriptionId,
+        invoiceKind: kind,
+        counterpartyName,
+        counterpartyAddress,
         items: { create: normalizedItems },
       },
       include: { items: true },
@@ -184,10 +243,18 @@ export async function updateInvoice(
       discountAmount?: number;
       vatAmount?: number;
       total?: number;
+      counterpartyName?: string | null;
+      counterpartyAddress?: string | null;
     } = { ...totalsPatch };
 
     if (input.clientId != null && String(input.clientId).trim() !== '') {
       data.clientId = String(input.clientId);
+    }
+    if (input.counterpartyName !== undefined) {
+      data.counterpartyName = input.counterpartyName ? String(input.counterpartyName).trim() : null;
+    }
+    if (input.counterpartyAddress !== undefined) {
+      data.counterpartyAddress = input.counterpartyAddress ? String(input.counterpartyAddress).trim() : null;
     }
     if (input.currency !== undefined) data.currency = String(input.currency);
     if (input.status !== undefined) data.status = String(input.status);
@@ -319,7 +386,9 @@ export async function duplicateInvoice(id: string, companyId: string) {
     });
     if (!original) return { success: false as const, error: 'Invoice not found' };
 
-    const invoiceNumber = await generateNextInvoiceNumber(companyId);
+    const numberKind: InvoiceNumberKind =
+      original.invoiceKind === 'dipencil' ? 'dipencil' : 'client';
+    const invoiceNumber = await generateNextInvoiceNumber(companyId, numberKind);
     const now = new Date();
 
     const data = await prisma.invoice.create({
@@ -338,6 +407,9 @@ export async function duplicateInvoice(id: string, companyId: string) {
         clientId: original.clientId,
         companyId,
         subscriptionId: original.subscriptionId,
+        invoiceKind: original.invoiceKind ?? 'client',
+        counterpartyName: original.counterpartyName,
+        counterpartyAddress: original.counterpartyAddress,
         items: {
           create: original.items.map((item) => ({
             description: item.description,

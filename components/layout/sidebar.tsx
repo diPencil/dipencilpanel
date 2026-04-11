@@ -122,6 +122,7 @@ const navItems = [
       { label: 'Overview', href: '/dashboard/billing' },
       { label: 'Subscriptions', href: '/dashboard/billing/subscriptions' },
       { label: 'Invoices', href: '/dashboard/billing/invoices' },
+      { label: 'diPencil Invoices', href: '/dashboard/billing/dipencil-invoices' },
       { label: 'Payment History', href: '/dashboard/billing/payments' },
       { label: 'Sub. Reminders', href: '/dashboard/billing/reminders' },
       { label: 'Business Emails', href: '/dashboard/billing/business-emails' },
