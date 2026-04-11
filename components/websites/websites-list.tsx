@@ -315,7 +315,7 @@ export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
               </div>
             );
           })}
-        </div>
+        </Card>
       )}
 
       {/* Table View */}
