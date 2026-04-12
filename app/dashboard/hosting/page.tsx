@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Plus, 
   Search, 
-  Filter, 
   MoreVertical, 
   ExternalLink, 
   RotateCcw, 
@@ -19,7 +18,8 @@ import {
   Cpu,
   Activity,
   Trash2,
-  Calendar
+  Calendar,
+  Pencil
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -169,6 +169,11 @@ export default function HostingOverviewPage() {
                              <DropdownMenuItem asChild>
                                 <Link href={`/dashboard/hosting/${h.id}`} className="cursor-pointer">
                                    <ExternalLink className="h-4 w-4 mr-2" /> Manage
+                                </Link>
+                             </DropdownMenuItem>
+                             <DropdownMenuItem asChild>
+                                <Link href={`/dashboard/hosting/${h.id}?edit=1`} className="cursor-pointer">
+                                   <Pencil className="h-4 w-4 mr-2" /> Edit
                                 </Link>
                              </DropdownMenuItem>
                              <DropdownMenuItem onClick={() => renewHosting(h.id)}>

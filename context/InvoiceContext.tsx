@@ -360,7 +360,14 @@ function mapDbVPS(v: Record<string, unknown>): VPS {
 }
 
 function mapDbHosting(h: Record<string, unknown>): Hosting {
-  const resources = h.resources ? JSON.parse(h.resources as string) : { cpu: '', ram: '', storage: '', bandwidth: '' };
+  let resources: Hosting['resources'] = { cpu: '', ram: '', storage: '', bandwidth: '' };
+  if (h.resources && typeof h.resources === 'string') {
+    try {
+      resources = JSON.parse(h.resources) as Hosting['resources'];
+    } catch {
+      resources = { cpu: '', ram: '', storage: '', bandwidth: '' };
+    }
+  }
   return {
     id: h.id as string,
     name: h.name as string,
@@ -373,6 +380,7 @@ function mapDbHosting(h: Record<string, unknown>): Hosting {
     companyId: h.companyId as string,
     domainId: '',
     price: (h.price as number) ?? 0,
+    currency: (h.currency as string | undefined) ?? undefined,
     billingCycle: (h.billingCycle as 'monthly' | 'yearly') ?? 'monthly',
     subscriptionId: h.subscriptionId as string | undefined,
     createdAt: (h.createdAt as Date | string)?.toString() ?? '',
@@ -1207,7 +1215,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     createInvoice({
       clientId: data.clientId,
       companyId: tenantId,
-      subscriptionId: data.serviceId,
+      subscriptionId: data.subscriptionId ?? data.serviceId,
       issueDate: data.issueDate,
       dueDate: new Date(data.dueDate),
       nextBillingDate: data.nextBillingDate ? new Date(data.nextBillingDate) : null,

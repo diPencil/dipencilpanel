@@ -1,7 +1,8 @@
 'use server';
 
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { computeEndDate } from '@/lib/billing-utils';
+import { computeEndDate, generateNextInvoiceNumber } from '@/lib/billing-utils';
 
 type CreateHostingInput = {
   name: string;
@@ -92,21 +93,37 @@ export async function updateHosting(
     planName: string;
     status: string;
     expiryDate: Date | string;
-    resources: string;
+    resources: string | Record<string, unknown>;
+    price: number;
+    billingCycle: string;
+    currency: string;
   }>,
 ) {
   try {
     const existing = await prisma.hosting.findFirst({ where: { id, companyId } });
     if (!existing) return { success: false as const, error: 'Hosting not found' };
 
-    const data = await prisma.hosting.update({
+    const data: Prisma.HostingUpdateInput = {};
+    if (input.name !== undefined) data.name = input.name;
+    if (input.type !== undefined) data.type = input.type;
+    if (input.planName !== undefined) data.planName = input.planName;
+    if (input.status !== undefined) data.status = input.status;
+    if (input.price !== undefined) data.price = input.price;
+    if (input.billingCycle !== undefined) data.billingCycle = input.billingCycle;
+    if (input.currency !== undefined) data.currency = input.currency;
+    if (input.expiryDate !== undefined) data.expiryDate = new Date(input.expiryDate);
+    if (input.resources !== undefined) {
+      data.resources =
+        typeof input.resources === 'string'
+          ? input.resources
+          : JSON.stringify(input.resources);
+    }
+
+    const updated = await prisma.hosting.update({
       where: { id },
-      data: {
-        ...input,
-        expiryDate: input.expiryDate ? new Date(input.expiryDate) : undefined,
-      },
+      data,
     });
-    return { success: true as const, data };
+    return { success: true as const, data: updated };
   } catch (error) {
     return { success: false as const, error: String(error) };
   }

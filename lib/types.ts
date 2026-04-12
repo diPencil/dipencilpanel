@@ -235,6 +235,7 @@ export interface Hosting {
   type: 'web' | 'node' | 'wordpress' | 'cloud';
   planName: string;
   price: number;
+  currency?: string;
   billingCycle: 'monthly' | 'yearly';
   status: 'active' | 'suspended' | 'expired';
   expiryDate: string;
