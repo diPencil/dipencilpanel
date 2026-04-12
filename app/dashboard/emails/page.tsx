@@ -456,8 +456,8 @@ export default function EmailsPage() {
       </Card>
 
       {/* Main Mailbox Management Section */}
-      <Card className="border-none shadow-sm overflow-hidden bg-background">
-        <div className="p-4 border-b border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/5">
+      <Card className="border border-border/50 shadow-sm overflow-hidden bg-card ring-1 ring-border/30">
+        <div className="p-4 border-b border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/30">
           <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
             <Mail className="h-3.5 w-3.5 text-primary/60" />
             Active Mailboxes ({filteredEmails.length})
@@ -472,10 +472,10 @@ export default function EmailsPage() {
             />
           </div>
         </div>
-        <div className="relative w-full overflow-x-auto">
+        <div className="relative w-full overflow-x-auto bg-card">
           <Table>
-            <TableHeader className="bg-muted/10">
-              <TableRow className="hover:bg-transparent border-b border-border/30">
+            <TableHeader className="bg-muted/40">
+              <TableRow className="hover:bg-transparent border-b border-border/30 bg-muted/20">
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest h-9 pl-6">Core Identity</TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest h-9">Network Domain</TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest h-9">Allocation</TableHead>
@@ -500,7 +500,7 @@ export default function EmailsPage() {
                 </TableRow>
               ) : (
                 filteredEmails.map((email) => (
-                  <TableRow key={email.id} className="hover:bg-primary/1 transition-colors border-b border-border/20 last:border-0 group">
+                  <TableRow key={email.id} className="bg-card hover:bg-muted/40 transition-colors border-b border-border/20 last:border-0 group">
                     <TableCell className="py-4 pl-6">
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 bg-primary/5 rounded-xl flex items-center justify-center text-primary/60 border border-primary/5 group-hover:bg-primary group-hover:text-white transition-all duration-300">

@@ -7,21 +7,22 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Plus, 
-  Search, 
-  MoreVertical, 
-  ExternalLink, 
-  RotateCcw, 
+import {
+  Plus,
+  Search,
+  MoreVertical,
+  ExternalLink,
+  RotateCcw,
   History,
   HardDrive,
   Cpu,
   Activity,
   Trash2,
   Calendar,
-  Pencil
+  Pencil,
+  CirclePlay,
 } from 'lucide-react';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -29,26 +30,50 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { formatCurrency, formatDate } from '@/lib/formatting';
 import { resolveHostingPrimaryDomain } from '@/lib/hosting-domain';
+import { isHostingRenewEligible } from '@/lib/hosting-renew-eligibility';
+import { RenewHostingDialog } from '@/components/hosting/renew-hosting-dialog';
 import { cn } from '@/lib/utils';
+import type { Hosting } from '@/lib/types';
 
 type HostingStatus = 'all' | 'active' | 'suspended' | 'expired';
 
 export default function HostingOverviewPage() {
-  const { hosting = [], clients = [], domains = [], deleteHosting, suspendHosting, renewHosting } = useInvoiceData();
+  const {
+    hosting = [],
+    clients = [],
+    domains = [],
+    deleteHosting,
+    suspendHosting,
+    reactivateHosting,
+  } = useInvoiceData();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<HostingStatus>('all');
+  const [suspendTarget, setSuspendTarget] = useState<Hosting | null>(null);
+  const [reactivateTarget, setReactivateTarget] = useState<Hosting | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Hosting | null>(null);
+  const [renewTarget, setRenewTarget] = useState<Hosting | null>(null);
 
   const filteredHosting = useMemo(() => {
-    return (hosting || []).filter(h => {
-      const client = clients.find(c => c.id === h.clientId);
-      const domain = domains.find(d => d.id === h.domainId);
-      
-      const searchStr = `${h.name} ${client?.name || ''} ${domain?.name || ''}`.toLowerCase();
+    return (hosting || []).filter((h) => {
+      const client = clients.find((c) => c.id === h.clientId);
+      const primary = resolveHostingPrimaryDomain(h, domains);
+
+      const searchStr = `${h.name} ${client?.name || ''} ${primary.display}`.toLowerCase();
       const matchesSearch = searchStr.includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === 'all' || h.status === statusFilter;
-      
+
       return matchesSearch && matchesStatus;
     });
   }, [hosting, clients, domains, searchQuery, statusFilter]);
@@ -177,14 +202,34 @@ export default function HostingOverviewPage() {
                                    <Pencil className="h-4 w-4 mr-2" /> Edit
                                 </Link>
                              </DropdownMenuItem>
-                             <DropdownMenuItem onClick={() => renewHosting(h.id)}>
-                                <RotateCcw className="h-4 w-4 mr-2" /> Renew
-                             </DropdownMenuItem>
-                             <DropdownMenuItem onClick={() => suspendHosting(h.id)} className="text-amber-600">
-                                <History className="h-4 w-4 mr-2" /> Suspend
-                             </DropdownMenuItem>
+                             {isHostingRenewEligible(h) ? (
+                               <DropdownMenuItem
+                                 className="gap-2 text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950/30"
+                                 onClick={() => setRenewTarget(h)}
+                               >
+                                 <RotateCcw className="h-4 w-4" /> Renewal
+                               </DropdownMenuItem>
+                             ) : null}
+                             {h.status === 'suspended' ? (
+                               <DropdownMenuItem
+                                 className="gap-2 text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950/30"
+                                 onClick={() => setReactivateTarget(h)}
+                               >
+                                 <CirclePlay className="h-4 w-4" /> Reactivate
+                               </DropdownMenuItem>
+                             ) : (
+                               <DropdownMenuItem
+                                 className="text-amber-600 focus:text-amber-700 focus:bg-amber-50 dark:focus:bg-amber-950/30"
+                                 onClick={() => setSuspendTarget(h)}
+                               >
+                                 <History className="h-4 w-4 mr-2" /> Suspend
+                               </DropdownMenuItem>
+                             )}
                              <DropdownMenuSeparator />
-                             <DropdownMenuItem onClick={() => deleteHosting(h.id)} className="text-destructive">
+                             <DropdownMenuItem
+                               className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                               onClick={() => setDeleteTarget(h)}
+                             >
                                 <Trash2 className="h-4 w-4 mr-2" /> Delete
                              </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -246,6 +291,90 @@ export default function HostingOverviewPage() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!suspendTarget} onOpenChange={(open) => !open && setSuspendTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Suspend this hosting account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The service for <strong>{suspendTarget?.name}</strong> will be marked suspended. Linked billing may be
+              paused. You can reactivate it later from the same menu.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-amber-600 text-white hover:bg-amber-600/90"
+              onClick={() => {
+                if (suspendTarget) {
+                  suspendHosting(suspendTarget.id);
+                  setSuspendTarget(null);
+                }
+              }}
+            >
+              Yes, suspend
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!reactivateTarget} onOpenChange={(open) => !open && setReactivateTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reactivate hosting?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{reactivateTarget?.name}</strong> will return to active status. If a subscription is linked, it
+              will be set active with auto-renew enabled.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (reactivateTarget) {
+                  reactivateHosting(reactivateTarget.id);
+                  setReactivateTarget(null);
+                }
+              }}
+            >
+              Yes, reactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete hosting account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes <strong>{deleteTarget?.name}</strong> and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTarget) {
+                  deleteHosting(deleteTarget.id);
+                  setDeleteTarget(null);
+                }
+              }}
+            >
+              Yes, delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <RenewHostingDialog
+        open={!!renewTarget}
+        onOpenChange={(open) => {
+          if (!open) setRenewTarget(null);
+        }}
+        hostingId={renewTarget?.id ?? null}
+      />
     </div>
   );
 }

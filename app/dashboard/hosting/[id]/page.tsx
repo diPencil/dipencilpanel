@@ -45,6 +45,7 @@ import {
   Trash2,
   XCircle,
   Pencil,
+  CirclePlay,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -54,12 +55,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { formatCurrency, formatDate, formatDateForInput } from '@/lib/formatting';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { calculateInvoiceTotals } from '@/lib/invoice-utils';
 import { isInvoiceLinkedToHosting } from '@/lib/hosting-invoice';
 import { resolveHostingPrimaryDomain } from '@/lib/hosting-domain';
+import { parseSafePanelUrl } from '@/lib/panel-url';
+import { isHostingRenewEligible } from '@/lib/hosting-renew-eligibility';
+import { RenewHostingDialog } from '@/components/hosting/renew-hosting-dialog';
 import type { Hosting, InvoiceItem } from '@/lib/types';
 
 function parseCapacityGb(text: string): number | null {
@@ -100,7 +114,7 @@ function HostingDetailsPage() {
     invoices = [],
     deleteHosting,
     suspendHosting,
-    renewHosting,
+    reactivateHosting,
     updateHosting,
     addInvoiceAsync,
     company,
@@ -213,6 +227,11 @@ function HostingDetailsPage() {
   const [editBandwidth, setEditBandwidth] = useState('');
   const [editCurrency, setEditCurrency] = useState('USD');
   const [editDomainId, setEditDomainId] = useState('');
+  const [editPanelUrl, setEditPanelUrl] = useState('');
+  const [suspendConfirmOpen, setSuspendConfirmOpen] = useState(false);
+  const [reactivateConfirmOpen, setReactivateConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [renewDialogOpen, setRenewDialogOpen] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('edit') === '1') {
@@ -235,6 +254,7 @@ function HostingDetailsPage() {
     setEditBandwidth(h.resources.bandwidth);
     setEditCurrency(h.currency ?? invoiceCurrency);
     setEditDomainId(h.domainId || '');
+    setEditPanelUrl(h.panelUrl?.trim() ? h.panelUrl : '');
   }, [editOpen, h, invoiceCurrency]);
 
   if (!h) {
@@ -249,9 +269,9 @@ function HostingDetailsPage() {
     );
   }
 
-  const handleDelete = () => {
+  const handleConfirmDelete = () => {
     deleteHosting(h.id);
-    toast.success('Hosting account deleted');
+    setDeleteConfirmOpen(false);
     router.push('/dashboard/hosting');
   };
 
@@ -259,6 +279,11 @@ function HostingDetailsPage() {
     const price = Number.parseFloat(editPrice);
     if (!Number.isFinite(price) || price < 0) {
       toast.error('Enter a valid price');
+      return;
+    }
+    const nextPanelUrl = parseSafePanelUrl(editPanelUrl);
+    if (editPanelUrl.trim() && !nextPanelUrl) {
+      toast.error('Enter a valid control panel URL (https://…)');
       return;
     }
     updateHosting(h.id, {
@@ -276,6 +301,7 @@ function HostingDetailsPage() {
       },
       currency: editCurrency,
       domainId: editDomainId.trim(),
+      panelUrl: nextPanelUrl,
     });
     toast.success('Hosting updated');
     setEditOpen(false);
@@ -356,18 +382,26 @@ function HostingDetailsPage() {
           >
             <Pencil className="h-4 w-4" /> Edit
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="rounded-xl gap-2 font-bold px-6 shadow-sm"
-            onClick={() =>
-              toast.message('Control panel', {
-                description: 'Add your provider control-panel URL in company or hosting settings when available.',
-              })
-            }
-          >
-            <Settings className="h-4 w-4" /> Control Panel
-          </Button>
+          {h.panelUrl?.trim() ? (
+            <Button variant="outline" className="rounded-xl gap-2 font-bold px-6 shadow-sm" asChild>
+              <a href={h.panelUrl.trim()} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4" /> Control Panel
+              </a>
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl gap-2 font-bold px-6 shadow-sm"
+              onClick={() =>
+                toast.message('Control panel', {
+                  description: 'Open Edit and paste your provider panel URL (cPanel, Plesk, etc.), then save.',
+                })
+              }
+            >
+              <Settings className="h-4 w-4" /> Control Panel
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="rounded-xl h-10 w-10 border-border/50 shadow-sm">
@@ -381,14 +415,34 @@ function HostingDetailsPage() {
               <DropdownMenuItem onClick={() => setEditOpen(true)} className="rounded-xl py-2.5">
                 <Pencil className="h-4 w-4 mr-3" /> Edit details
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => renewHosting(h.id)} className="rounded-xl py-2.5">
-                <RotateCcw className="h-4 w-4 mr-3" /> Renew Cycle
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => suspendHosting(h.id)} className="rounded-xl py-2.5 text-amber-600">
-                <History className="h-4 w-4 mr-3" /> Suspend Service
-              </DropdownMenuItem>
+              {isHostingRenewEligible(h) ? (
+                <DropdownMenuItem
+                  className="rounded-xl py-2.5 text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950/30"
+                  onClick={() => setRenewDialogOpen(true)}
+                >
+                  <RotateCcw className="h-4 w-4 mr-3" /> Renewal
+                </DropdownMenuItem>
+              ) : null}
+              {h.status === 'suspended' ? (
+                <DropdownMenuItem
+                  className="rounded-xl py-2.5 text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950/30"
+                  onClick={() => setReactivateConfirmOpen(true)}
+                >
+                  <CirclePlay className="h-4 w-4 mr-3" /> Reactivate
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  className="rounded-xl py-2.5 text-amber-600"
+                  onClick={() => setSuspendConfirmOpen(true)}
+                >
+                  <History className="h-4 w-4 mr-3" /> Suspend Service
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleDelete} className="rounded-xl py-2.5 text-destructive font-bold focus:bg-destructive focus:text-white">
+              <DropdownMenuItem
+                onClick={() => setDeleteConfirmOpen(true)}
+                className="rounded-xl py-2.5 text-destructive font-bold focus:bg-destructive focus:text-white"
+              >
                 <Trash2 className="h-4 w-4 mr-3" /> Terminate Account
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -484,6 +538,20 @@ function HostingDetailsPage() {
               </Select>
             </div>
             <div className="grid gap-2">
+              <Label htmlFor="host-panel-url">Control panel URL</Label>
+              <Input
+                id="host-panel-url"
+                type="url"
+                inputMode="url"
+                placeholder="https://cpanel.example.com or server hostname"
+                value={editPanelUrl}
+                onChange={(e) => setEditPanelUrl(e.target.value)}
+              />
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                Opens in a new tab from the Control Panel button. Leave empty to remove the link.
+              </p>
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="host-cpu">CPU label</Label>
               <Input id="host-cpu" value={editCpu} onChange={(e) => setEditCpu(e.target.value)} placeholder="e.g. Shared" />
             </div>
@@ -510,6 +578,79 @@ function HostingDetailsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={suspendConfirmOpen} onOpenChange={setSuspendConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Suspend this hosting account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The service for <strong>{h.name}</strong> will be marked suspended. Linked billing may be paused. You can
+              reactivate it later from the same menu.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-amber-600 text-white hover:bg-amber-600/90"
+              onClick={() => {
+                suspendHosting(h.id);
+                setSuspendConfirmOpen(false);
+              }}
+            >
+              Yes, suspend
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={reactivateConfirmOpen} onOpenChange={setReactivateConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reactivate hosting?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{h.name}</strong> will return to active status. If a subscription is linked, it will be set active
+              with auto-renew enabled.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                reactivateHosting(h.id);
+                setReactivateConfirmOpen(false);
+              }}
+            >
+              Yes, reactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Terminate hosting account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes <strong>{h.name}</strong> and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleConfirmDelete}
+            >
+              Yes, delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <RenewHostingDialog
+        open={renewDialogOpen}
+        onOpenChange={setRenewDialogOpen}
+        hostingId={renewDialogOpen ? h.id : null}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">

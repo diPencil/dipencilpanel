@@ -249,6 +249,9 @@ model Hosting {
   domainId String?
   primaryDomain Domain? @relation("HostingPrimaryDomain", fields: [domainId], references: [id], onDelete: SetNull)
 
+  /// External control panel (cPanel, Plesk, DirectAdmin, etc.) — opened in a new tab from the dashboard.
+  panelUrl String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

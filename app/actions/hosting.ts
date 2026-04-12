@@ -3,6 +3,8 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { computeEndDate, generateNextInvoiceNumber } from '@/lib/billing-utils';
+import { parseSafePanelUrl } from '@/lib/panel-url';
+import type { RenewalScheduleInput } from '@/app/actions/subscriptions';
 
 type CreateHostingInput = {
   name: string;
@@ -18,6 +20,8 @@ type CreateHostingInput = {
   taxRate?: number;
   /** Optional primary domain — must belong to the same client and company. */
   domainId?: string | null;
+  /** Optional cPanel / Plesk / provider panel URL. */
+  panelUrl?: string | null;
 };
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -80,6 +84,15 @@ export async function createHosting(input: CreateHostingInput) {
       ? new Date(input.expiryDate)
       : computeEndDate(new Date(), input.billingCycle);
 
+    let panelUrl: string | null = null;
+    if (input.panelUrl != null && String(input.panelUrl).trim() !== '') {
+      const parsed = parseSafePanelUrl(String(input.panelUrl));
+      if (!parsed) {
+        return { success: false as const, error: 'Invalid control panel URL' };
+      }
+      panelUrl = parsed;
+    }
+
     const hosting = await prisma.hosting.create({
       data: {
         name: input.name,
@@ -93,6 +106,7 @@ export async function createHosting(input: CreateHostingInput) {
         clientId: input.clientId,
         companyId: input.companyId,
         domainId,
+        panelUrl,
       },
     });
 
@@ -116,6 +130,7 @@ export async function updateHosting(
     billingCycle: string;
     currency: string;
     domainId: string | null;
+    panelUrl: string | null;
   }>,
 ) {
   try {
@@ -152,6 +167,17 @@ export async function updateHosting(
           return { success: false as const, error: 'Domain not found or does not belong to this client' };
         }
         data.domainId = input.domainId;
+      }
+    }
+    if (input.panelUrl !== undefined) {
+      if (input.panelUrl === null || String(input.panelUrl).trim() === '') {
+        data.panelUrl = null;
+      } else {
+        const parsed = parseSafePanelUrl(String(input.panelUrl));
+        if (!parsed) {
+          return { success: false as const, error: 'Invalid control panel URL' };
+        }
+        data.panelUrl = parsed;
       }
     }
 
@@ -192,6 +218,125 @@ export async function suspendHosting(id: string, companyId: string) {
     });
 
     return { success: true as const };
+  } catch (error) {
+    return { success: false as const, error: String(error) };
+  }
+}
+
+function parseScheduleDate(s: string): Date | null {
+  const d = new Date(s.trim());
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Resume a suspended hosting account and linked subscription (if any). */
+export async function reactivateHosting(id: string, companyId: string) {
+  try {
+    const hosting = await prisma.hosting.findFirst({ where: { id, companyId } });
+    if (!hosting) return { success: false as const, error: 'Hosting not found' };
+
+    await prisma.$transaction(async (tx) => {
+      await tx.hosting.update({ where: { id }, data: { status: 'active' } });
+      if (hosting.subscriptionId) {
+        await tx.subscription.update({
+          where: { id: hosting.subscriptionId },
+          data: { status: 'active', autoRenew: true },
+        });
+      }
+    });
+
+    return { success: true as const };
+  } catch (error) {
+    return { success: false as const, error: String(error) };
+  }
+}
+
+/**
+ * Renewal with custom issue / due / expiry dates (same pattern as subscription renew schedule).
+ */
+export async function renewHostingWithSchedule(
+  id: string,
+  companyId: string,
+  input: RenewalScheduleInput,
+) {
+  try {
+    const issueDate = parseScheduleDate(input.issueDate);
+    const dueDate = parseScheduleDate(input.dueDate);
+    const expiryDate = parseScheduleDate(input.expiryDate);
+    if (!issueDate || !dueDate || !expiryDate) {
+      return { success: false as const, error: 'Invalid date(s)' };
+    }
+    if (expiryDate.getTime() <= issueDate.getTime()) {
+      return { success: false as const, error: 'Expiry date must be after issue date' };
+    }
+
+    const hosting = await prisma.hosting.findFirst({
+      where: { id, companyId },
+      include: { subscription: true },
+    });
+    if (!hosting) return { success: false as const, error: 'Hosting not found' };
+
+    const company = await prisma.company.findUnique({ where: { id: companyId } });
+    const taxRate = company?.taxRate ?? 0;
+    const currency = hosting.currency || company?.currency || 'USD';
+    const price = hosting.price ?? 0;
+    const cycle = input.billingCycle === 'yearly' ? 'yearly' : 'monthly';
+    const invoiceNumber = await generateNextInvoiceNumber(companyId);
+    const vatAmount = price * (taxRate / 100);
+
+    const result = await prisma.$transaction(async (tx) => {
+      const updated = await tx.hosting.update({
+        where: { id },
+        data: {
+          expiryDate,
+          status: 'active',
+          billingCycle: cycle,
+        },
+      });
+
+      if (hosting.subscriptionId) {
+        await tx.subscription.update({
+          where: { id: hosting.subscriptionId },
+          data: {
+            endDate: expiryDate,
+            billingCycle: cycle,
+            status: 'active',
+          },
+        });
+      }
+
+      const invoice = await tx.invoice.create({
+        data: {
+          number: invoiceNumber,
+          issueDate,
+          dueDate,
+          nextBillingDate: expiryDate,
+          status: 'pending',
+          paymentStatus: 'unpaid',
+          currency,
+          notes: `Hosting renewal: ${hosting.planName} — ${hosting.name} (${id})`,
+          subtotal: price,
+          discountAmount: 0,
+          vatAmount,
+          total: price + vatAmount,
+          clientId: hosting.clientId,
+          companyId,
+          subscriptionId: hosting.subscriptionId,
+          items: {
+            create: {
+              description: `Hosting Renewal — ${hosting.planName} (${id})`,
+              quantity: 1,
+              price,
+              discount: 0,
+              vat: taxRate,
+            },
+          },
+        },
+      });
+
+      return { hosting: updated, invoice };
+    });
+
+    return { success: true as const, data: result };
   } catch (error) {
     return { success: false as const, error: String(error) };
   }

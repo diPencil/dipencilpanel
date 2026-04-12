@@ -40,7 +40,16 @@ import type {
 import { getCompanies, createCompany, updateCompany as updateCompanyAction, deleteCompany } from '@/app/actions/company';
 import { getAllClients, createClient, updateClient as updateClientAction, deleteClient as deleteClientAction, getAllClientGroups, createClientGroup, updateClientGroup as updateClientGroupAction, deleteClientGroup as deleteClientGroupAction, toggleClientInGroup as toggleClientInGroupAction } from '@/app/actions/clients';
 import { getAllDomains, createDomain, updateDomain as updateDomainAction, deleteDomain as deleteDomainAction, renewDomain as renewDomainAction, renewDomainWithSchedule as renewDomainWithScheduleAction } from '@/app/actions/domains';
-import { getAllHosting, createHosting, updateHosting as updateHostingAction, deleteHosting as deleteHostingAction, suspendHosting as suspendHostingAction, renewHosting as renewHostingAction } from '@/app/actions/hosting';
+import {
+  getAllHosting,
+  createHosting,
+  updateHosting as updateHostingAction,
+  deleteHosting as deleteHostingAction,
+  suspendHosting as suspendHostingAction,
+  renewHosting as renewHostingAction,
+  reactivateHosting as reactivateHostingAction,
+  renewHostingWithSchedule as renewHostingWithScheduleAction,
+} from '@/app/actions/hosting';
 import { getAllVPS, createVPS, updateVPS as updateVPSAction, deleteVPS as deleteVPSAction } from '@/app/actions/vps';
 import { getAllEmails, createEmail, updateEmail as updateEmailAction, deleteEmail as deleteEmailAction } from '@/app/actions/emails';
 import { getAllWebsites, createWebsite, updateWebsite as updateWebsiteAction, deleteWebsite as deleteWebsiteAction } from '@/app/actions/websites';
@@ -196,7 +205,12 @@ interface InvoiceContextType {
   deleteHosting: (id: string) => void;
   getHosting: (id: string) => Hosting | undefined;
   suspendHosting: (id: string) => void;
+  reactivateHosting: (id: string) => void;
   renewHosting: (id: string) => void;
+  renewHostingWithSchedule: (
+    id: string,
+    input: import('@/app/actions/subscriptions').RenewalScheduleInput,
+  ) => Promise<boolean>;
 
   // Mobile App actions
   addMobileApp: (app: Omit<MobileApp, 'id' | 'createdAt' | 'updatedAt'> & { companyId?: string }) => MobileApp | undefined;
@@ -389,6 +403,7 @@ function mapDbHosting(h: Record<string, unknown>): Hosting {
     subscriptionId: h.subscriptionId as string | undefined,
     createdAt: (h.createdAt as Date | string)?.toString() ?? '',
     linkedServices: { emailIds: [], vpsIds: [] },
+    panelUrl: (h.panelUrl as string | null | undefined) ?? undefined,
   };
 }
 
@@ -1792,6 +1807,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       price: data.price,
       billingCycle: data.billingCycle,
       domainId: data.domainId && data.domainId.trim() !== '' ? data.domainId : null,
+      panelUrl: data.panelUrl && String(data.panelUrl).trim() !== '' ? String(data.panelUrl) : null,
     }).then((res) => {
       if (res.success && res.data) {
         const real = mapDbHosting(res.data.hosting as unknown as Record<string, unknown>);
@@ -1823,12 +1839,26 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
   const getHosting = (id: string) => hosting.find((h) => h.id === id);
 
   const suspendHosting = (id: string) => {
-    updateHosting(id, { status: 'suspended' });
     const h = getHosting(id);
-    if (h?.subscriptionId) cancelSubscription(h.subscriptionId);
+    updateHosting(id, { status: 'suspended' });
+    if (h?.subscriptionId) {
+      updateSubscription(h.subscriptionId, { status: 'suspended', autoRenew: false });
+    }
     suspendHostingAction(id, tenantId).then((res) => {
       if (res.success) toast.success('Hosting suspended');
       else toast.error(res.success === false ? res.error : 'Could not suspend hosting');
+    });
+  };
+
+  const reactivateHosting = (id: string) => {
+    const h = getHosting(id);
+    updateHosting(id, { status: 'active' });
+    if (h?.subscriptionId) {
+      updateSubscription(h.subscriptionId, { status: 'active', autoRenew: true });
+    }
+    reactivateHostingAction(id, tenantId).then((res) => {
+      if (res.success) toast.success('Hosting reactivated');
+      else toast.error(res.success === false ? res.error : 'Could not reactivate hosting');
     });
   };
 
@@ -1848,6 +1878,38 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         toast.error(res.success === false ? res.error : 'Could not renew hosting');
       }
     });
+  };
+
+  const renewHostingWithSchedule = async (
+    id: string,
+    input: import('@/app/actions/subscriptions').RenewalScheduleInput,
+  ): Promise<boolean> => {
+    if (!requireTenantId()) return false;
+    const res = await renewHostingWithScheduleAction(id, tenantId, input);
+    if (res.success && res.data) {
+      const inv = mapDbInvoice(res.data.invoice as unknown as Record<string, unknown>);
+      const host = mapDbHosting(res.data.hosting as unknown as Record<string, unknown>);
+      setInvoices((prev) => [...prev, inv]);
+      setHosting((prev) => prev.map((x) => (x.id === id ? host : x)));
+      if (host.subscriptionId) {
+        setSubscriptions((prev) =>
+          prev.map((s) =>
+            s.id === host.subscriptionId
+              ? {
+                  ...s,
+                  expiryDate: host.expiryDate,
+                  billingCycle: host.billingCycle,
+                  status: 'active',
+                }
+              : s,
+          ),
+        );
+      }
+      toast.success('Renewal invoice created and hosting updated.');
+      return true;
+    }
+    toast.error(res.success === false ? res.error : 'Failed to renew hosting');
+    return false;
   };
 
   // ─── Mobile App Actions ────────────────────────────────────────────────────
@@ -1972,7 +2034,14 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     addTransfer, updateTransfer, deleteTransfer, getTransfer,
     addEmail, updateEmail, deleteEmail, getEmail,
     addVPS, updateVPS, deleteVPS, getVPS,
-    addHosting, updateHosting, deleteHosting, getHosting, suspendHosting, renewHosting,
+    addHosting,
+    updateHosting,
+    deleteHosting,
+    getHosting,
+    suspendHosting,
+    reactivateHosting,
+    renewHosting,
+    renewHostingWithSchedule,
     addMobileApp, updateMobileApp, deleteMobileApp, getMobileApp, setMobileAppStatus,
     getTotalRevenue, getPaidRevenue, getPendingRevenue, getTotalInvoices,
     getRecentInvoices, getInvoicesByClient, getMonthlyRevenue, getTotalStorageUsed,

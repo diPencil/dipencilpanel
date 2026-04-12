@@ -252,6 +252,8 @@ export interface Hosting {
     vpsIds: string[];
   };
   companyId: string;
+  /** Provider control panel URL (cPanel, Plesk, etc.), if set. */
+  panelUrl?: string | null;
 }
 
 export interface HostingPlan {
