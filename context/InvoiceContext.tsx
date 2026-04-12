@@ -130,6 +130,10 @@ interface InvoiceContextType {
 
   // Invoice actions
   addInvoice: (invoice: Omit<Invoice, 'id' | 'number' | 'createdAt' | 'updatedAt'>) => Invoice | null;
+  /** Creates invoice on server and returns the persisted row (real id). No optimistic temp row. */
+  addInvoiceAsync: (
+    invoice: Omit<Invoice, 'id' | 'number' | 'createdAt' | 'updatedAt'>,
+  ) => Promise<Invoice | null>;
   updateInvoice: (
     id: string,
     invoice: Partial<Invoice>,
@@ -378,7 +382,7 @@ function mapDbHosting(h: Record<string, unknown>): Hosting {
     resources,
     clientId: h.clientId as string,
     companyId: h.companyId as string,
-    domainId: '',
+    domainId: h.domainId != null ? (h.domainId as string) : '',
     price: (h.price as number) ?? 0,
     currency: (h.currency as string | undefined) ?? undefined,
     billingCycle: (h.billingCycle as 'monthly' | 'yearly') ?? 'monthly',
@@ -1215,7 +1219,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     createInvoice({
       clientId: data.clientId,
       companyId: tenantId,
-      subscriptionId: data.subscriptionId ?? data.serviceId,
+      subscriptionId: data.subscriptionId,
       issueDate: data.issueDate,
       dueDate: new Date(data.dueDate),
       nextBillingDate: data.nextBillingDate ? new Date(data.nextBillingDate) : null,
@@ -1236,6 +1240,33 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     });
 
     return temp;
+  };
+
+  const addInvoiceAsync = async (
+    data: Omit<Invoice, 'id' | 'number' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Invoice | null> => {
+    if (!requireTenantId()) return null;
+    const res = await createInvoice({
+      clientId: data.clientId,
+      companyId: tenantId,
+      subscriptionId: data.subscriptionId,
+      issueDate: data.issueDate,
+      dueDate: new Date(data.dueDate),
+      nextBillingDate: data.nextBillingDate ? new Date(data.nextBillingDate) : null,
+      currency: data.currency,
+      notes: data.notes,
+      items: data.items,
+      invoiceKind: data.invoiceKind ?? 'client',
+      counterpartyName: data.counterpartyName ?? undefined,
+      counterpartyAddress: data.counterpartyAddress ?? undefined,
+    });
+    if (res.success && res.data) {
+      const real = mapDbInvoice(res.data as unknown as Record<string, unknown>);
+      setInvoices((prev) => [...prev, real]);
+      return real;
+    }
+    toast.error(res.success === false ? res.error : 'Could not save invoice');
+    return null;
   };
 
   const updateInvoice = async (
@@ -1281,6 +1312,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       invoiceKind: original.invoiceKind,
       counterpartyName: original.counterpartyName,
       counterpartyAddress: original.counterpartyAddress,
+      subscriptionId: original.subscriptionId,
       ...calculateInvoiceTotals(original.items),
     });
     duplicateInvoiceAction(id, tenantId).catch(console.error);
@@ -1759,12 +1791,14 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       companyId: tenantId,
       price: data.price,
       billingCycle: data.billingCycle,
+      domainId: data.domainId && data.domainId.trim() !== '' ? data.domainId : null,
     }).then((res) => {
       if (res.success && res.data) {
         const real = mapDbHosting(res.data.hosting as unknown as Record<string, unknown>);
         setHosting((prev) => prev.map((h) => (h.id === id ? real : h)));
       } else {
         setHosting((prev) => prev.filter((h) => h.id !== id));
+        toast.error(res.success === false ? res.error : 'Could not create hosting');
       }
     });
 
@@ -1778,7 +1812,12 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   const deleteHosting = (id: string) => {
     setHosting((prev) => prev.filter((h) => h.id !== id));
-    deleteHostingAction(id, tenantId).catch(console.error);
+    deleteHostingAction(id, tenantId).then((res) => {
+      if (res.success) toast.success('Hosting removed');
+      else {
+        toast.error(res.success === false ? res.error : 'Could not delete hosting');
+      }
+    });
   };
 
   const getHosting = (id: string) => hosting.find((h) => h.id === id);
@@ -1787,7 +1826,10 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     updateHosting(id, { status: 'suspended' });
     const h = getHosting(id);
     if (h?.subscriptionId) cancelSubscription(h.subscriptionId);
-    suspendHostingAction(id, tenantId).catch(console.error);
+    suspendHostingAction(id, tenantId).then((res) => {
+      if (res.success) toast.success('Hosting suspended');
+      else toast.error(res.success === false ? res.error : 'Could not suspend hosting');
+    });
   };
 
   const renewHosting = (id: string) => {
@@ -1801,6 +1843,9 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       if (res.success && res.data) {
         const inv = mapDbInvoice(res.data.invoice as unknown as Record<string, unknown>);
         setInvoices((prev) => [...prev, inv]);
+        toast.success('Renewal invoice created');
+      } else {
+        toast.error(res.success === false ? res.error : 'Could not renew hosting');
       }
     });
   };
@@ -1918,7 +1963,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     addRole, updateRole, deleteRole,
     addClient, updateClient, deleteClient, getClient,
     addClientGroup, updateClientGroup, deleteClientGroup, toggleClientInGroup,
-    addInvoice, updateInvoice, deleteInvoice, getInvoice, duplicateInvoice, markAsPaid,
+    addInvoice, addInvoiceAsync, updateInvoice, deleteInvoice, getInvoice, duplicateInvoice, markAsPaid,
     addWebsite, updateWebsite, deleteWebsite, getWebsite,
     addDomain, updateDomain, deleteDomain, getDomain, renewDomain, renewDomainWithSchedule,
     addSubscription, updateSubscription, deleteSubscription, getSubscription, cancelSubscription, renewSubscription,

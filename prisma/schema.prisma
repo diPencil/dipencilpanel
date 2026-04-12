@@ -188,6 +188,8 @@ model Domain {
   subscriptionId String?       @unique
   subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 
+  hostingsAsPrimary Hosting[] @relation("HostingPrimaryDomain")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -243,12 +245,17 @@ model Hosting {
   subscriptionId String?       @unique
   subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 
+  /// Primary domain for this hosting (must belong to the same client).
+  domainId String?
+  primaryDomain Domain? @relation("HostingPrimaryDomain", fields: [domainId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([clientId])
   @@index([companyId])
   @@index([status])
+  @@index([domainId])
 }
 
 model VPS {

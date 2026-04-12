@@ -58,6 +58,8 @@ import { formatCurrency, formatDate, formatDateForInput } from '@/lib/formatting
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { calculateInvoiceTotals } from '@/lib/invoice-utils';
+import { isInvoiceLinkedToHosting } from '@/lib/hosting-invoice';
+import { resolveHostingPrimaryDomain } from '@/lib/hosting-domain';
 import type { Hosting, InvoiceItem } from '@/lib/types';
 
 function parseCapacityGb(text: string): number | null {
@@ -100,7 +102,7 @@ function HostingDetailsPage() {
     suspendHosting,
     renewHosting,
     updateHosting,
-    addInvoice,
+    addInvoiceAsync,
     company,
     currentCompany,
   } = useInvoiceData();
@@ -127,30 +129,17 @@ function HostingDetailsPage() {
     [domains, client],
   );
 
-  const primaryDomain = useMemo(() => {
-    if (!h || !clientDomains.length) return null;
-    if (h.domainId) {
-      const byId = clientDomains.find((d) => d.id === h.domainId);
-      if (byId) return byId;
-    }
-    return clientDomains.length === 1 ? clientDomains[0] : null;
-  }, [h, clientDomains]);
+  const primary = useMemo(
+    () => (h ? resolveHostingPrimaryDomain(h, domains) : null),
+    [h, domains],
+  );
 
   const invoiceCurrency = h?.currency ?? currentCompany?.currency ?? company.currency ?? 'USD';
 
   const lastHostingInvoice = useMemo(() => {
     if (!h) return undefined;
     const related = invoices
-      .filter((inv) => {
-        if (inv.clientId !== h.clientId) return false;
-        if (h.subscriptionId && inv.subscriptionId === h.subscriptionId) return true;
-        if (inv.notes?.includes(h.name)) return true;
-        return inv.items.some(
-          (it) =>
-            it.description.toLowerCase().includes('hosting') &&
-            (it.description.includes(h.planName) || it.description.includes(h.name)),
-        );
-      })
+      .filter((inv) => isInvoiceLinkedToHosting(inv, h))
       .sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime());
     return related[0];
   }, [invoices, h]);
@@ -223,6 +212,7 @@ function HostingDetailsPage() {
   const [editStorage, setEditStorage] = useState('');
   const [editBandwidth, setEditBandwidth] = useState('');
   const [editCurrency, setEditCurrency] = useState('USD');
+  const [editDomainId, setEditDomainId] = useState('');
 
   useEffect(() => {
     if (searchParams.get('edit') === '1') {
@@ -244,6 +234,7 @@ function HostingDetailsPage() {
     setEditStorage(h.resources.storage);
     setEditBandwidth(h.resources.bandwidth);
     setEditCurrency(h.currency ?? invoiceCurrency);
+    setEditDomainId(h.domainId || '');
   }, [editOpen, h, invoiceCurrency]);
 
   if (!h) {
@@ -284,23 +275,24 @@ function HostingDetailsPage() {
         bandwidth: editBandwidth.trim(),
       },
       currency: editCurrency,
+      domainId: editDomainId.trim(),
     });
     toast.success('Hosting updated');
     setEditOpen(false);
   };
 
-  const handleManualInvoice = () => {
+  const handleManualInvoice = async () => {
     const taxRate = company.taxRate ?? 0;
     const item: InvoiceItem = {
       id: `line-${Date.now()}`,
-      description: `Web hosting — ${h.planName} (${h.name})`,
+      description: `Web hosting — ${h.planName} (${h.id})`,
       quantity: 1,
       price: h.price,
       discount: 0,
       vat: taxRate,
     };
     const totals = calculateInvoiceTotals([item]);
-    const created = addInvoice({
+    const created = await addInvoiceAsync({
       clientId: h.clientId,
       companyId: h.companyId,
       invoiceKind: 'client',
@@ -475,6 +467,23 @@ function HostingDetailsPage() {
               <Input id="host-expiry" type="date" value={editExpiry} onChange={(e) => setEditExpiry(e.target.value)} />
             </div>
             <div className="grid gap-2">
+              <Label>Primary domain</Label>
+              <Select value={editDomainId || '__none__'} onValueChange={(v) => setEditDomainId(v === '__none__' ? '' : v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Not linked" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Not linked</SelectItem>
+                  {clientDomains.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}
+                      {d.tld}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="host-cpu">CPU label</Label>
               <Input id="host-cpu" value={editCpu} onChange={(e) => setEditCpu(e.target.value)} placeholder="e.g. Shared" />
             </div>
@@ -593,23 +602,23 @@ function HostingDetailsPage() {
                   </div>
                   <div className="flex-1">
                     <p className="font-black text-lg tracking-tight uppercase">
-                      {primaryDomain ? `${primaryDomain.name}${primaryDomain.tld}` : 'Not linked'}
+                      {primary?.display ?? 'Not linked'}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       Status:{' '}
                       <span className="text-green-500 font-bold uppercase">
-                        {primaryDomain?.status ?? '—'}
+                        {primary?.domain?.status ?? '—'}
                       </span>
                     </p>
-                    {clientDomains.length > 1 && !primaryDomain && (
+                    {clientDomains.length > 1 && !primary?.domain && (
                       <p className="text-[10px] text-muted-foreground mt-2">
-                        This client has {clientDomains.length} domains — open Domains to choose which one to attach.
+                        This client has {clientDomains.length} domains — choose the primary domain in Edit.
                       </p>
                     )}
                   </div>
                   <Button variant="ghost" size="sm" className="w-full h-9 rounded-lg gap-2 text-[10px] uppercase font-bold text-blue-600 hover:bg-blue-50" asChild>
-                    <Link href={primaryDomain ? `/dashboard/domains/${primaryDomain.id}` : '/dashboard/domains/dns'}>
-                      {primaryDomain ? 'Domain details' : 'DNS management'} <ExternalLink className="h-3 w-3" />
+                    <Link href={primary?.domain ? primary.detailHref : '/dashboard/domains/dns'}>
+                      {primary?.domain ? 'Domain details' : 'DNS management'} <ExternalLink className="h-3 w-3" />
                     </Link>
                   </Button>
                 </div>

@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { formatCurrency, formatDate } from '@/lib/formatting';
+import { resolveHostingPrimaryDomain } from '@/lib/hosting-domain';
 import { cn } from '@/lib/utils';
 
 type HostingStatus = 'all' | 'active' | 'suspended' | 'expired';
@@ -129,7 +130,7 @@ export default function HostingOverviewPage() {
         {filteredHosting.length > 0 ? (
           filteredHosting.map((h) => {
             const client = clients.find(c => c.id === h.clientId);
-            const domain = domains.find(d => d.id === h.domainId);
+            const primary = resolveHostingPrimaryDomain(h, domains);
             
             return (
               <Card key={h.id} className="group overflow-hidden border-border/50 hover:shadow-xl transition-all duration-300 ring-1 ring-border/5">
@@ -197,8 +198,8 @@ export default function HostingOverviewPage() {
                        </div>
                        <div className="space-y-1">
                           <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest leading-none">Primary Domain</p>
-                          <Link href={`/dashboard/domains`} className="font-semibold text-primary hover:underline truncate block">
-                             {domain ? `${domain.name}${domain.tld}` : 'No domain'}
+                          <Link href={primary.detailHref} className="font-semibold text-primary hover:underline truncate block">
+                             {primary.display}
                           </Link>
                        </div>
                     </div>

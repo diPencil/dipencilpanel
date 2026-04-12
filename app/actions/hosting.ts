@@ -16,6 +16,8 @@ type CreateHostingInput = {
   currency?: string;
   billingCycle: string;
   taxRate?: number;
+  /** Optional primary domain — must belong to the same client and company. */
+  domainId?: string | null;
 };
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -59,6 +61,21 @@ export async function createHosting(input: CreateHostingInput) {
     const company = await prisma.company.findUnique({ where: { id: input.companyId } });
     const currency = input.currency ?? company?.currency ?? 'USD';
 
+    let domainId: string | null = null;
+    if (input.domainId && input.domainId.trim() !== '') {
+      const dom = await prisma.domain.findFirst({
+        where: {
+          id: input.domainId,
+          companyId: input.companyId,
+          clientId: input.clientId,
+        },
+      });
+      if (!dom) {
+        return { success: false as const, error: 'Domain not found or does not belong to this client' };
+      }
+      domainId = dom.id;
+    }
+
     const endDate = input.expiryDate
       ? new Date(input.expiryDate)
       : computeEndDate(new Date(), input.billingCycle);
@@ -75,6 +92,7 @@ export async function createHosting(input: CreateHostingInput) {
         billingCycle: input.billingCycle,
         clientId: input.clientId,
         companyId: input.companyId,
+        domainId,
       },
     });
 
@@ -97,6 +115,7 @@ export async function updateHosting(
     price: number;
     billingCycle: string;
     currency: string;
+    domainId: string | null;
   }>,
 ) {
   try {
@@ -117,6 +136,23 @@ export async function updateHosting(
         typeof input.resources === 'string'
           ? input.resources
           : JSON.stringify(input.resources);
+    }
+    if (input.domainId !== undefined) {
+      if (input.domainId === null || input.domainId === '') {
+        data.domainId = null;
+      } else {
+        const dom = await prisma.domain.findFirst({
+          where: {
+            id: input.domainId,
+            companyId,
+            clientId: existing.clientId,
+          },
+        });
+        if (!dom) {
+          return { success: false as const, error: 'Domain not found or does not belong to this client' };
+        }
+        data.domainId = input.domainId;
+      }
     }
 
     const updated = await prisma.hosting.update({
@@ -201,7 +237,7 @@ export async function renewHosting(id: string, companyId: string) {
           status: 'pending',
           paymentStatus: 'unpaid',
           currency,
-          notes: `Hosting renewal: ${hosting.planName} — ${hosting.name}`,
+          notes: `Hosting renewal: ${hosting.planName} — ${hosting.name} (${id})`,
           subtotal: price,
           discountAmount: 0,
           vatAmount,
@@ -211,7 +247,7 @@ export async function renewHosting(id: string, companyId: string) {
           subscriptionId: hosting.subscriptionId,
           items: {
             create: {
-              description: `Hosting Renewal — ${hosting.planName}`,
+              description: `Hosting Renewal — ${hosting.planName} (${id})`,
               quantity: 1,
               price,
               discount: 0,
