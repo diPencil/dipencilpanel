@@ -834,28 +834,8 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         setMobileApps(mobileAppsRes.data.map((a) => mapDbMobileApp(a as unknown as Record<string, unknown>)));
       }
 
-      const autoRenewRes = await runSubscriptionAutoRenewals(cid);
-      if (autoRenewRes.success && autoRenewRes.renewedCount > 0) {
-        const [subsRefresh, invoicesRefresh] = await Promise.all([
-          getAllSubscriptions(cid),
-          getAllInvoices(cid),
-        ]);
-        if (subsRefresh.success && subsRefresh.data) {
-          setSubscriptions(
-            subsRefresh.data.map((s) => mapDbSubscription(s as unknown as Record<string, unknown>)),
-          );
-        }
-        if (invoicesRefresh.success && invoicesRefresh.data) {
-          setInvoices(
-            invoicesRefresh.data.map((inv) => mapDbInvoice(inv as unknown as Record<string, unknown>)),
-          );
-        }
-        toast.success(
-          autoRenewRes.renewedCount === 1
-            ? 'Auto-renew: 1 renewal invoice was generated.'
-            : `Auto-renew: ${autoRenewRes.renewedCount} renewal invoices were generated.`,
-        );
-      }
+      // Auto-renewal has been removed from dashboard load to prevent write-on-read.
+      // If auto-renewals are required, run them via an explicit admin or scheduled worker.
     } finally {
       setIsLoading(false);
     }
@@ -1501,6 +1481,18 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       if (res.success && res.data) {
         const real = mapDbDomain(res.data.domain as unknown as Record<string, unknown>);
         setDomains((prev) => prev.map((d) => (d.id === id ? real : d)));
+
+        // Handle the created subscription if any
+        if (res.data.subscription) {
+          const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
+          setSubscriptions((prev) => [...prev, sub]);
+        }
+
+        // Handle the created invoice if any
+        if (res.data.invoice) {
+          const inv = mapDbInvoice(res.data.invoice as unknown as Record<string, unknown>);
+          setInvoices((prev) => [...prev, inv]);
+        }
       } else {
         setDomains((prev) => prev.filter((d) => d.id !== id));
       }

@@ -2,6 +2,8 @@
 
 import { prisma } from '@/lib/prisma';
 import { generateNextInvoiceNumber } from '@/lib/billing-utils';
+import { createSubscription } from './subscriptions';
+import { createInvoice } from './invoices';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -74,8 +76,7 @@ export async function getExpiringDomains(companyId: string, withinDays = 30) {
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 /**
- * Creates a Domain record. No subscription or invoice is created here;
- * those are managed separately from the Billing > Subscriptions page.
+ * Creates a Domain record along with its Subscription and Initial Invoice.
  */
 export async function createDomain(input: CreateDomainInput) {
   try {
@@ -84,6 +85,7 @@ export async function createDomain(input: CreateDomainInput) {
     });
     const currency = input.currency ?? company?.currency ?? 'USD';
 
+    // 1. Create the Domain
     const domain = await prisma.domain.create({
       data: {
         name: input.name,
@@ -102,8 +104,66 @@ export async function createDomain(input: CreateDomainInput) {
       },
     });
 
-    return { success: true as const, data: { domain } };
+    // 2. Create the Subscription
+    const subRes = await createSubscription({
+      serviceType: 'domain',
+      serviceId: domain.id,
+      serviceName: `${domain.name}${domain.tld}`,
+      planName: input.planName || 'Domain Registration',
+      price: input.price,
+      currency,
+      billingCycle: 'yearly',
+      startDate: new Date(),
+      endDate: new Date(input.expiryDate),
+      autoRenew: input.autoRenew ?? true,
+      clientId: input.clientId,
+      companyId: input.companyId,
+      domainId: domain.id,
+    });
+
+    if (!subRes.success) {
+      console.error('[CreateDomain] Failed to create subscription:', subRes.error);
+      return { success: true as const, data: { domain } }; // Proceed anyway but log error
+    }
+
+    const subscription = subRes.data;
+
+    // Link subscription back to domain
+    await prisma.domain.update({
+      where: { id: domain.id },
+      data: { subscriptionId: subscription.id },
+    });
+
+    // 3. Create the Initial Invoice
+    const issueDate = new Date();
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 7);
+
+    const invRes = await createInvoice({
+      clientId: input.clientId,
+      companyId: input.companyId,
+      issueDate: issueDate.toISOString(),
+      dueDate: dueDate.toISOString(),
+      currency,
+      notes: `Initial registration for ${domain.name}${domain.tld}`,
+      subscriptionId: subscription.id,
+      items: [
+        {
+          description: `Domain Registration: ${domain.name}${domain.tld}`,
+          quantity: 1,
+          price: input.price,
+          vat: company?.taxRate || 0,
+        },
+      ],
+    });
+
+    if (!invRes.success) {
+      console.error('[CreateDomain] Failed to create invoice:', invRes.error);
+    }
+
+    return { success: true as const, data: { domain, subscription, invoice: invRes.data } };
   } catch (error) {
+    console.error('[CreateDomain] Root error:', error);
     return { success: false as const, error: String(error) };
   }
 }

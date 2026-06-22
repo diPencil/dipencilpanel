@@ -211,7 +211,9 @@ function NewDomainPageInner() {
         return;
       }
 
-      const created = addDomain({
+      console.log('[CreateDomain] Starting process for:', fullDomain);
+
+      addDomain({
         name: domainName.trim().toLowerCase().replace(/\s+/g, '-'),
         tld: tld.startsWith('.') ? tld.trim() : `.${tld.trim()}`,
         clientId,
@@ -247,8 +249,8 @@ function NewDomainPageInner() {
       });
 
       toast({
-        title: 'Domain created',
-        description: `${created.name}${created.tld} was added to client records.`,
+        title: 'Domain logic started',
+        description: `${fullDomain} is being created...`,
       });
       router.push('/dashboard/domains');
     } catch (err) {
