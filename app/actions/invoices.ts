@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { generateNextInvoiceNumber, calcTotals, markOverdueInvoices, type InvoiceNumberKind } from '@/lib/billing-utils';
+import { generateNextInvoiceNumber, calcTotals, type InvoiceNumberKind } from '@/lib/billing-utils';
 
 type InvoiceItemInput = {
   description: string;
@@ -71,9 +71,8 @@ export async function getOrCreateDipencilInternalClient(companyId: string) {
 
 export async function getAllInvoices(companyId: string, page = 1, limit = 100) {
   try {
-    // Auto-mark overdue on each fetch
-    await markOverdueInvoices(companyId);
-
+    // NOTE: intentionally not marking overdue invoices here to avoid write-on-read.
+    // Overdue marking should be performed via an explicit admin/cron action.
     const data = await prisma.invoice.findMany({
       where: { companyId },
       include: {
@@ -125,7 +124,7 @@ export async function getInvoicesByClient(clientId: string, companyId: string) {
 
 export async function getOverdueInvoices(companyId: string) {
   try {
-    await markOverdueInvoices(companyId);
+    // NOTE: do not auto-mark overdue invoices here; this function only reads overdue invoices.
     const data = await prisma.invoice.findMany({
       where: { companyId, status: 'overdue' },
       include: { client: { select: { id: true, name: true } } },

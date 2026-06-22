@@ -61,7 +61,6 @@ import {
   cancelSubscription as cancelSubscriptionAction,
   renewSubscription as renewSubscriptionAction,
   renewSubscriptionWithSchedule as renewSubscriptionWithScheduleAction,
-  runSubscriptionAutoRenewals,
 } from '@/app/actions/subscriptions';
 import {
   getAllInvoices,
