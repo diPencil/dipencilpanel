@@ -36,7 +36,7 @@ export default function DomainManagePage() {
   const params = useParams();
   const domainId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
   const { toast } = useToast();
-  const { getDomain, clients = [], websites = [], emails = [], vps = [], updateDomain, renewDomain, getSubscription, updateSubscription } = useInvoiceData();
+  const { getDomain, clients = [], websites = [], emails = [], vps = [], subscriptions = [], updateDomain, renewDomain, getSubscription, updateSubscription } = useInvoiceData();
   const domain = domainId ? getDomain(domainId) : undefined;
 
   const [clientId, setClientId] = useState(domain?.clientId ?? '');
@@ -55,6 +55,19 @@ export default function DomainManagePage() {
   const [selectedVpsId, setSelectedVpsId] = useState(domain?.linkedServices.vpsIds[0] ?? '');
   const [dnsRecords, setDnsRecords] = useState(domain?.dnsRecords?.length ? domain.dnsRecords : EMPTY_DNS);
 
+  const subscription = useMemo(() => {
+    if (!domain) return undefined;
+
+    if (domain.subscriptionId) {
+      const byId = getSubscription(domain.subscriptionId);
+      if (byId) return byId;
+    }
+
+    return subscriptions.find((sub) =>
+      sub.serviceType === 'domain' && (sub.serviceId === domain.id || (sub as any).domainId === domain.id),
+    );
+  }, [domain, getSubscription, subscriptions]);
+
   useEffect(() => {
     if (!domain) return;
 
@@ -63,9 +76,9 @@ export default function DomainManagePage() {
     setStatus(domain.status);
     setExpiryDate(domain.expiryDate);
     setAutoRenew(domain.autoRenew);
-    setPlanName(domain.planName);
+    setPlanName(domain.planName || subscription?.planName || 'Yearly Registration');
     setPrice(String(domain.price));
-    setNextInvoiceDate(domain.nextInvoiceDate);
+    setNextInvoiceDate(domain.nextInvoiceDate || domain.expiryDate || subscription?.nextInvoiceDate || new Date().toISOString());
     setNotes(domain.notes ?? '');
     setNs1(domain.nameservers[0]);
     setNs2(domain.nameservers[1]);
@@ -73,10 +86,9 @@ export default function DomainManagePage() {
     setSelectedEmailId(domain.linkedServices.emailIds[0] ?? '');
     setSelectedVpsId(domain.linkedServices.vpsIds[0] ?? '');
     setDnsRecords(domain.dnsRecords?.length ? domain.dnsRecords : EMPTY_DNS);
-  }, [domain]);
+  }, [domain, subscription]);
 
   const clientName = useMemo(() => clients.find((client) => client.id === clientId)?.name ?? 'Unassigned', [clients, clientId]);
-  const subscription = useMemo(() => (domain?.subscriptionId ? getSubscription(domain.subscriptionId) : undefined), [domain?.subscriptionId, getSubscription]);
 
   if (!domain) {
     return (

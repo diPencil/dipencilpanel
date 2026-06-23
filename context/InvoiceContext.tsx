@@ -286,6 +286,15 @@ function tempId() {
   return `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+// Convert various DB date-like values to ISO strings (safe for <input type="date">)
+const toIsoString = (value: unknown): string => {
+  if (value == null) return '';
+  if (value instanceof Date) return value.toISOString();
+  const s = String(value);
+  const parsed = new Date(s);
+  return Number.isNaN(parsed.getTime()) ? s : parsed.toISOString();
+};
+
 // Maps a DB Domain row to the frontend Domain type
 function mapDbDomain(d: Record<string, unknown>): Domain {
   return {
@@ -293,7 +302,7 @@ function mapDbDomain(d: Record<string, unknown>): Domain {
     name: d.name as string,
     tld: d.tld as string,
     registrar: d.registrar as string,
-    expiryDate: (d.expiryDate as Date | string)?.toString() ?? '',
+    expiryDate: toIsoString(d.expiryDate),
     autoRenew: d.autoRenew as boolean,
     status: (d.status as Domain['status']) ?? 'active',
     nameservers: d.nameservers ? JSON.parse(d.nameservers as string) : [],
@@ -301,13 +310,14 @@ function mapDbDomain(d: Record<string, unknown>): Domain {
     reminderDays: (d.reminderDays as number | undefined) ?? undefined,
     price: (d.price as number) ?? 0,
     billingCycle: ((d.billingCycle as Domain['billingCycle']) ?? 'yearly'),
-    planName: ((d.planName as string | undefined) ?? ''),
+    planName:
+      ((d.planName as string | undefined) || ((d.subscription as Record<string, unknown> | undefined)?.planName as string | undefined) || ''),
     clientId: d.clientId as string,
     companyId: d.companyId as string,
     subscriptionId: d.subscriptionId as string | undefined,
     createdAt: (d.createdAt as Date | string)?.toString() ?? '',
-    renewalDate: (d.expiryDate as Date | string)?.toString() ?? '',
-    nextInvoiceDate: (d.expiryDate as Date | string)?.toString() ?? '',
+    renewalDate: toIsoString((d as any).renewalDate ?? d.expiryDate),
+    nextInvoiceDate: toIsoString((d as any).nextInvoiceDate ?? d.expiryDate),
     linkedServices: { websiteIds: [], emailIds: [], vpsIds: [] },
   };
 }

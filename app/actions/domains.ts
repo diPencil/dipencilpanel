@@ -142,6 +142,9 @@ export async function createDomain(input: CreateDomainInput) {
       data: { subscriptionId: subscription.id },
     });
 
+    // Re-fetch updated domain so we return the record that includes subscriptionId
+    const updatedDomain = await prisma.domain.findUnique({ where: { id: domain.id }, include: { subscription: true } });
+
     // 3. Create the Initial Invoice
     const issueDate = new Date();
     const dueDate = new Date();
@@ -167,11 +170,18 @@ export async function createDomain(input: CreateDomainInput) {
 
     if (!invRes.success) {
       console.error('[CreateDomain] Failed to create invoice:', invRes.error);
-      // Subscription and domain exist but invoice creation failed — report failure
-      return { success: false as const, error: `Failed to create invoice: ${invRes.error}`, data: { domain, subscription } };
+      // Subscription and domain exist but invoice creation failed — report failure and include updated domain
+      return {
+        success: false as const,
+        error: `Failed to create invoice: ${invRes.error}`,
+        data: { domain: updatedDomain ?? { ...domain, subscriptionId: subscription.id }, subscription },
+      };
     }
 
-    return { success: true as const, data: { domain, subscription, invoice: invRes.data } };
+    return {
+      success: true as const,
+      data: { domain: updatedDomain ?? { ...domain, subscriptionId: subscription.id }, subscription, invoice: invRes.data },
+    };
   } catch (error) {
     console.error('[CreateDomain] Root error:', error);
     return { success: false as const, error: String(error) };
