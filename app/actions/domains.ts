@@ -84,8 +84,15 @@ export async function createDomain(input: CreateDomainInput) {
       where: { id: input.companyId },
     });
     const currency = input.currency ?? company?.currency ?? 'USD';
+    // Normalize nameservers: Prisma expects a string column
+    const normalizedNameservers =
+      input.nameservers == null
+        ? undefined
+        : typeof input.nameservers === 'string'
+        ? input.nameservers
+        : JSON.stringify(input.nameservers);
 
-    // 1. Create the Domain
+    // 1. Create the Domain (only pass Prisma-safe fields)
     const domain = await prisma.domain.create({
       data: {
         name: input.name,
@@ -93,9 +100,9 @@ export async function createDomain(input: CreateDomainInput) {
         registrar: input.registrar,
         expiryDate: new Date(input.expiryDate),
         autoRenew: input.autoRenew ?? true,
-        nameservers: input.nameservers,
+        nameservers: normalizedNameservers,
         notes: input.notes,
-        reminderDays: input.reminderDays,
+        reminderDays: input.reminderDays ?? undefined,
         price: input.price,
         currency,
         billingCycle: 'yearly',
@@ -123,7 +130,8 @@ export async function createDomain(input: CreateDomainInput) {
 
     if (!subRes.success) {
       console.error('[CreateDomain] Failed to create subscription:', subRes.error);
-      return { success: true as const, data: { domain } }; // Proceed anyway but log error
+      // Domain was created but subscription failed — surface failure to caller
+      return { success: false as const, error: `Failed to create subscription: ${subRes.error}` };
     }
 
     const subscription = subRes.data;
@@ -159,6 +167,8 @@ export async function createDomain(input: CreateDomainInput) {
 
     if (!invRes.success) {
       console.error('[CreateDomain] Failed to create invoice:', invRes.error);
+      // Subscription and domain exist but invoice creation failed — report failure
+      return { success: false as const, error: `Failed to create invoice: ${invRes.error}`, data: { domain, subscription } };
     }
 
     return { success: true as const, data: { domain, subscription, invoice: invRes.data } };

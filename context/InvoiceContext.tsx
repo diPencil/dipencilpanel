@@ -159,6 +159,7 @@ interface InvoiceContextType {
 
   // Domain actions
   addDomain: (domain: Omit<Domain, 'id' | 'createdAt' | 'renewalDate' | 'subscriptionId'>) => Domain;
+  addDomainAsync: (domain: Omit<Domain, 'id' | 'createdAt' | 'renewalDate' | 'subscriptionId'>) => Promise<{ success: boolean; error?: string; data?: any }>;
   updateDomain: (id: string, domain: Partial<Domain>) => void;
   deleteDomain: (id: string) => void;
   getDomain: (id: string) => Domain | undefined;
@@ -1458,18 +1459,21 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   // ─── Domain Actions ────────────────────────────────────────────────────────
 
+  // Optimistic addDomain (keeps existing behaviour) — and add addDomainAsync for awaitable server result
   const addDomain = (data: Omit<Domain, 'id' | 'createdAt' | 'renewalDate' | 'subscriptionId'>) => {
     const id = tempId();
     const now = new Date().toISOString();
     const temp: Domain = { ...data, id, createdAt: now, renewalDate: data.expiryDate, companyId: tenantId };
     setDomains((prev) => [...prev, temp]);
 
+    // Fire-and-forget (keeps backward compatibility)
     createDomain({
       name: data.name,
       tld: data.tld,
       registrar: data.registrar,
       expiryDate: new Date(data.expiryDate),
       autoRenew: data.autoRenew,
+      nameservers: (data.nameservers as unknown) as string | undefined,
       notes: data.notes,
       reminderDays: data.reminderDays ?? undefined,
       clientId: data.clientId,
@@ -1498,6 +1502,53 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     });
 
     return temp;
+  };
+
+  // Awaitable domain creation: returns the server result and rolls back optimistic domain on failure
+  const addDomainAsync = async (data: Omit<Domain, 'id' | 'createdAt' | 'renewalDate' | 'subscriptionId'>) => {
+    if (!requireTenantId()) return { success: false, error: 'Workspace not ready' } as const;
+    const id = tempId();
+    const now = new Date().toISOString();
+    const temp: Domain = { ...data, id, createdAt: now, renewalDate: data.expiryDate, companyId: tenantId };
+    setDomains((prev) => [...prev, temp]);
+
+    try {
+      const res = await createDomain({
+        name: data.name,
+        tld: data.tld,
+        registrar: data.registrar,
+        expiryDate: new Date(data.expiryDate),
+        autoRenew: data.autoRenew,
+        nameservers: (data.nameservers as unknown) as string | undefined,
+        notes: data.notes,
+        reminderDays: data.reminderDays ?? undefined,
+        clientId: data.clientId,
+        companyId: tenantId,
+        price: data.price,
+        planName: data.planName,
+      });
+
+      if (res.success && res.data) {
+        const real = mapDbDomain(res.data.domain as unknown as Record<string, unknown>);
+        setDomains((prev) => prev.map((d) => (d.id === id ? real : d)));
+        if (res.data.subscription) {
+          const sub = mapDbSubscription(res.data.subscription as unknown as Record<string, unknown>);
+          setSubscriptions((prev) => [...prev, sub]);
+        }
+        if (res.data.invoice) {
+          const inv = mapDbInvoice(res.data.invoice as unknown as Record<string, unknown>);
+          setInvoices((prev) => [...prev, inv]);
+        }
+      } else {
+        // roll back optimistic
+        setDomains((prev) => prev.filter((d) => d.id !== id));
+      }
+
+      return res;
+    } catch (err) {
+      setDomains((prev) => prev.filter((d) => d.id !== id));
+      return { success: false as const, error: String(err) };
+    }
   };
 
   const updateDomain = (id: string, updates: Partial<Domain>) => {
@@ -2018,7 +2069,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     addClientGroup, updateClientGroup, deleteClientGroup, toggleClientInGroup,
     addInvoice, addInvoiceAsync, updateInvoice, deleteInvoice, getInvoice, duplicateInvoice, markAsPaid,
     addWebsite, updateWebsite, deleteWebsite, getWebsite,
-    addDomain, updateDomain, deleteDomain, getDomain, renewDomain, renewDomainWithSchedule,
+    addDomain, addDomainAsync, updateDomain, deleteDomain, getDomain, renewDomain, renewDomainWithSchedule,
     addSubscription, updateSubscription, deleteSubscription, getSubscription, cancelSubscription, renewSubscription,
     renewSubscriptionWithSchedule,
     addPayment,

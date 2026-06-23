@@ -44,8 +44,9 @@ function NewDomainPageInner() {
     emailPlans = [],
     allCompanies = [],
     currentCompany,
-    addDomain 
+    addDomainAsync
   } = useInvoiceData();
+
 
   const [domainName, setDomainName] = useState('');
   const [tld, setTld] = useState('.net');
@@ -213,7 +214,8 @@ function NewDomainPageInner() {
 
       console.log('[CreateDomain] Starting process for:', fullDomain);
 
-      addDomain({
+      // Use awaitable API to ensure server-side success before redirect
+      const res = await addDomainAsync({
         name: domainName.trim().toLowerCase().replace(/\s+/g, '-'),
         tld: tld.startsWith('.') ? tld.trim() : `.${tld.trim()}`,
         clientId,
@@ -248,11 +250,12 @@ function NewDomainPageInner() {
         notes: selectedClient ? `Registered for ${selectedClient.name}` : undefined,
       });
 
-      toast({
-        title: 'Domain logic started',
-        description: `${fullDomain} is being created...`,
-      });
-      router.push('/dashboard/domains');
+      if (res.success) {
+        toast({ title: 'Domain created', description: `${fullDomain} was created successfully.` });
+        router.push('/dashboard/domains');
+      } else {
+        toast({ title: 'Failed', description: res.error ?? 'Failed to create domain', variant: 'destructive' });
+      }
     } catch (err) {
       toast({ title: 'Error', description: 'Failed to create domain. Please try again.', variant: 'destructive' });
       console.error('[CreateDomain]', err);
