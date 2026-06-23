@@ -150,147 +150,136 @@ export default function HostingOverviewPage() {
         </div>
       </div>
 
-      {/* Hosting List */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {filteredHosting.length > 0 ? (
-          filteredHosting.map((h) => {
-            const client = clients.find(c => c.id === h.clientId);
-            const primary = resolveHostingPrimaryDomain(h, domains);
-            
-            return (
-              <Card key={h.id} className="group overflow-hidden border-border/50 hover:shadow-xl transition-all duration-300 ring-1 ring-border/5">
-                 <div className="p-6">
-                    <div className="flex items-start justify-between mb-6">
-                       <div className="flex items-center gap-4">
-                          <div className={cn(
-                            "h-14 w-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-500",
-                            h.status === 'active' ? 'bg-green-50 text-green-600' : 
-                            h.status === 'suspended' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'
-                          )}>
-                             <HardDrive className="h-7 w-7" />
-                          </div>
-                          <div>
-                             <h3 className="font-bold text-lg leading-tight">{h.name}</h3>
-                             <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="outline" className={cn(
-                                  "capitalize text-[10px] py-0 h-5 border-none font-bold",
-                                  h.status === 'active' ? 'bg-green-100 text-green-700' : 
-                                  h.status === 'suspended' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
-                                )}>
-                                  {h.status}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground font-medium">• {h.planName}</span>
-                             </div>
-                          </div>
-                       </div>
-                       
-                       <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                             <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
-                                <MoreVertical className="h-5 w-5" />
-                             </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                             <DropdownMenuItem asChild>
-                                <Link href={`/dashboard/hosting/${h.id}`} className="cursor-pointer">
-                                   <ExternalLink className="h-4 w-4 mr-2" /> Manage
-                                </Link>
-                             </DropdownMenuItem>
-                             <DropdownMenuItem asChild>
-                                <Link href={`/dashboard/hosting/${h.id}?edit=1`} className="cursor-pointer">
-                                   <Pencil className="h-4 w-4 mr-2" /> Edit
-                                </Link>
-                             </DropdownMenuItem>
-                             {isHostingRenewEligible(h) ? (
-                               <DropdownMenuItem
-                                 className="gap-2 text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950/30"
-                                 onClick={() => setRenewTarget(h)}
-                               >
-                                 <RotateCcw className="h-4 w-4" /> Renewal
-                               </DropdownMenuItem>
-                             ) : null}
-                             {h.status === 'suspended' ? (
-                               <DropdownMenuItem
-                                 className="gap-2 text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950/30"
-                                 onClick={() => setReactivateTarget(h)}
-                               >
-                                 <CirclePlay className="h-4 w-4" /> Reactivate
-                               </DropdownMenuItem>
-                             ) : (
-                               <DropdownMenuItem
-                                 className="text-amber-600 focus:text-amber-700 focus:bg-amber-50 dark:focus:bg-amber-950/30"
-                                 onClick={() => setSuspendTarget(h)}
-                               >
-                                 <History className="h-4 w-4 mr-2" /> Suspend
-                               </DropdownMenuItem>
-                             )}
-                             <DropdownMenuSeparator />
-                             <DropdownMenuItem
-                               className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                               onClick={() => setDeleteTarget(h)}
-                             >
-                                <Trash2 className="h-4 w-4 mr-2" /> Delete
-                             </DropdownMenuItem>
-                          </DropdownMenuContent>
-                       </DropdownMenu>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                       <div className="space-y-1">
-                          <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest leading-none">Client</p>
-                          <p className="font-semibold truncate">{client?.name || 'Unassigned'}</p>
-                       </div>
-                       <div className="space-y-1">
-                          <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest leading-none">Primary Domain</p>
-                          <Link href={primary.detailHref} className="font-semibold text-primary hover:underline truncate block">
-                             {primary.display}
+      {/* Hosting List — table layout similar to Domains */}
+      <Card className="overflow-hidden border-border/60 shadow-sm">
+        <div className="hidden overflow-x-auto lg:block">
+          <table className="w-full">
+            <thead className="bg-muted/60">
+              <tr className="text-left text-sm">
+                <th className="px-5 py-4 font-semibold">Hosting / Plan</th>
+                <th className="px-5 py-4 font-semibold">Client</th>
+                <th className="px-5 py-4 font-semibold">Primary Domain</th>
+                <th className="px-5 py-4 font-semibold">Status</th>
+                <th className="px-5 py-4 font-semibold">Resources</th>
+                <th className="px-5 py-4 font-semibold">Storage</th>
+                <th className="px-5 py-4 font-semibold">Expiration</th>
+                <th className="px-5 py-4 font-semibold">Price</th>
+                <th className="px-5 py-4 text-right font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredHosting.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-5 py-12 text-center text-muted-foreground">
+                    No hosting matches your filters.
+                  </td>
+                </tr>
+              ) : (
+                filteredHosting.map((h) => {
+                  const client = clients.find(c => c.id === h.clientId);
+                  const primary = resolveHostingPrimaryDomain(h, domains);
+                  return (
+                    <tr key={h.id} className="border-t border-border/60 transition-colors hover:bg-muted/30">
+                      <td className="px-5 py-4">
+                        <div className="space-y-1">
+                          <div className="font-semibold">{h.name}</div>
+                          <div className="text-xs text-muted-foreground">{h.planName}</div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-sm">{client?.name || 'Unassigned'}</td>
+                      <td className="px-5 py-4 text-sm">
+                        <Link href={primary.detailHref} className="font-semibold text-primary hover:underline truncate block">{primary.display}</Link>
+                      </td>
+                      <td className="px-5 py-4">{
+                        h.status === 'active' ? <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Active</Badge>
+                        : h.status === 'suspended' ? <Badge variant="secondary">Suspended</Badge>
+                        : <Badge className="bg-rose-50 text-rose-700 border-rose-200">Expired</Badge>
+                      }</td>
+                      <td className="px-5 py-4 text-sm">{h.resources.cpu} / {h.resources.ram}</td>
+                      <td className="px-5 py-4 text-sm">{h.resources.storage}</td>
+                      <td className="px-5 py-4 text-sm">{formatDate(h.expiryDate)}</td>
+                      <td className="px-5 py-4 text-lg font-black">{formatCurrency(h.price)}<span className="text-[10px] font-bold text-muted-foreground uppercase ml-1">/{h.billingCycle === 'monthly' ? 'mo' : 'yr'}</span></td>
+                      <td className="px-5 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Link href={`/dashboard/hosting/${h.id}`}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" title="Manage">
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
                           </Link>
-                       </div>
-                    </div>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit" onClick={() => window.location.assign(`/dashboard/hosting/${h.id}?edit=1`)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          {isHostingRenewEligible(h) ? (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" title="Renew" onClick={() => setRenewTarget(h)}>
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          ) : null}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/dashboard/hosting/${h.id}`} className="cursor-pointer"><ExternalLink className="h-4 w-4 mr-2" /> Manage</Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => window.location.assign(`/dashboard/hosting/${h.id}?edit=1`)}>
+                                <Pencil className="h-4 w-4 mr-2" /> Edit
+                              </DropdownMenuItem>
+                              {h.status === 'suspended' ? (
+                                <DropdownMenuItem onClick={() => setReactivateTarget(h)}>
+                                  <CirclePlay className="h-4 w-4 mr-2" /> Reactivate
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem onClick={() => setSuspendTarget(h)}>
+                                  <History className="h-4 w-4 mr-2" /> Suspend
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(h)}>
+                                <Trash2 className="h-4 w-4 mr-2" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-                    <div className="flex items-center gap-4 p-4 bg-muted/40 rounded-xl mb-6">
-                       <div className="flex-1 flex items-center gap-3">
-                          <Cpu className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                             <p className="text-[10px] text-muted-foreground uppercase font-bold">Resources</p>
-                             <p className="text-xs font-bold">{h.resources.cpu} / {h.resources.ram}</p>
-                          </div>
-                       </div>
-                       <div className="w-px h-8 bg-border/50" />
-                       <div className="flex-1 flex items-center gap-3 pl-2">
-                          <HardDrive className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                             <p className="text-[10px] text-muted-foreground uppercase font-bold">Storage</p>
-                             <p className="text-xs font-bold">{h.resources.storage}</p>
-                          </div>
-                       </div>
+        {/* Mobile / compact list */}
+        <div className="space-y-3 p-4 lg:hidden">
+          {filteredHosting.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No hosting matches your filters.</div>
+          ) : (
+            filteredHosting.map((h) => {
+              const client = clients.find(c => c.id === h.clientId);
+              const primary = resolveHostingPrimaryDomain(h, domains);
+              return (
+                <Card key={h.id} className="p-4 shadow-sm">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="font-semibold">{h.name}</div>
+                      <div className="text-xs text-muted-foreground">{client?.name || 'Unassigned'} • {h.planName}</div>
+                      <div className="text-xs text-muted-foreground mt-2">{primary.display}</div>
                     </div>
-
-                    <div className="flex items-center justify-between border-t border-border/50 pt-4">
-                       <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                          <Calendar className="h-3.5 w-3.5" />
-                          Expires: <span className={cn(h.status === 'expired' && "text-red-500")}>{formatDate(h.expiryDate)}</span>
-                       </div>
-                       <p className="text-lg font-black">{formatCurrency(h.price)}<span className="text-[10px] font-bold text-muted-foreground uppercase ml-1">/{h.billingCycle === 'monthly' ? 'mo' : 'yr'}</span></p>
+                    <div className="text-right">
+                      <div>{h.status === 'active' ? <Badge className="bg-emerald-50 text-emerald-700">Active</Badge> : h.status === 'suspended' ? <Badge variant="secondary">Suspended</Badge> : <Badge className="bg-rose-50 text-rose-700">Expired</Badge>}</div>
+                      <div className="mt-2 text-sm font-black">{formatCurrency(h.price)}<span className="text-[10px] font-bold text-muted-foreground uppercase ml-1">/{h.billingCycle === 'monthly' ? 'mo' : 'yr'}</span></div>
                     </div>
-                 </div>
-              </Card>
-            );
-          })
-        ) : (
-          <div className="col-span-full border-2 border-dashed border-border rounded-3xl p-20 flex flex-col items-center justify-center text-center space-y-4">
-             <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center">
-                <HardDrive className="h-10 w-10 text-muted-foreground" />
-             </div>
-             <div>
-                <h3 className="text-2xl font-bold">No hosting found</h3>
-                <p className="text-muted-foreground mt-1 max-w-sm">Try adjusting your filters or search query to find your hosting accounts.</p>
-             </div>
-             <Button variant="outline" className="rounded-xl px-8" onClick={() => { setSearchQuery(''); setStatusFilter('all'); }}>Clear Filters</Button>
-          </div>
-        )}
-      </div>
+                  </div>
+                </Card>
+              );
+            })
+          )}
+        </div>
+      </Card>
 
       <AlertDialog open={!!suspendTarget} onOpenChange={(open) => !open && setSuspendTarget(null)}>
         <AlertDialogContent>
