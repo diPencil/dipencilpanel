@@ -178,7 +178,7 @@ function NewDomainPageInner() {
     return items;
   }, [emailId, emails, vps, vpsId, websiteId, websites]);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!domainName.trim() || !clientId) {
