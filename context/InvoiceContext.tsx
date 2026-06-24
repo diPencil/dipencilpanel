@@ -308,10 +308,13 @@ function mapDbDomain(d: Record<string, unknown>): Domain {
     nameservers: d.nameservers ? JSON.parse(d.nameservers as string) : [],
     notes: (d.notes as string | undefined) ?? undefined,
     reminderDays: (d.reminderDays as number | undefined) ?? undefined,
-    price: (d.price as number) ?? 0,
-    billingCycle: ((d.billingCycle as Domain['billingCycle']) ?? 'yearly'),
+    // Prefer domain-level values, fallback to linked subscription when absent
+    price: (d.price as number) ?? ((d.subscription as Record<string, unknown> | undefined)?.price as number) ?? 0,
+    billingCycle:
+      ((d.billingCycle as Domain['billingCycle']) ?? ((d.subscription as Record<string, unknown> | undefined)?.billingCycle as Domain['billingCycle']) ?? 'yearly'),
     planName:
       ((d.planName as string | undefined) || ((d.subscription as Record<string, unknown> | undefined)?.planName as string | undefined) || ''),
+    currency: (d.currency as string | undefined) ?? ((d.subscription as Record<string, unknown> | undefined)?.currency as string | undefined) ?? 'USD',
     clientId: d.clientId as string,
     companyId: d.companyId as string,
     subscriptionId: d.subscriptionId as string | undefined,
