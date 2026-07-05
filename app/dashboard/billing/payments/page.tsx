@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,7 +36,7 @@ import { toast } from 'sonner';
 
 export default function PaymentsPage() {
   const router = useRouter();
-  const { payments = [], invoices = [], domains = [], websites = [], emails = [], vps = [], getPaidRevenue, company } = useInvoiceData();
+  const { payments = [], invoices = [], domains = [], websites = [], emails = [], vps = [], subscriptions = [], hosting = [], getPaidRevenue, company } = useInvoiceData();
   const [activeTab, setActiveTab] = useState<'payments' | 'refunds'>('payments');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMethod, setFilterMethod] = useState<'all' | 'card' | 'cash' | 'bank'>('all');
@@ -53,28 +54,66 @@ export default function PaymentsPage() {
     searchTerm.trim().length > 0
       ? filteredPayments.reduce(
           (sum, pay) =>
-            sum + convertCurrency(pay.amount, pay.currency || companyCurrency, companyCurrency, company),
+              sum + convertCurrency(pay.amount, pay.currency || companyCurrency, companyCurrency, company),
           0
         )
       : null;
 
-  const getServiceInfo = (invoiceId: string) => {
+  const getDetailedServiceInfo = (invoiceId: string) => {
     const inv = invoices.find(i => i.id === invoiceId);
-    if (!inv) return { type: 'General', title: 'Unknown Service' };
+    if (!inv) return { main: 'Unknown Service', sub: '' };
 
-    let title = inv.serviceName || inv.items[0]?.description || 'General Service';
-    
-    if (inv.serviceType === 'domain' && inv.serviceId) {
-       title = domains.find(d => d.id === inv.serviceId)?.name || title;
-    } else if (inv.serviceType === 'website' && inv.serviceId) {
-       title = websites.find(w => w.id === inv.serviceId)?.name || title;
-    } else if (inv.serviceType === 'email' && inv.serviceId) {
-       title = emails.find(e => e.id === inv.serviceId)?.name || title;
-    } else if (inv.serviceType === 'vps' && inv.serviceId) {
-       title = vps.find(v => v.id === inv.serviceId)?.name || title;
+    // 1. Try finding subscription
+    const sub = inv.subscriptionId ? subscriptions.find(s => s.id === inv.subscriptionId) : null;
+    if (sub) {
+      return {
+        main: sub.planName || inv.serviceName || 'Service',
+        sub: sub.serviceName || ''
+      };
     }
 
-    return { type: inv.serviceType || 'Service', title };
+    // 2. Fallback to direct service resource lookup
+    let main = inv.serviceName || inv.items[0]?.description || 'General Service';
+    let subStr = '';
+
+    // Clean up main from any billing cycle details (e.g. "(billed annually)" or "(billed monthly)")
+    if (main.includes('(')) {
+      main = main.split('(')[0].trim();
+    }
+
+    if (inv.serviceType === 'domain' && inv.serviceId) {
+       const d = domains.find(x => x.id === inv.serviceId);
+       if (d) {
+         main = d.planName || main;
+         subStr = d.name;
+       }
+    } else if (inv.serviceType === 'website' && inv.serviceId) {
+       const w = websites.find(x => x.id === inv.serviceId);
+       if (w) {
+         main = w.plan?.name || main;
+         subStr = w.domain || w.name;
+       }
+    } else if (inv.serviceType === 'email' && inv.serviceId) {
+       const e = emails.find(x => x.id === inv.serviceId);
+       if (e) {
+         main = 'Business Email';
+         subStr = e.domain || e.name;
+       }
+    } else if (inv.serviceType === 'vps' && inv.serviceId) {
+       const v = vps.find(x => x.id === inv.serviceId);
+       if (v) {
+         main = v.planName || main;
+         subStr = v.name;
+       }
+    } else if (inv.serviceType === 'hosting' && inv.serviceId) {
+       const h = hosting.find(x => x.id === inv.serviceId);
+       if (h) {
+         main = h.planName || main;
+         subStr = h.name;
+       }
+    }
+
+    return { main, sub: subStr };
   };
 
   const totalAllTime = getPaidRevenue();
@@ -219,6 +258,17 @@ export default function PaymentsPage() {
         {/* Hostinger-style Table Layer */}
         <div className="overflow-x-auto border-t border-border/40">
           <table className="w-full">
+            <thead>
+              <tr className="border-b border-border/40 text-muted-foreground/80 text-sm font-semibold">
+                <th className="pl-6 py-4 w-10"></th>
+                <th className="px-6 py-4 text-left font-semibold">Payment ID</th>
+                <th className="px-6 py-4 text-left font-semibold">Subscription ID</th>
+                <th className="px-6 py-4 text-left font-semibold">Service</th>
+                <th className="px-6 py-4 text-left font-semibold">Paid at</th>
+                <th className="px-6 py-4 text-left font-semibold">Amount</th>
+                <th className="pr-8 py-4 w-10"></th>
+              </tr>
+            </thead>
             <tbody className="divide-y divide-border/40">
               {filteredPayments.length === 0 ? (
                 <tr>
@@ -233,8 +283,11 @@ export default function PaymentsPage() {
                 </tr>
               ) : (
                 filteredPayments.map((payment) => {
-                  const service = getServiceInfo(payment.invoiceId);
+                  const service = getDetailedServiceInfo(payment.invoiceId);
                   const isSelected = selectedIds.includes(payment.id);
+                  const invoice = invoices.find(inv => inv.id === payment.invoiceId);
+                  const subId = invoice?.subscriptionId;
+                  
                   return (
                     <tr 
                       key={payment.id} 
@@ -250,59 +303,47 @@ export default function PaymentsPage() {
                       </td>
                       
                       <td className="px-6 py-5">
-                        <div className="flex flex-col space-y-1">
-                          <span className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-wider">Payment ID</span>
-                          <span className="text-sm font-bold text-foreground">
-                            H_{(payment.id.split('').reduce((sum, c) => sum + c.charCodeAt(0) , 0) * 15485863 % 90000000 + 10000000).toString()}
-                          </span>
-                        </div>
+                        <span className="text-sm font-bold text-foreground">
+                          H_{(payment.id.split('').reduce((sum, c) => sum + c.charCodeAt(0) , 0) * 15485863 % 90000000 + 10000000).toString()}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-5" onClick={(e) => e.stopPropagation()}>
+                        {subId ? (
+                          <Link 
+                            href={`/dashboard/billing/subscriptions/${subId}`}
+                            className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium text-sm"
+                          >
+                            {subId}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground/50 text-sm">—</span>
+                        )}
                       </td>
 
                       <td className="px-6 py-5">
-                        <div className="flex flex-col space-y-1">
-                          <span className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-wider">Invoice ID</span>
-                          <span className="text-sm font-bold text-foreground">
-                            {formatInvoiceNumber(payment.invoiceNumber)}
-                          </span>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold text-foreground">{service.main}</span>
+                          {service.sub && (
+                            <span className="text-xs text-muted-foreground/80 mt-0.5 font-normal">
+                              {service.sub}
+                            </span>
+                          )}
                         </div>
                       </td>
 
-                      <td className="px-6 py-5">
-                        <div className="flex flex-col space-y-1">
-                          <span className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-wider">Client</span>
-                          <span className="text-sm font-bold text-foreground truncate max-w-[150px]">
-                            {payment.clientName}
-                          </span>
-                        </div>
+                      <td className="px-6 py-5 text-sm text-foreground/90">
+                         {payment.date ? new Date(payment.date).toISOString().split('T')[0] : 'N/A'}
                       </td>
 
                       <td className="px-6 py-5">
-                        <div className="flex flex-col space-y-1">
-                          <span className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-wider">Title</span>
-                          <span className="text-sm font-medium text-foreground max-w-[150px] truncate">{service.title}</span>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <div className="flex flex-col space-y-1">
-                          <span className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-wider">Paid at</span>
-                          <span className="text-sm font-medium text-foreground">
-                             {payment.date ? new Date(payment.date).toISOString().split('T')[0] : 'N/A'}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <div className="flex flex-col space-y-1">
-                          <span className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-wider">Amount</span>
-                          <span className="text-sm font-bold text-foreground">
-                            {formatCurrency(payment.amount, payment.currency)}
-                          </span>
-                        </div>
+                        <span className="text-sm font-bold text-foreground">
+                          {formatCurrency(payment.amount, payment.currency)}
+                        </span>
                       </td>
 
                       <td className="pr-8 py-5 text-right w-10">
-                         <ChevronRight className="h-5 w-5 text-primary opacity-40 group-hover:opacity-100 transition-all translate-x-0 group-hover:translate-x-1" />
+                         <ChevronRight className="h-5 w-5 text-indigo-600 dark:text-indigo-400 opacity-60 group-hover:opacity-100 transition-all translate-x-0 group-hover:translate-x-1" />
                       </td>
                     </tr>
                   )
