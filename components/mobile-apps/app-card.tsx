@@ -27,9 +27,9 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { AppStatusBadge, AppTypeBadge, AppPlanBadge, AppFrameworkBadge } from './app-badge';
-import type { MobileApp, Client, Domain, Hosting, VPS } from '@/lib/types';
-import { formatCurrency } from '@/lib/formatting';
-import { cn } from '@/lib/utils';
+import type { MobileApp, Client, Domain, Hosting, VPS } from '@/lib/core/types';
+import { formatCurrency } from '@/lib/core/formatting';
+import { cn } from '@/lib/core/utils';
 
 interface AppCardProps {
   app: MobileApp;

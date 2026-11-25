@@ -22,7 +22,7 @@ import {
   Server,
   BarChart2,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import { useSidebar } from '@/context/SidebarContext';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Button } from '@/components/ui/button';
@@ -169,7 +169,7 @@ export function Sidebar() {
   const { company } = useInvoiceData();
   const { user, initials } = useUser();
   const systemLogo = getSystemLogo(company.logo);
-  const systemFavicon = '/favicon.svg';
+  const systemFavicon = company.favicon || '/favicon.svg';
   const [mounted, setMounted] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
 

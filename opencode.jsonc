@@ -1,0 +1,46 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Binding project documents are loaded alongside AGENTS.md so every session
+  // starts with the same rules.
+  "instructions": ["CONSTITUTION.md", "docs/DESIGN_SYSTEM.md"],
+
+  "permissions": [
+    { "action": "shell", "resource": "pnpm db:reset*", "effect": "ask" },
+    { "action": "shell", "resource": "npx prisma migrate reset*", "effect": "ask" },
+    { "action": "shell", "resource": "pnpm prisma migrate reset*", "effect": "ask" },
+    { "action": "shell", "resource": "git reset --hard*", "effect": "ask" },
+    { "action": "shell", "resource": "git push --force*", "effect": "ask" }
+  ],
+
+  "mcp": {
+    "timeout": {
+      "startup": 45000,
+      "catalog": 30000,
+      "execution": 600000
+    },
+    "servers": {
+      // 21st.dev - remote MCP for component/theme search and design work.
+      // Auth: set API_KEY_21ST (a 21st_sk_... key) in the environment.
+      // Docs: https://21st.dev/mcp
+      "twentyfirst": {
+        "type": "remote",
+        "url": "https://21st.dev/api/mcp",
+        "oauth": false,
+        "headers": {
+          "x-api-key": "{env:API_KEY_21ST}"
+        }
+      },
+
+      // REA - local MCP for reverse-engineering / Evidence work.
+      // Disabled by default: the package is ~49 MB and is unrelated to normal
+      // feature work. Remove "disabled" (or set it to false) when needed.
+      "rea": {
+        "type": "local",
+        "command": ["npx", "-y", "rea-agents@latest", "mcp"],
+        "cwd": ".",
+        "disabled": true
+      }
+    }
+  }
+}

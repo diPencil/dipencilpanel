@@ -23,7 +23,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
-import { REGISTRAR_NAMESERVERS } from '@/lib/constants';
+import { REGISTRAR_NAMESERVERS } from '@/lib/core/constants';
 
 const REGISTRARS = Object.keys(REGISTRAR_NAMESERVERS);
 
@@ -81,7 +81,7 @@ export function EditDomainDNSDialog({ open, onOpenChange, domainId }: EditDomain
         <DialogHeader>
           <DialogTitle>Edit nameservers</DialogTitle>
           <DialogDescription>
-            {domain.name}{domain.tld} — update the DNS nameservers for this domain.
+            {domain.name}{domain.tld} - update the DNS nameservers for this domain.
           </DialogDescription>
         </DialogHeader>
 

@@ -5,28 +5,36 @@ services:
       - "3000:3000"
     env_file:
       - .env
-    # Inside the app container, `localhost` is not Postgres — use the compose service name `db`.
+    # Inside the app container, `localhost` is not the database - use the compose service name `db`.
     # This overrides DATABASE_URL from .env so Docker deployments work with the bundled database.
     environment:
-      DATABASE_URL: postgresql://panel:panel_password@db:5432/panel_db
+      DATABASE_URL: mysql://panel:panel_password@db:3306/dipencil_panel
     depends_on:
       db:
         condition: service_healthy
 
   db:
-    image: postgres:16-alpine
+    image: mariadb:10.11
     restart: unless-stopped
     environment:
-      POSTGRES_DB: panel_db
-      POSTGRES_USER: panel
-      POSTGRES_PASSWORD: panel_password
+      MARIADB_DATABASE: dipencil_panel
+      MARIADB_USER: panel
+      MARIADB_PASSWORD: panel_password
+      MARIADB_ROOT_PASSWORD: panel_root_password
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mariadb_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U panel -d panel_db"]
+      test:
+        [
+          "CMD",
+          "healthcheck.sh",
+          "--connect",
+          "--innodb_initialized",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
-  postgres_data:
+  mariadb_data:

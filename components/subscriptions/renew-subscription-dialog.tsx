@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { Subscription } from '@/lib/types';
+import type { Subscription } from '@/lib/core/types';
 
 function toInputDate(d: Date) {
   const y = d.getFullYear();
@@ -119,7 +119,7 @@ export function RenewSubscriptionDialog({
           <DialogTitle>Renew subscription</DialogTitle>
           <DialogDescription>
             {serviceName
-              ? `${serviceName} — creates a renewal invoice and sets the subscription to active with the new end date.`
+              ? `${serviceName} - creates a renewal invoice and sets the subscription to active with the new end date.`
               : 'Creates a renewal invoice and sets the subscription to active with the new end date.'}
           </DialogDescription>
         </DialogHeader>

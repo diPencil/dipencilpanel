@@ -17,10 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Subscription } from '@/lib/types';
-import { generateSubscriptionServiceId } from '@/lib/subscription-service-id';
-import { CURRENCIES } from '@/lib/constants';
-import { convertCurrency } from '@/lib/currency-utils';
+import { Subscription } from '@/lib/core/types';
+import { generateSubscriptionServiceId } from '@/lib/services/subscription-service-id';
+import { CURRENCIES } from '@/lib/core/constants';
+import { convertCurrency } from '@/lib/billing/currency-utils';
 import { Card } from '@/components/ui/card';
 import {
   AlertDialog,
@@ -567,7 +567,7 @@ export default function EditSubscriptionPage() {
                       placeholder="Vendor cost (optional)"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Not on invoices — Financial Summary margin only.
+                      Not on invoices - Financial Summary margin only.
                     </p>
                     {errors.providerPrice && <p className="text-xs text-red-600 mt-1">{errors.providerPrice}</p>}
                   </div>

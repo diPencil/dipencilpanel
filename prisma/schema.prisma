@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 
 generator client {
@@ -7,7 +7,7 @@ generator client {
 }
 
 // ==========================================
-// ENUMS (stored as String in PostgreSQL)
+// ENUMS (stored as String in MySQL)
 // ==========================================
 // ServiceType: "domain" | "hosting" | "vps" | "email" | "website" | "mobile_app"
 // BillingCycle: "monthly" | "yearly"
@@ -29,22 +29,52 @@ model Company {
   ownerName     String?
   email         String?
   phone         String?
-  address       String?
+  address       String?  @db.Text
   vatNumber     String?
-  logo          String?
-  invoiceLogo   String?
-  /// Optional HTML fragment (table rows or inner markup) for invoice notification emails; use {{placeholders}} — see settings UI.
-  invoiceEmailHeaderHtml String?
-  /// Middle section: greeting, line items table, totals, dates, agent note — use {{itemsTableRows}}, {{totalsBlock}}, etc.
-  invoiceEmailBodyHtml String?
-  invoiceEmailFooterHtml String?
-  /// Subscription / renewal reminder emails (Send Reminder). {{placeholders}} — see Settings → Reminder email template.
-  reminderEmailHeaderHtml String?
-  reminderEmailBodyHtml   String?
-  reminderEmailFooterHtml String?
+  logo          String?  @db.LongText
+  invoiceLogo   String?  @db.LongText
+  /// Optional HTML fragment (table rows or inner markup) for invoice notification emails; use {{placeholders}} - see settings UI.
+  invoiceEmailHeaderHtml String? @db.Text
+  /// Middle section: greeting, line items table, totals, dates, agent note - use {{itemsTableRows}}, {{totalsBlock}}, etc.
+  invoiceEmailBodyHtml String? @db.LongText
+  invoiceEmailFooterHtml String? @db.Text
+  /// Subscription / renewal reminder emails (Send Reminder). {{placeholders}} - see Settings → Reminder email template.
+  reminderEmailHeaderHtml String? @db.Text
+  reminderEmailBodyHtml   String? @db.LongText
+  reminderEmailFooterHtml String? @db.Text
+  /// diPencil internal invoices (System & diPencil Invoices) branding & footer
+  dipencilLogo            String?  @db.LongText
+  dipencilSellerName      String?  @db.Text
+  dipencilSellerLines     String?  @db.Text
+  dipencilFooterLeft      String?  @db.Text
+  dipencilFooterRight     String?  @db.Text
+  /// Client invoices custom footer blocks
+  clientInvoiceFooterLeft String?  @db.Text
+  clientInvoiceFooterRight String? @db.Text
+  /// App & Company Branding settings (Sidebar, Login, Favicon, Project Name)
+  projectName             String?  @default("diPencil Panel")
+  favicon                 String?  @db.LongText
+  loginLogo               String?  @db.LongText
+  /// Dynamic Email Configuration (Outgoing SMTP & Incoming IMAP/POP3)
+  smtpHost                String?
+  smtpPort                Int?     @default(465)
+  smtpEncryption          String?  @default("SSL") // "SSL" | "TLS" | "None"
+  smtpUser                String?
+  smtpPass                String?  @db.Text
+  smtpFromName            String?
+  smtpFromEmail           String?
+  smtpTimeout             Int?     @default(30)
+  smtpAuthEnabled         Boolean? @default(true)
+  imapProtocol            String?  @default("IMAP") // "IMAP" | "POP3"
+  imapHost                String?
+  imapPort                Int?     @default(993)
+  imapEncryption          String?  @default("SSL") // "SSL" | "TLS" | "None"
+  imapUser                String?
+  imapPass                String?  @db.Text
+  imapMailbox             String?  @default("INBOX")
   currency      String   @default("USD")
   taxRate       Float    @default(0)
-  exchangeRates String?  // JSON: { "EUR": 0.92, ... }
+  exchangeRates String?  @db.Text // JSON: { "EUR": 0.92, ... }
   status        String   @default("active")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -71,8 +101,8 @@ model Company {
 model Role {
   id          String   @id @default(cuid())
   name        String
-  description String?
-  permissions String   // JSON: { dashboard: { view, create, edit, delete }, ... }
+  description String?  @db.Text
+  permissions String   @db.Text // JSON: { dashboard: { view, create, edit, delete }, ... }
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -91,7 +121,7 @@ model User {
   name      String
   email     String    @unique
   password  String?
-  avatar    String?
+  avatar    String?  @db.LongText
   status    String    @default("active")
   lastLogin DateTime?
   lastLogoutAt DateTime?
@@ -119,8 +149,8 @@ model Client {
   name        String
   email       String
   phone       String?
-  address     String?
-  companyName String?
+  address     String?  @db.Text
+  companyName String?  @db.Text
   /// Hidden system client used only for diPencil internal invoices (FK); not shown in client lists.
   isDipencilInternal Boolean @default(false)
 
@@ -147,9 +177,9 @@ model Client {
 model ClientGroup {
   id          String  @id @default(cuid())
   name        String
-  description String?
+  description String? @db.Text
   color       String?
-  clientIds   String  @default("[]") // JSON array of client IDs
+  clientIds   String  @db.Text // JSON array of client IDs
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -172,8 +202,8 @@ model Domain {
   expiryDate   DateTime
   autoRenew    Boolean  @default(true)
   status       String   @default("active") // "active" | "expiring" | "expired" | "suspended"
-  nameservers  String?  // JSON array
-  notes        String?
+  nameservers  String?  @db.Text // JSON array
+  notes        String?  @db.Text
   reminderDays Int?
   price        Float    @default(0)
   currency     String   @default("USD")
@@ -207,7 +237,7 @@ model DomainTransfer {
   expiryDate       DateTime?
   status           String    @default("pending") // "pending" | "completed" | "failed"
   autoRenew        Boolean   @default(true)
-  notes            String?
+  notes            String?   @db.Text
   price            Float     @default(0)
 
   clientId String
@@ -231,7 +261,7 @@ model Hosting {
   planName   String
   status     String    @default("active") // "active" | "suspended" | "expired"
   expiryDate DateTime?
-  resources  String?   // JSON: { cpu, ram, storage, bandwidth }
+  resources  String?   @db.Text // JSON: { cpu, ram, storage, bandwidth }
   price      Float     @default(0)
   currency   String    @default("USD")
   billingCycle String  @default("monthly")
@@ -249,7 +279,7 @@ model Hosting {
   domainId String?
   primaryDomain Domain? @relation("HostingPrimaryDomain", fields: [domainId], references: [id], onDelete: SetNull)
 
-  /// External control panel (cPanel, Plesk, DirectAdmin, etc.) — opened in a new tab from the dashboard.
+  /// External control panel (cPanel, Plesk, DirectAdmin, etc.) - opened in a new tab from the dashboard.
   panelUrl String?
 
   createdAt DateTime @default(now())
@@ -270,7 +300,7 @@ model VPS {
   cpu        Int
   status     String    @default("active")
   expiryDate DateTime?
-  notes      String?
+  notes      String?   @db.Text
   price      Float     @default(0)
   currency   String    @default("USD")
   billingCycle String  @default("monthly")
@@ -360,7 +390,7 @@ model MobileApp {
   name        String
   appType     String    // "android" | "ios" | "windows"
   framework   String    @default("native") // "flutter" | "react_native" | "kotlin" | "swift" | "java" | "dart" | "python" | "nodejs" | "native"
-  description String?
+  description String?   @db.Text
   status      String    @default("development") // "development" | "live" | "suspended" | "expired"
   plan        String    @default("basic")       // "basic" | "pro" | "enterprise"
   price       Float     @default(0)
@@ -372,7 +402,7 @@ model MobileApp {
   domainId    String?  // optional linked domain ID
   hostingId   String?  // optional linked hosting ID
   vpsId       String?  // optional linked VPS ID
-  emailIds    String   @default("[]") // JSON array of linked email IDs
+  emailIds    String   @db.Text // JSON array of linked email IDs
 
   clientId  String
   client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -402,7 +432,7 @@ model Subscription {
   serviceName  String?
   planName     String?
   price        Float
-  /// Upstream/provider cost (internal only — not on invoices or payments)
+  /// Upstream/provider cost (internal only - not on invoices or payments)
   providerPrice Float?
   currency     String   @default("USD")
   billingCycle String   // "monthly" | "yearly"
@@ -410,7 +440,7 @@ model Subscription {
   endDate      DateTime
   autoRenew    Boolean  @default(true)
   status       String   @default("active") // "active" | "cancelled" | "expired" | "suspended"
-  notes        String?
+  notes        String?  @db.Text
 
   /// Optional linked domain ID (for manually created subscriptions referencing a domain)
   domainId     String?
@@ -449,15 +479,15 @@ model Invoice {
   status           String    @default("pending") // "paid" | "pending" | "overdue"
   paymentStatus String   @default("unpaid")  // "paid" | "unpaid" | "partial"
   currency      String   @default("USD")
-  notes         String?
+  notes         String?  @db.Text
   subtotal      Float
   discountAmount Float   @default(0)
   vatAmount     Float    @default(0)
   total         Float
   /// "client" = normal panel invoices; "dipencil" = company-owned invoices (same totals roll into billing).
   invoiceKind         String  @default("client")
-  counterpartyName    String?
-  counterpartyAddress String?
+  counterpartyName    String? @db.Text
+  counterpartyAddress String? @db.Text
 
   clientId String
   client   Client @relation(fields: [clientId], references: [id], onDelete: Restrict)
@@ -481,7 +511,7 @@ model Invoice {
 
 model InvoiceItem {
   id          String  @id @default(cuid())
-  description String
+  description String  @db.Text
   quantity    Int     @default(1)
   price       Float
   discount    Float   @default(0)
@@ -497,7 +527,7 @@ model Payment {
   method   String   // "card" | "bank_transfer" | "paypal" | "cash"
   currency String   @default("USD")
   date     DateTime @default(now())
-  notes    String?
+  notes    String?  @db.Text
   status   String   @default("completed") // "completed" | "failed" | "refunded"
 
   invoiceId String
@@ -542,8 +572,8 @@ model BusinessEmail {
   companyId String
   clientId  String?
   type      String    // "quotation" | "contract" | "project_start" | "custom"
-  subject   String
-  body      String
+  subject   String    @db.Text
+  body      String    @db.LongText
   status    String    @default("draft") // "draft" | "sent"
   sentAt    DateTime?
   createdAt DateTime  @default(now())
@@ -561,13 +591,13 @@ model WebsiteMigration {
   sourceIp     String
   port         Int     @default(22)
   username     String
-  password     String  // AES-256-CBC encrypted
+  password     String  @db.Text // AES-256-CBC encrypted
   type         String  @default("cpanel")
   status       String  @default("pending") // pending | analyzing | ready | in_progress | completed | failed | cancelled
-  logs         String  @default("[]")      // JSON array of { time, message, level }
+  logs         String  @db.LongText // JSON array of { time, message, level }
   dataSize     Float   @default(0)
-  notes        String?
-  errorMessage String?
+  notes        String? @db.Text
+  errorMessage String? @db.Text
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)

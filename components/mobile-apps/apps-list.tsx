@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { AppCard } from './app-card';
-import type { MobileApp } from '@/lib/types';
+import type { MobileApp } from '@/lib/core/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,8 +15,8 @@ import {
   Search, Smartphone, Grid3x3, List, Globe, HardDrive, Server, Mail,
 } from 'lucide-react';
 import { AppStatusBadge, AppTypeBadge, AppPlanBadge, AppFrameworkBadge } from './app-badge';
-import { formatCurrency } from '@/lib/formatting';
-import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/core/formatting';
+import { cn } from '@/lib/core/utils';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/shared/confirm-delete-dialog';

@@ -18,7 +18,7 @@ import {
   MessageSquare,
   ArrowRight
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import { toast } from 'sonner';
 
 const CATEGORIES_RAW = [

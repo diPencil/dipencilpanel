@@ -2,7 +2,7 @@
 set -eu
 cd /app
 
-# First boot on VPS: empty Postgres → no users until migrations + seed run.
+# First boot on VPS: empty MySQL/MariaDB → no users until migrations + seed run.
 pnpm exec prisma migrate deploy
 
 # Keep startup resilient: seed helps bootstrap data, but must not take down

@@ -1,0 +1,19 @@
+Vendored skill repositories, verified after removing nested .git directories.
+
+name|commit|repository
+21st-ai|15c7436c41dc88c54094f1be93ce53bda456b114|https://github.com/21st-dev/skill.git
+agent-skills|e997ac5b9a74eab332d5e9793bb38a38c8cfdd74|https://github.com/addyosmani/agent-skills.git
+rea|0cbde34808caa46cf1854918df5b559d88fa5257|https://github.com/morluto/rea.git
+ui-ux-pro-max|8db36338810d0942567b97ce439affd1619fcf31|https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git
+security-audit|c1c8a8c1471069fb0e188eeaff69b8e8db6564a8|https://github.com/cloudflare/security-audit-skill.git
+
+Sizes after removing .git:
+21st-ai        0.1 MB / 12 files
+agent-skills   1.4 MB / 280 files
+rea           92.8 MB / 9,031 files
+ui-ux-pro-max 22.2 MB / 750 files
+security-audit 0.3 MB / 22 files
+total        122,332,655 bytes (about 117 MiB)
+
+Nested .git directories remaining: 0
+SKILL.md entry points: 46 (7 + 26 + 5 + 7 + 1)

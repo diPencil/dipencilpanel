@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useConfirm } from '@/context/ConfirmationContext';
-import { ClientGroup, Client } from '@/lib/types';
+import { ClientGroup, Client } from '@/lib/core/types';
 import { Plus, Pencil, Trash2, Users, Search, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -263,7 +263,7 @@ export default function ClientGroupsPage() {
       <Dialog open={assignDialog.open} onOpenChange={v => setAssignDialog({ open: v, groupId: null })}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Manage Clients — {assigningGroup?.name}</DialogTitle>
+            <DialogTitle>Manage Clients - {assigningGroup?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="relative">

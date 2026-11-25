@@ -32,7 +32,7 @@ export function WebsiteDetailContent() {
           {isViewMode ? 'Website details' : 'Edit Website'}
         </h1>
         <p className="text-muted-foreground mt-1">
-          {isViewMode ? 'Read-only overview — use Edit website to make changes.' : website.name}
+          {isViewMode ? 'Read-only overview - use Edit website to make changes.' : website.name}
         </p>
       </div>
 

@@ -6,7 +6,7 @@ import { useInvoiceData } from '@/context/InvoiceContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 export function LatestWebsitesWidget() {
   const { getRecentWebsites } = useInvoiceData();

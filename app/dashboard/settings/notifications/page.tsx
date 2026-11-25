@@ -12,13 +12,13 @@ import {
   Calendar,
   Clock
 } from 'lucide-react';
-import { getNotifications, NotificationItem } from '@/app/actions/notifications';
-import { getRelativeTime, formatDate } from '@/lib/formatting';
+import { getNotifications, NotificationItem } from '@/app/actions/communications/notifications';
+import { getRelativeTime, formatDate } from '@/lib/core/formatting';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);

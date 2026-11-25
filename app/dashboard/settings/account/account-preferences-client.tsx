@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser, updateAccountAction } from '@/app/actions/auth';
-import type { AccountActivityData } from '@/lib/account-activity-types';
+import { getCurrentUser, updateAccountAction } from '@/app/actions/auth/auth';
+import type { AccountActivityData } from '@/lib/auth/account-activity-types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,19 +24,19 @@ import {
 } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { formatDate, formatTime } from '@/lib/formatting';
+import { formatDate, formatTime } from '@/lib/core/formatting';
 
 function formatDateTimeLabel(iso: string | null): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try {
     return `${formatDate(iso)} · ${formatTime(iso)}`;
   } catch {
-    return '—';
+    return '-';
   }
 }
 
 function formatSessionDuration(startIso: string | null, nowMs: number): string {
-  if (!startIso) return '—';
+  if (!startIso) return '-';
   try {
     const start = new Date(startIso).getTime();
     const ms = Math.max(0, nowMs - start);
@@ -48,7 +48,7 @@ function formatSessionDuration(startIso: string | null, nowMs: number): string {
     if (m > 0) return `${m}m ${sec}s`;
     return `${sec}s`;
   } catch {
-    return '—';
+    return '-';
   }
 }
 

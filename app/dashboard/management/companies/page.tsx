@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { useConfirm } from '@/context/ConfirmationContext';
-import { Company } from '@/lib/types';
+import { Company } from '@/lib/core/types';
 import { Building2, Plus, Search, Edit, Trash2, Users, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ export default function CompaniesPage() {
     status: 'active' as 'active' | 'suspended',
   });
 
-  // Exclude the system tenant company — it is managed from Settings, not here
+  // Exclude the system tenant company - it is managed from Settings, not here
   const clientCompanies = allCompanies.filter(c => c.id !== currentCompany?.id);
 
   const filtered = clientCompanies.filter(c =>

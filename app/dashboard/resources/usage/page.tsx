@@ -8,8 +8,8 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { formatCurrency } from '@/lib/formatting';
-import { isSubscriptionActiveForKpis } from '@/lib/subscription-display-status';
+import { formatCurrency } from '@/lib/core/formatting';
+import { isSubscriptionActiveForKpis } from '@/lib/services/subscription-display-status';
 import {
   ResponsiveContainer,
   BarChart,
@@ -406,7 +406,7 @@ export default function UsageAnalyticsPage() {
   const vpsTotalRAM = activeVPS.reduce((s, v) => s + parseNum(v.ram), 0);
   const vpsTotalDisk = activeVPS.reduce((s, v) => s + parseNum(v.storage), 0);
 
-  const activeEmails = fEmails; // Email type has no status field — treat all as active
+  const activeEmails = fEmails; // Email type has no status field - treat all as active
   const emailStorageMB = fEmails.reduce((s, e) => s + parseNum(e.storage), 0);
 
   const activeDomains = fDomains.filter((d) => d.status === 'active');
@@ -586,7 +586,7 @@ export default function UsageAnalyticsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Usage Analytics</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Full BI dashboard — service usage, revenue, growth, and expiration tracking
+            Full BI dashboard - service usage, revenue, growth, and expiration tracking
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium bg-emerald-500/5 px-3 py-1.5 rounded-full border border-emerald-500/20">
@@ -1188,7 +1188,7 @@ export default function UsageAnalyticsPage() {
                       </div>
                       <div className="flex items-center gap-3 shrink-0 text-right">
                         <span className="text-xs text-muted-foreground hidden sm:block">
-                          {clientNameMap.get(item.clientId) || '—'}
+                          {clientNameMap.get(item.clientId) || '-'}
                         </span>
                         <span
                           className={`text-xs font-semibold ${

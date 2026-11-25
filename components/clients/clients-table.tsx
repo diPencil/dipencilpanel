@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Client } from '@/lib/types';
+import { Client } from '@/lib/core/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ClientDialog } from './client-dialog';

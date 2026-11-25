@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Globe, Save, RotateCcw, Monitor, Mail, Server } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/formatting';
+import { formatCurrency, formatDate } from '@/lib/core/formatting';
 import { useToast } from '@/hooks/use-toast';
 
 const EMPTY_DNS = [

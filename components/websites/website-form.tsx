@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Website } from '@/lib/types';
+import { Website } from '@/lib/core/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';

@@ -1,10 +1,10 @@
 /**
- * Prisma seed — creates the default admin user if it doesn't exist.
+ * Prisma seed - creates the default admin user if it doesn't exist.
  * Run: npx tsx prisma/seed.ts   (or: npx prisma db seed)
  */
 
 import bcrypt from 'bcryptjs';
-import { prisma } from '../lib/prisma';
+import { prisma } from '../lib/db/prisma';
 
 async function main() {
   // Ensure there's at least one company to attach the user to
@@ -36,7 +36,7 @@ async function main() {
   // Create default admin user
   const existing = await prisma.user.findUnique({ where: { username: 'dipencil' } });
   if (existing) {
-    console.log('ℹ️  Default user already exists — skipping.');
+    console.log('ℹ️  Default user already exists - skipping.');
     return;
   }
 

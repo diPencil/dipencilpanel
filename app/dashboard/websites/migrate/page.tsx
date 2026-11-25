@@ -15,8 +15,8 @@ import {
 import Link from 'next/link';
 import { toast } from "sonner";
 import { useInvoiceData } from '@/context/InvoiceContext';
-import type { MigrationStatus } from '@/lib/migration-utils';
-import { STATUS_LABELS, STATUS_COLORS, MIGRATION_TYPES, getAllowedTransitions } from '@/lib/migration-utils';
+import type { MigrationStatus } from '@/lib/migration/migration-utils';
+import { STATUS_LABELS, STATUS_COLORS, MIGRATION_TYPES, getAllowedTransitions } from '@/lib/migration/migration-utils';
 
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -331,7 +331,7 @@ export default function WebsiteMigratePage() {
                 Source Server Details
               </CardTitle>
               <CardDescription>
-                Enter the credentials of the server to migrate from. We'll run a live TCP check before saving.
+                Enter the credentials of the server to migrate from. We&apos;ll run a live TCP check before saving.
               </CardDescription>
             </CardHeader>
             <CardContent>

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { downloadTextFile, delay, rowsToCsv, safeJsonStringify } from '@/lib/dashboard-export';
+import { downloadTextFile, delay, rowsToCsv, safeJsonStringify } from '@/lib/export/dashboard-export';
 import { toast } from 'sonner';
 import type {
   Client,
@@ -26,7 +26,7 @@ import type {
   Subscription,
   VPS,
   Website,
-} from '@/lib/types';
+} from '@/lib/core/types';
 
 export type DashboardExportPayload = {
   invoices: Invoice[];
@@ -135,7 +135,7 @@ export function DashboardExportDialog({
         return;
       }
 
-      // CSV: one file per selected table (pause between saves — avoids browser blocking 2+ downloads)
+      // CSV: one file per selected table (pause between saves - avoids browser blocking 2+ downloads)
       let files = 0;
       let isFirstFile = true;
       for (const key of selected) {
@@ -155,7 +155,7 @@ export function DashboardExportDialog({
         files += 1;
       }
       if (files === 0) {
-        toast.error('Selected datasets are empty — nothing to export as CSV.');
+        toast.error('Selected datasets are empty - nothing to export as CSV.');
         return;
       }
       toast.success(files === 1 ? 'CSV downloaded.' : `${files} CSV files downloaded.`);
@@ -211,13 +211,13 @@ export function DashboardExportDialog({
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="json" id="fmt-json" />
                 <Label htmlFor="fmt-json" className="font-normal cursor-pointer">
-                  JSON — single file (good for backup / developers)
+                  JSON - single file (good for backup / developers)
                 </Label>
               </div>
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="csv" id="fmt-csv" />
                 <Label htmlFor="fmt-csv" className="font-normal cursor-pointer">
-                  CSV — one spreadsheet per table (Excel-friendly)
+                  CSV - one spreadsheet per table (Excel-friendly)
                 </Label>
               </div>
             </RadioGroup>

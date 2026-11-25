@@ -65,16 +65,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { formatCurrency, formatDate, formatDateForInput } from '@/lib/formatting';
-import { cn } from '@/lib/utils';
+import { formatCurrency, formatDate, formatDateForInput } from '@/lib/core/formatting';
+import { cn } from '@/lib/core/utils';
 import { toast } from 'sonner';
-import { calculateInvoiceTotals } from '@/lib/invoice-utils';
-import { isInvoiceLinkedToHosting } from '@/lib/hosting-invoice';
-import { resolveHostingPrimaryDomain } from '@/lib/hosting-domain';
-import { parseSafePanelUrl } from '@/lib/panel-url';
-import { isHostingRenewEligible } from '@/lib/hosting-renew-eligibility';
+import { calculateInvoiceTotals } from '@/lib/billing/invoice-utils';
+import { isInvoiceLinkedToHosting } from '@/lib/billing/hosting-invoice';
+import { resolveHostingPrimaryDomain } from '@/lib/services/hosting-domain';
+import { parseSafePanelUrl } from '@/lib/services/panel-url';
+import { isHostingRenewEligible } from '@/lib/services/hosting-renew-eligibility';
 import { RenewHostingDialog } from '@/components/hosting/renew-hosting-dialog';
-import type { Hosting, InvoiceItem } from '@/lib/types';
+import type { Hosting, InvoiceItem } from '@/lib/core/types';
 
 function parseCapacityGb(text: string): number | null {
   const m = text.match(/([\d.]+)\s*(GB|TB)/i);
@@ -176,11 +176,11 @@ function HostingDetailsPage() {
     const storageMetric =
       storageCap != null
         ? usageLineFromCapGb(storageCap, h.resources.storage, h.id, 'stor')
-        : { line: h.resources.storage || '—', pct: stablePercent(h.id, 'stor') };
+        : { line: h.resources.storage || '-', pct: stablePercent(h.id, 'stor') };
     const bandwidthMetric =
       bandwidthCap != null
         ? usageLineFromCapGb(bandwidthCap, h.resources.bandwidth, h.id, 'bw')
-        : { line: h.resources.bandwidth || '—', pct: stablePercent(h.id, 'bw') };
+        : { line: h.resources.bandwidth || '-', pct: stablePercent(h.id, 'bw') };
 
     return [
       {
@@ -311,7 +311,7 @@ function HostingDetailsPage() {
     const taxRate = company.taxRate ?? 0;
     const item: InvoiceItem = {
       id: `line-${Date.now()}`,
-      description: `Web hosting — ${h.planName} (${h.id})`,
+      description: `Web hosting - ${h.planName} (${h.id})`,
       quantity: 1,
       price: h.price,
       discount: 0,
@@ -331,7 +331,7 @@ function HostingDetailsPage() {
       status: 'pending',
       paymentStatus: 'unpaid',
       items: [item],
-      notes: `Hosting service — ${h.name} (${h.id})`,
+      notes: `Hosting service - ${h.name} (${h.id})`,
       serviceType: 'hosting',
       serviceId: h.id,
       serviceName: h.name,
@@ -748,12 +748,12 @@ function HostingDetailsPage() {
                     <p className="text-xs text-muted-foreground mt-1">
                       Status:{' '}
                       <span className="text-green-500 font-bold uppercase">
-                        {primary?.domain?.status ?? '—'}
+                        {primary?.domain?.status ?? '-'}
                       </span>
                     </p>
                     {clientDomains.length > 1 && !primary?.domain && (
                       <p className="text-[10px] text-muted-foreground mt-2">
-                        This client has {clientDomains.length} domains — choose the primary domain in Edit.
+                        This client has {clientDomains.length} domains - choose the primary domain in Edit.
                       </p>
                     )}
                   </div>

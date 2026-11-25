@@ -10,10 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { InvoiceDisplay } from '@/components/invoices/invoice-display';
-import { exportElementToPdf, invoicePdfFilename } from '@/lib/export-invoice-pdf';
-import { sendInvoiceToClientEmail } from '@/app/actions/invoice-email';
+import { exportElementToPdf, invoicePdfFilename } from '@/lib/billing/export-invoice-pdf';
+import { sendInvoiceToClientEmail } from '@/app/actions/billing/invoice-email';
 import { SendInvoiceDialog } from '@/components/invoices/send-invoice-dialog';
-import type { Client, Invoice } from '@/lib/types';
+import type { Client, Invoice } from '@/lib/core/types';
 import { 
   Download, 
   Eye, 
@@ -44,8 +44,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/formatting';
-import { convertCurrency } from '@/lib/currency-utils';
+import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/core/formatting';
+import { convertCurrency } from '@/lib/billing/currency-utils';
 
 function InvoicesBillingPage() {
   const searchParams = useSearchParams();

@@ -40,12 +40,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { formatCurrency, formatDate } from '@/lib/formatting';
-import { resolveHostingPrimaryDomain } from '@/lib/hosting-domain';
-import { isHostingRenewEligible } from '@/lib/hosting-renew-eligibility';
+import { formatCurrency, formatDate } from '@/lib/core/formatting';
+import { resolveHostingPrimaryDomain } from '@/lib/services/hosting-domain';
+import { isHostingRenewEligible } from '@/lib/services/hosting-renew-eligibility';
 import { RenewHostingDialog } from '@/components/hosting/renew-hosting-dialog';
-import { cn } from '@/lib/utils';
-import type { Hosting } from '@/lib/types';
+import { cn } from '@/lib/core/utils';
+import type { Hosting } from '@/lib/core/types';
 
 type HostingStatus = 'all' | 'active' | 'suspended' | 'expired';
 
@@ -150,7 +150,7 @@ export default function HostingOverviewPage() {
         </div>
       </div>
 
-      {/* Hosting List — table layout similar to Domains */}
+      {/* Hosting List - table layout similar to Domains */}
       <Card className="overflow-hidden border-border/60 shadow-sm">
         <div className="hidden overflow-x-auto lg:block">
           <table className="w-full">

@@ -4,8 +4,8 @@ import React, { useMemo } from 'react';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/formatting';
-import { isSubscriptionActiveForKpis } from '@/lib/subscription-display-status';
+import { formatCurrency } from '@/lib/core/formatting';
+import { isSubscriptionActiveForKpis } from '@/lib/services/subscription-display-status';
 import {
   TrendingUp,
   DollarSign,
@@ -200,7 +200,7 @@ export default function FinancialSummaryPage() {
 
   const expiringSoon = useMemo(() => {
     const clientNameById = new Map(clients.map((c) => [c.id, c.name]));
-    const clientLabel = (clientId: string) => clientNameById.get(clientId)?.trim() || '—';
+    const clientLabel = (clientId: string) => clientNameById.get(clientId)?.trim() || '-';
 
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() + 30);
@@ -239,7 +239,7 @@ export default function FinancialSummaryPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Financial Summary</h1>
         <p className="text-muted-foreground mt-1">
-          Full financial overview across all services — revenue, subscriptions, outstanding, and upcoming renewals.
+          Full financial overview across all services - revenue, subscriptions, outstanding, and upcoming renewals.
         </p>
       </div>
 
@@ -354,7 +354,7 @@ export default function FinancialSummaryPage() {
             value={
               subscriptionEconomics.blendedMarginPct != null
                 ? `${subscriptionEconomics.blendedMarginPct.toFixed(1)}%`
-                : '—'
+                : '-'
             }
             sub={`${subscriptionEconomics.trackedProviderCount} of ${subscriptionEconomics.activeSubscriptionCount} active subs have provider price`}
           />
@@ -506,8 +506,8 @@ export default function FinancialSummaryPage() {
               <tbody>
                 {recentPayments.map((p) => (
                   <tr key={p.id} className="border-b border-border/40 hover:bg-muted/30 transition-colors last:border-0">
-                    <td className="py-3 px-5 font-medium">{p.clientName || '—'}</td>
-                    <td className="py-3 px-5 text-muted-foreground">{p.invoiceNumber || '—'}</td>
+                    <td className="py-3 px-5 font-medium">{p.clientName || '-'}</td>
+                    <td className="py-3 px-5 text-muted-foreground">{p.invoiceNumber || '-'}</td>
                     <td className="py-3 px-5">
                       <Badge variant="outline" className="text-xs capitalize">
                         {p.method}

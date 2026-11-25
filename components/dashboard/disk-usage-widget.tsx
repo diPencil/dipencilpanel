@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { Card } from '@/components/ui/card';
 import { ArrowRight, HardDrive } from 'lucide-react';
-import { getStorageSummary } from '@/lib/storage-utils';
+import { getStorageSummary } from '@/lib/services/storage-utils';
 
 export function DiskUsageWidget() {
   const { hosting = [], vps = [] } = useInvoiceData();

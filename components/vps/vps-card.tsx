@@ -41,7 +41,7 @@ export default function VpsCard({
         <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
           <div>Plan: <strong>{vps.plan}</strong></div>
           <div>OS: <strong>{vps.os}</strong></div>
-          <div>Panel: <strong>{vps.panel || '—'}</strong></div>
+          <div>Panel: <strong>{vps.panel || '-'}</strong></div>
           <div>CPU: <strong>{vps.cpu} vCPU</strong></div>
           <div>RAM: <strong>{vps.ram} GB</strong></div>
           <div>Storage: <strong>{vps.storage} GB</strong></div>

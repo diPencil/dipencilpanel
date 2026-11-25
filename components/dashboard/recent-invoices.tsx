@@ -2,10 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Invoice, Client } from '@/lib/types';
+import { Invoice, Client } from '@/lib/core/types';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/invoices/status-badge';
-import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/formatting';
+import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/core/formatting';
 import { ArrowRight } from 'lucide-react';
 
 interface RecentInvoicesProps {

@@ -1,0 +1,32 @@
+Command: pnpm lint
+Exit: 0
+
+Summary line:
+370 problems (0 errors, 370 warnings)
+
+No AI-style em dash (U+2014) found in first-party content.
+
+The warnings are the pre-existing baseline (unused vars and React Compiler
+advisories). No new error or warning was introduced by the governance changes.
+The tail of the output is reproduced below.
+
+lib/auth/auth.ts
+  50:19  warning  '_omitAvatar' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+lib/billing/export-invoice-pdf.ts
+  47:33  warning  '_node' is defined but never used  @typescript-eslint/no-unused-vars
+
+lib/core/constants.ts
+  25:7  warning  'DEFAULT_PERMISSIONS' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  26:7  warning  'READ_ONLY_PERMISSIONS' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+lib/email/reminder-email-preview.ts
+  7:3  warning  'DEFAULT_REMINDER_EMAIL_BODY_HTML' is defined but never used    @typescript-eslint/no-unused-vars
+  8:3  warning  'DEFAULT_REMINDER_EMAIL_FOOTER_HTML' is defined but never used  @typescript-eslint/no-unused-vars
+  9:3  warning  'DEFAULT_REMINDER_EMAIL_HEADER_HTML' is defined but never used  @typescript-eslint/no-unused-vars
+
+scripts/create-admin.ts
+  26:9  warning  'newUser' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+scripts/fix-password.ts
+  10:9  warning  'updated' is assigned a value but never used  @typescript-eslint/no-unused-vars

@@ -1,0 +1,21 @@
+Command: python docs/scripts/check-ui-controls.py --json
+Mode: advisory (exit 0)
+Files scanned: 121
+
+Summary:
+totalFindings: 77
+native-date-input: 24
+native-select: 7
+raw-textarea: 8
+hardcoded-hex: 38
+exemptHex (invoice path): 17
+
+Measured with a case-sensitive scan over app/ and components/ (177 TSX/JSX
+files in total; the script skips components/ui primitives and the excluded
+directories):
+
+native <select>:        7 in 3 files
+design-system <Select>: 85 in 26 files
+native date/time inputs: 24 in 12 files
+raw <textarea>:         9 including components/ui/textarea.tsx (8 product files)
+hex colours:            55 in 3 files (17 in the invoice template, exempt)

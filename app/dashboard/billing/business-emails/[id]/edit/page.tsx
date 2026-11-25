@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { ChevronLeft } from 'lucide-react';
-import { getBusinessEmailById, type BusinessEmailRecord } from '@/app/actions/business-emails';
+import { getBusinessEmailById, type BusinessEmailRecord } from '@/app/actions/communications/business-emails';
 import { BusinessEmailEditor } from '@/components/business-emails/business-email-editor';
 
 export default function EditBusinessEmailPage() {
@@ -68,7 +68,7 @@ export default function EditBusinessEmailPage() {
 
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Edit business email</h1>
-        <p className="text-sm text-muted-foreground mt-1">Update subject, body, client, or type — then save as draft.</p>
+        <p className="text-sm text-muted-foreground mt-1">Update subject, body, client, or type - then save as draft.</p>
       </div>
 
       <Card className="p-6 border-border/50 shadow-sm">

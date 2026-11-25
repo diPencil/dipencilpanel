@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ClientForm } from './client-form';
-import { Client } from '@/lib/types';
+import { Client } from '@/lib/core/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface ClientDialogProps {

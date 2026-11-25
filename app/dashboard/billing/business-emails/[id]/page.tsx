@@ -19,7 +19,7 @@ import {
 import {
   getBusinessEmailById, sendBusinessEmail, deleteBusinessEmail,
   type BusinessEmailRecord, type BusinessEmailType,
-} from '@/app/actions/business-emails';
+} from '@/app/actions/communications/business-emails';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -225,7 +225,7 @@ export default function BusinessEmailDetailPage() {
         </div>
       </div>
 
-      {/* Main content — styled like an email/letter */}
+      {/* Main content - styled like an email/letter */}
       <div className="w-full">
         {/* Meta header card */}
         <div className="bg-card border border-border rounded-xl p-5 mb-4 flex flex-wrap items-center gap-4 shadow-sm">
@@ -263,7 +263,7 @@ export default function BusinessEmailDetailPage() {
           </div>
         </div>
 
-        {/* Email body — letter style */}
+        {/* Email body - letter style */}
         <div className="bg-white dark:bg-card border border-border rounded-xl shadow-sm overflow-hidden">
           {/* Letter header */}
           <div className="px-10 pt-10 pb-4 border-b border-border/40">

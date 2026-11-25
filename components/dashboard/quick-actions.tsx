@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import { ArrowUpRight, FileText, Globe, Monitor } from 'lucide-react';
 
 type CardTone = 'sky' | 'emerald' | 'slate' | 'violet';

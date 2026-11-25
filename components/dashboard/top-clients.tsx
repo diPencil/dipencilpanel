@@ -2,8 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Client, Invoice } from '@/lib/types';
-import { formatCurrency } from '@/lib/formatting';
+import { Client, Invoice } from '@/lib/core/types';
+import { formatCurrency } from '@/lib/core/formatting';
 
 interface TopClientsProps {
   clients: Client[];

@@ -13,11 +13,11 @@ import {
   DEFAULT_INVOICE_EMAIL_FOOTER_HTML,
   DEFAULT_INVOICE_EMAIL_HEADER_HTML,
   INVOICE_EMAIL_TEMPLATE_VARIABLES,
-} from '@/lib/invoice-email-placeholders';
+} from '@/lib/email/invoice-email-placeholders';
 import {
   buildInvoiceEmailPreviewDocument,
   templateMatchesDefault,
-} from '@/lib/invoice-email-preview';
+} from '@/lib/email/invoice-email-preview';
 
 function effectiveTemplate(stored: string | null | undefined, builtIn: string): string {
   return stored?.trim() || builtIn;
@@ -75,7 +75,7 @@ export default function InvoiceEmailTemplatePage() {
         <h1 className="text-3xl font-bold">Invoice email template</h1>
         <p className="text-muted-foreground max-w-3xl">
           Edit the HTML for each section of the invoice notification email. The fields are pre-filled with the current
-          defaults — change any wording, layout, or style and click <strong>Save template</strong>. Use{' '}
+          defaults - change any wording, layout, or style and click <strong>Save template</strong>. Use{' '}
           <code className="text-xs bg-muted px-1 rounded">{'{{placeholder}}'}</code> variables to inject live invoice
           data.
         </p>
@@ -93,7 +93,7 @@ export default function InvoiceEmailTemplatePage() {
             <ul className="text-xs text-muted-foreground grid sm:grid-cols-2 gap-x-6 gap-y-1">
               {INVOICE_EMAIL_TEMPLATE_VARIABLES.map((v) => (
                 <li key={v.key}>
-                  <code className="text-foreground font-mono">{`{{${v.key}}}`}</code> — {v.description}
+                  <code className="text-foreground font-mono">{`{{${v.key}}}`}</code> - {v.description}
                 </li>
               ))}
             </ul>
@@ -118,7 +118,7 @@ export default function InvoiceEmailTemplatePage() {
                 className="gap-1"
                 onClick={() => {
                   setHeader(DEFAULT_INVOICE_EMAIL_HEADER_HTML);
-                  toast.message('Header reset — click Save to persist');
+                  toast.message('Header reset - click Save to persist');
                 }}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -146,7 +146,7 @@ export default function InvoiceEmailTemplatePage() {
                 className="gap-1"
                 onClick={() => {
                   setBody(DEFAULT_INVOICE_EMAIL_BODY_HTML);
-                  toast.message('Body reset — click Save to persist');
+                  toast.message('Body reset - click Save to persist');
                 }}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -177,7 +177,7 @@ export default function InvoiceEmailTemplatePage() {
                 className="gap-1"
                 onClick={() => {
                   setFooter(DEFAULT_INVOICE_EMAIL_FOOTER_HTML);
-                  toast.message('Footer reset — click Save to persist');
+                  toast.message('Footer reset - click Save to persist');
                 }}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -191,7 +191,7 @@ export default function InvoiceEmailTemplatePage() {
               spellCheck={false}
             />
             <p className="text-xs text-muted-foreground">
-              Shown below the body — disclaimer, two-column contact block, and closing.
+              Shown below the body - disclaimer, two-column contact block, and closing.
             </p>
           </Card>
 

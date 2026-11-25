@@ -110,7 +110,7 @@ export function RenewDomainDialog({
           <DialogTitle>Renew domain</DialogTitle>
           <DialogDescription>
             {domainName
-              ? `${domainName} — creates a renewal invoice and updates the domain expiry date.`
+              ? `${domainName} - creates a renewal invoice and updates the domain expiry date.`
               : 'Creates a renewal invoice and updates the domain expiry date.'}
           </DialogDescription>
         </DialogHeader>

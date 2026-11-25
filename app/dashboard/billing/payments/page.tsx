@@ -30,8 +30,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/formatting';
-import { convertCurrency } from '@/lib/currency-utils';
+import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/core/formatting';
+import { convertCurrency } from '@/lib/billing/currency-utils';
 import { toast } from 'sonner';
 
 export default function PaymentsPage() {
@@ -317,7 +317,7 @@ export default function PaymentsPage() {
                             {subId}
                           </Link>
                         ) : (
-                          <span className="text-muted-foreground/50 text-sm">—</span>
+                          <span className="text-muted-foreground/50 text-sm">-</span>
                         )}
                       </td>
 

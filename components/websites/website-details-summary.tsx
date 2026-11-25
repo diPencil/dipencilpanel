@@ -8,11 +8,11 @@ import { useInvoiceData } from '@/context/InvoiceContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Website } from '@/lib/types';
-import { formatCurrency } from '@/lib/formatting';
-import { getWebsiteTypeOption } from '@/lib/website-type-options';
+import type { Website } from '@/lib/core/types';
+import { formatCurrency } from '@/lib/core/formatting';
+import { getWebsiteTypeOption } from '@/lib/services/website-type-options';
 import { WebsiteTypeIcon } from '@/components/websites/website-type-icon';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 function billingCycleLabel(cycle: Website['plan']['billingCycle']): string {
   switch (cycle) {
@@ -70,8 +70,8 @@ export function WebsiteDetailsSummary({ website }: { website: Website }) {
   const { clients } = useInvoiceData();
   const client = clients.find((c) => c.id === website.clientId);
   const typeLabel = getWebsiteTypeOption(website.type).label;
-  const clientName = client?.name ?? '—';
-  const business = client?.companyName?.trim() || client?.name || '—';
+  const clientName = client?.name ?? '-';
+  const business = client?.companyName?.trim() || client?.name || '-';
   const domainHref = `https://${website.domain.replace(/^https?:\/\//i, '')}`;
 
   return (

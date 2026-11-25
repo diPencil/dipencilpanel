@@ -57,9 +57,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { formatDate } from '@/lib/formatting';
-import type { Domain, EmailPlan, Email } from '@/lib/types';
+import { cn } from '@/lib/core/utils';
+import { formatDate } from '@/lib/core/formatting';
+import type { Domain, EmailPlan, Email } from '@/lib/core/types';
 import { ConfirmDeleteDialog } from '@/components/shared/confirm-delete-dialog';
 
 const getDomainFqdn = (domain: Domain): string => `${domain.name}${domain.tld}`;
@@ -363,10 +363,10 @@ export default function EmailsPage() {
                       <SelectValue placeholder="Allocation size" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">1 GB — Basic Inbox</SelectItem>
-                      <SelectItem value="5">5 GB — Business Box</SelectItem>
-                      <SelectItem value="10">10 GB — Power User</SelectItem>
-                      <SelectItem value="50">50 GB — Archive Pro</SelectItem>
+                      <SelectItem value="1">1 GB - Basic Inbox</SelectItem>
+                      <SelectItem value="5">5 GB - Business Box</SelectItem>
+                      <SelectItem value="10">10 GB - Power User</SelectItem>
+                      <SelectItem value="50">50 GB - Archive Pro</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

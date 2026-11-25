@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Send, X, Users, Plus, Mail } from 'lucide-react';
 import { useInvoiceData } from '@/context/InvoiceContext';
-import type { ReminderItem } from '@/app/actions/reminder-emails';
+import type { ReminderItem } from '@/app/actions/communications/reminder-emails';
 
 interface SendReminderDialogProps {
   item: ReminderItem | null;
@@ -144,7 +144,7 @@ export function SendReminderDialog({
               <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <span className="text-sm font-medium truncate">
                 <span className="text-foreground">{item.clientName} &mdash; </span>
-                <span className="text-muted-foreground">{primaryEmail || '—'}</span>
+                <span className="text-muted-foreground">{primaryEmail || '-'}</span>
               </span>
             </div>
           </div>

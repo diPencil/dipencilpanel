@@ -1,4 +1,4 @@
-import { fetchAccountActivity } from '@/lib/server/account-activity';
+import { fetchAccountActivity } from '@/lib/auth/account-activity.server';
 import AccountPreferencesClient from './account-preferences-client';
 
 export const dynamic = 'force-dynamic';

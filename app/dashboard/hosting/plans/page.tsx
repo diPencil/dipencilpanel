@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { HostingPlan, CloudHostingPlan } from '@/lib/types';
+import type { HostingPlan, CloudHostingPlan } from '@/lib/core/types';
 import {
   CheckCircle2,
   Plus,

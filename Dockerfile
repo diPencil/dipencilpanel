@@ -12,6 +12,9 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# `prisma generate` reads prisma.config.ts, which requires DATABASE_URL.
+# The real connection string is injected at runtime by compose/.env.
+ENV DATABASE_URL="mysql://build:build@127.0.0.1:3306/build"
 RUN pnpm prisma generate
 RUN pnpm build
 

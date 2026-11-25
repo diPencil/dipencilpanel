@@ -23,9 +23,9 @@ import {
   Shield,
   ArrowRight,
 } from 'lucide-react';
-import { logoutAction } from '@/app/actions/auth';
-import { getNotifications, NotificationItem, markNotificationsAsRead, markNotificationsAsCleared } from '@/app/actions/notifications';
-import { getRelativeTime } from '@/lib/formatting';
+import { logoutAction } from '@/app/actions/auth/auth';
+import { getNotifications, NotificationItem, markNotificationsAsRead, markNotificationsAsCleared } from '@/app/actions/communications/notifications';
+import { getRelativeTime } from '@/lib/core/formatting';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { SearchPalette } from './search-palette';
@@ -40,7 +40,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/core/utils";
 import {
   Breadcrumb,
   BreadcrumbItem,

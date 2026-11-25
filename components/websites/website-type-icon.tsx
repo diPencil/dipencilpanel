@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@/lib/utils';
-import { getWebsiteTypeOption } from '@/lib/website-type-options';
+import { cn } from '@/lib/core/utils';
+import { getWebsiteTypeOption } from '@/lib/services/website-type-options';
 
 type Size = 'sm' | 'md' | 'lg';
 

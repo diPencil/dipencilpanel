@@ -2,11 +2,11 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Invoice, Client } from '@/lib/types';
+import { Invoice, Client } from '@/lib/core/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from './status-badge';
-import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/formatting';
+import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/core/formatting';
 import { Plus, Search, Eye, Trash2, Copy } from 'lucide-react';
 import {
   AlertDialog,

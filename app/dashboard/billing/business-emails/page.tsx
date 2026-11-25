@@ -32,7 +32,7 @@ import {
   sendBusinessEmail,
   type BusinessEmailRecord,
   type BusinessEmailType,
-} from '@/app/actions/business-emails';
+} from '@/app/actions/communications/business-emails';
 import {
   EMAIL_TYPES,
   BusinessEmailEditor,
@@ -299,7 +299,7 @@ function QuickSendDialog({ email, open, onOpenChange, onSent, companyId }: Quick
               <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <span className="text-sm font-medium truncate">
                 {client?.name && <span className="text-foreground">{client.name} &mdash; </span>}
-                <span className="text-muted-foreground">{sendTo || '—'}</span>
+                <span className="text-muted-foreground">{sendTo || '-'}</span>
               </span>
             </div>
             {!sendTo && (
@@ -511,7 +511,7 @@ export default function BusinessEmailsPage() {
                     <tr key={email.id} className="hover:bg-muted/30 transition-colors group">
                       <td className="px-5 py-4">
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium">{client?.name ?? <span className="text-muted-foreground/60">—</span>}</span>
+                          <span className="text-sm font-medium">{client?.name ?? <span className="text-muted-foreground/60">-</span>}</span>
                           {client?.email && <span className="text-xs text-muted-foreground">{client.email}</span>}
                         </div>
                       </td>

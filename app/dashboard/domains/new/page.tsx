@@ -11,14 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Globe, ShieldCheck, ReceiptText } from 'lucide-react';
-import { formatCurrency } from '@/lib/formatting';
+import { formatCurrency } from '@/lib/core/formatting';
 import { useToast } from '@/hooks/use-toast';
 
 const HOST_OPTIONS = [
   { id: 'none', label: 'No host', type: 'none', price: 0 },
-  { id: 'website-shared', label: 'Website — Shared', type: 'website', price: 29.99 },
-  { id: 'email-workspace', label: 'Email — Workspace', type: 'email', price: 9.99 },
-  { id: 'vps-basic', label: 'VPS — Basic', type: 'vps', price: 49.99 },
+  { id: 'website-shared', label: 'Website - Shared', type: 'website', price: 29.99 },
+  { id: 'email-workspace', label: 'Email - Workspace', type: 'email', price: 9.99 },
+  { id: 'vps-basic', label: 'VPS - Basic', type: 'vps', price: 49.99 },
 ];
 
 function formatInputDate(date: Date) {
@@ -422,7 +422,7 @@ function NewDomainPageInner() {
                       <React.Fragment key={type}>
                         <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{type}</div>
                         {sites.map((website) => (
-                          <SelectItem key={website.id} value={website.id}>{website.name} — {website.domain}</SelectItem>
+                          <SelectItem key={website.id} value={website.id}>{website.name} - {website.domain}</SelectItem>
                         ))}
                       </React.Fragment>
                     ))}

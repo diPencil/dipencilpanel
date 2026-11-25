@@ -10,8 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { InvoiceDisplay } from '@/components/invoices/invoice-display';
-import { exportElementToPdf, invoicePdfFilename } from '@/lib/export-invoice-pdf';
-import type { Client, Invoice } from '@/lib/types';
+import { exportElementToPdf, invoicePdfFilename } from '@/lib/billing/export-invoice-pdf';
+import type { Client, Invoice } from '@/lib/core/types';
 import { 
   Download, 
   Eye, 
@@ -41,8 +41,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/formatting';
-import { convertCurrency } from '@/lib/currency-utils';
+import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/core/formatting';
+import { convertCurrency } from '@/lib/billing/currency-utils';
 
 function InvoicesBillingPage() {
   const searchParams = useSearchParams();
@@ -240,7 +240,7 @@ function InvoicesBillingPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">diPencil Invoices</h1>
           <p className="text-muted-foreground mt-1">
-            Company invoices (Pencil for E-Marketing Ltd.) — totals are included with main billing
+            Company invoices (Pencil for E-Marketing Ltd.) - totals are included with main billing
           </p>
         </div>
         <Link href="/dashboard/billing/dipencil-invoices/new">
@@ -349,7 +349,7 @@ function InvoicesBillingPage() {
               ) : (
                 filteredInvoices.map((invoice) => {
                   const client = getClient(invoice.clientId);
-                  const billName = invoice.counterpartyName?.trim() || client?.name || '—';
+                  const billName = invoice.counterpartyName?.trim() || client?.name || '-';
                   const showEmail = client?.email && !client.email.includes('internal.dipencil');
                   return (
                     <tr key={invoice.id} className="hover:bg-muted/30 transition-colors group">

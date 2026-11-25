@@ -42,8 +42,8 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { formatCurrency, formatDate } from '@/lib/formatting';
-import { cn } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/core/formatting';
+import { cn } from '@/lib/core/utils';
 
 export default function ClientProfilePage() {
   const params = useParams();

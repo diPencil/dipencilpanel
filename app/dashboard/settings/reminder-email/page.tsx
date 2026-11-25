@@ -13,11 +13,11 @@ import {
   DEFAULT_REMINDER_EMAIL_FOOTER_HTML,
   DEFAULT_REMINDER_EMAIL_HEADER_HTML,
   REMINDER_EMAIL_TEMPLATE_VARIABLES,
-} from '@/lib/reminder-email-template';
+} from '@/lib/email/reminder-email-template';
 import {
   buildReminderEmailPreviewDocument,
   templateMatchesDefault,
-} from '@/lib/reminder-email-preview';
+} from '@/lib/email/reminder-email-preview';
 
 function effectiveTemplate(stored: string | null | undefined, builtIn: string): string {
   return stored?.trim() || builtIn;
@@ -84,7 +84,7 @@ export default function ReminderEmailTemplatePage() {
         <p className="text-muted-foreground max-w-3xl">
           Edit the HTML for subscription renewal reminders sent from{' '}
           <strong>Subscription Reminders</strong>. The service details table (type, name, expiry, price) is built
-          automatically — keep <code className="text-xs bg-muted px-1 rounded">{'{{serviceDetailsTable}}'}</code> in
+          automatically - keep <code className="text-xs bg-muted px-1 rounded">{'{{serviceDetailsTable}}'}</code> in
           the Body where the box should appear.
         </p>
       </div>
@@ -100,7 +100,7 @@ export default function ReminderEmailTemplatePage() {
             <ul className="text-xs text-muted-foreground grid sm:grid-cols-2 gap-x-6 gap-y-1">
               {REMINDER_EMAIL_TEMPLATE_VARIABLES.map((v) => (
                 <li key={v.key}>
-                  <code className="text-foreground font-mono">{`{{${v.key}}}`}</code> — {v.description}
+                  <code className="text-foreground font-mono">{`{{${v.key}}}`}</code> - {v.description}
                 </li>
               ))}
             </ul>
@@ -124,7 +124,7 @@ export default function ReminderEmailTemplatePage() {
                 className="gap-1"
                 onClick={() => {
                   setHeader(DEFAULT_REMINDER_EMAIL_HEADER_HTML);
-                  toast.message('Header reset — click Save to persist');
+                  toast.message('Header reset - click Save to persist');
                 }}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -138,7 +138,7 @@ export default function ReminderEmailTemplatePage() {
               spellCheck={false}
             />
             <p className="text-xs text-muted-foreground">
-              Top of the card — usually the logo (<code className="bg-muted px-1 rounded text-[11px]">{'{{logoBlock}}'}</code>).
+              Top of the card - usually the logo (<code className="bg-muted px-1 rounded text-[11px]">{'{{logoBlock}}'}</code>).
             </p>
           </Card>
 
@@ -152,7 +152,7 @@ export default function ReminderEmailTemplatePage() {
                 className="gap-1"
                 onClick={() => {
                   setBody(DEFAULT_REMINDER_EMAIL_BODY_HTML);
-                  toast.message('Body reset — click Save to persist');
+                  toast.message('Body reset - click Save to persist');
                 }}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -183,7 +183,7 @@ export default function ReminderEmailTemplatePage() {
                 className="gap-1"
                 onClick={() => {
                   setFooter(DEFAULT_REMINDER_EMAIL_FOOTER_HTML);
-                  toast.message('Footer reset — click Save to persist');
+                  toast.message('Footer reset - click Save to persist');
                 }}
               >
                 <RotateCcw className="h-3.5 w-3.5" />

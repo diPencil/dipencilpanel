@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { InvoiceItem } from '@/lib/types';
+import { InvoiceItem } from '@/lib/core/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Trash2, Plus } from 'lucide-react';
-import { calculateLineItemSubtotal, calculateLineItemVAT, calculateLineItemTotal } from '@/lib/invoice-utils';
-import { formatCurrency } from '@/lib/formatting';
+import { calculateLineItemSubtotal, calculateLineItemVAT, calculateLineItemTotal } from '@/lib/billing/invoice-utils';
+import { formatCurrency } from '@/lib/core/formatting';
 
 interface InvoiceItemsEditorProps {
   items: InvoiceItem[];

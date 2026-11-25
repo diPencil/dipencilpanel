@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { useConfirm } from '@/context/ConfirmationContext';
-import { Role, PermissionModule, ModulePermissions } from '@/lib/types';
+import { Role, PermissionModule, ModulePermissions } from '@/lib/core/types';
 import { Shield, Plus, Edit, Trash2, Check, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

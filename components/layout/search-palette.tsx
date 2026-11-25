@@ -24,7 +24,7 @@ import {
   CommandList,
   CommandSeparator
 } from '@/components/ui/command';
-import { globalSearch, SearchResult } from '@/app/actions/search';
+import { globalSearch, SearchResult } from '@/app/actions/search/search';
 import { useRouter } from 'next/navigation';
 import { Kbd } from '@/components/ui/kbd';
 

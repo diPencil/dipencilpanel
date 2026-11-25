@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Plus, FileText, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 export function FloatingActionButton() {
   const [isOpen, setIsOpen] = useState(false);

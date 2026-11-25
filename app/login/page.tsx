@@ -1,10 +1,10 @@
 'use client';
 
-import React, { Suspense, useState, useTransition } from 'react';
+import React, { Suspense, useState, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { loginAction } from '@/app/actions/auth';
+import { loginAction } from '@/app/actions/auth/auth';
+import { getPublicBranding } from '@/app/actions/auth/company';
 import { Eye, EyeOff, Lock, User, AlertCircle, Loader2 } from 'lucide-react';
-import Image from 'next/image';
 
 function LoginForm() {
   const router = useRouter();
@@ -122,6 +122,22 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const [branding, setBranding] = useState({
+    projectName: 'diPencil Panel',
+    loginLogo: '/favicon.png',
+  });
+
+  useEffect(() => {
+    getPublicBranding().then((res) => {
+      if (res.success && res.data) {
+        setBranding({
+          projectName: res.data.projectName || 'diPencil Panel',
+          loginLogo: res.data.loginLogo || res.data.favicon || '/favicon.png',
+        });
+      }
+    });
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-sky-100 via-white to-white p-4">
 
@@ -136,14 +152,20 @@ export default function LoginPage() {
 
         {/* Icon */}
         <div className="flex justify-center mb-6">
-          <div className="w-13 h-13 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-sm p-1.5">
-            <Image src="/favicon.png" alt="diPencil" width={44} height={44} className="w-full h-full object-contain" />
+          <div className="w-13 h-13 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-sm p-1.5 overflow-hidden">
+            <img
+              src={branding.loginLogo}
+              alt={branding.projectName}
+              className="w-full h-full object-contain"
+            />
           </div>
         </div>
 
         {/* Title */}
         <div className="text-center mb-7">
-          <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">Sign in to diPencil Panel</h1>
+          <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">
+            Sign in to {branding.projectName}
+          </h1>
           <p className="text-sm text-slate-400 mt-1.5">Enter your credentials to access the dashboard.</p>
         </div>
 
@@ -152,7 +174,7 @@ export default function LoginPage() {
         </Suspense>
 
         <p className="text-center text-xs text-slate-400 mt-8">
-          diPencil Panel · Hosting & System Provider
+          {branding.projectName} · Hosting &amp; System Provider
         </p>
       </div>
     </div>

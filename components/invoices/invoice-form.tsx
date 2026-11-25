@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Invoice, InvoiceItem, Client } from '@/lib/types';
+import { Invoice, InvoiceItem, Client } from '@/lib/core/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,11 +12,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { InvoiceItemsEditor } from './invoice-items-editor';
-import { calculateInvoiceTotals } from '@/lib/invoice-utils';
+import { calculateInvoiceTotals } from '@/lib/billing/invoice-utils';
 import { useToast } from '@/hooks/use-toast';
-import { CURRENCIES } from '@/lib/constants';
+import { CURRENCIES } from '@/lib/core/constants';
 import { useInvoiceData } from '@/context/InvoiceContext';
-import { convertCurrency } from '@/lib/currency-utils';
+import { convertCurrency } from '@/lib/billing/currency-utils';
 
 interface InvoiceFormProps {
   invoice?: Invoice;
@@ -213,7 +213,7 @@ export function InvoiceForm({
         </div>
       </div>
 
-      {/* Dates row — 3 columns */}
+      {/* Dates row - 3 columns */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium mb-1.5">Issue Date</label>

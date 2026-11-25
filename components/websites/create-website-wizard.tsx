@@ -20,11 +20,11 @@ import {
   Monitor, Users, Globe, HardDrive, Server, Mail, CreditCard,
   CheckCircle2, ChevronRight, ChevronLeft, AlertCircle,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import { toast } from 'sonner';
-import { formatCurrency } from '@/lib/formatting';
-import type { WebsiteBillingCycle } from '@/lib/types';
-import { WEBSITE_TYPE_OPTIONS } from '@/lib/website-type-options';
+import { formatCurrency } from '@/lib/core/formatting';
+import type { WebsiteBillingCycle } from '@/lib/core/types';
+import { WEBSITE_TYPE_OPTIONS } from '@/lib/services/website-type-options';
 
 function planPriceForCycle(
   plan: { price: { monthly: number; yearly: number } },
@@ -267,7 +267,7 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
 
   // ─── Filtered data per client ──────────────────────────────────────────────
   const clientDomains = form.clientId ? domains.filter((d: any) => d.clientId === form.clientId) : domains;
-  // Infrastructure (hosting/VPS) is company-wide — show ALL accounts regardless of which client owns them.
+  // Infrastructure (hosting/VPS) is company-wide - show ALL accounts regardless of which client owns them.
   // The dropdown label shows the owning client so the user can distinguish between accounts.
   const clientHosting = hosting;
   const clientVPS = vps;
@@ -509,7 +509,7 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
                       const ownerName = clients.find((c: any) => c.id === h.clientId)?.name;
                       return (
                         <SelectItem key={h.id} value={h.id}>
-                          {h.name} ({h.planName}){ownerName ? ` — ${ownerName}` : ''}
+                          {h.name} ({h.planName}){ownerName ? ` - ${ownerName}` : ''}
                         </SelectItem>
                       );
                     })}
@@ -542,7 +542,7 @@ export function CreateWebsiteWizard({ initialType, initialClientId }: CreateWebs
                       const ownerName = clients.find((c: any) => c.id === v.clientId)?.name;
                       return (
                         <SelectItem key={v.id} value={v.id}>
-                          {v.name} ({v.planName}){ownerName ? ` — ${ownerName}` : ''}
+                          {v.name} ({v.planName}){ownerName ? ` - ${ownerName}` : ''}
                         </SelectItem>
                       );
                     })}

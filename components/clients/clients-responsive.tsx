@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Client } from '@/lib/types';
+import { Client } from '@/lib/core/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Edit2, Eye, Trash2, Mail, Phone } from 'lucide-react';

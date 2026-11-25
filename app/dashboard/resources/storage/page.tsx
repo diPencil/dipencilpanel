@@ -27,8 +27,8 @@ import {
   Pie,
   Legend,
 } from 'recharts';
-import { getStorageSummary, getHostingStorageTotal, getVpsStorageTotal } from '@/lib/storage-utils';
-import { isSubscriptionActiveForKpis } from '@/lib/subscription-display-status';
+import { getStorageSummary, getHostingStorageTotal, getVpsStorageTotal } from '@/lib/services/storage-utils';
+import { isSubscriptionActiveForKpis } from '@/lib/services/subscription-display-status';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -245,7 +245,7 @@ export default function StorageOverviewPage() {
   const activeEmails = emails.length; // Email type has no status field
   const activeWebsites = websites.filter((w) => w.status === 'active').length;
 
-  // Totals — "total" here = sum of all provisioned (active + inactive combined)
+  // Totals - "total" here = sum of all provisioned (active + inactive combined)
   // We use active-subscriptions based total for "total allocated"
   const totalHostingGB = useMemo(() => {
     const activeHosts = hosting.filter((h) => {

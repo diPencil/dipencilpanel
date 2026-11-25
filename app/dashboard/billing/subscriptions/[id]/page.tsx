@@ -30,7 +30,7 @@ import {
   ExternalLink,
   Edit2
 } from 'lucide-react';
-import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/formatting';
+import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/core/formatting';
 import { SubscriptionStatusBadge } from '@/components/subscriptions/subscription-status-badge';
 
 /** Calendar month before expiry (same day-of-month in UTC). Window: that day through and after expiry. */

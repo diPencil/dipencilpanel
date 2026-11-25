@@ -14,9 +14,9 @@ import {
   FileText, Activity,
 } from 'lucide-react';
 import { AppStatusBadge, AppTypeBadge, AppPlanBadge, AppFrameworkBadge } from './app-badge';
-import type { MobileApp } from '@/lib/types';
-import { formatCurrency } from '@/lib/formatting';
-import { cn } from '@/lib/utils';
+import type { MobileApp } from '@/lib/core/types';
+import { formatCurrency, formatInvoiceNumber } from '@/lib/core/formatting';
+import { cn } from '@/lib/core/utils';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/shared/confirm-delete-dialog';
 
@@ -169,7 +169,7 @@ export function AppDetail({ app }: AppDetailProps) {
                 <InfoRow label="Client">
                   <div className="flex items-center gap-1.5">
                     <User className="h-3.5 w-3.5 text-muted-foreground" />
-                    {client?.name ?? '—'}
+                    {client?.name ?? '-'}
                   </div>
                 </InfoRow>
                 <InfoRow label="Platform"><AppTypeBadge type={app.appType} /></InfoRow>
@@ -259,7 +259,7 @@ export function AppDetail({ app }: AppDetailProps) {
               <ServiceTile
                 icon={Server}
                 label="VPS"
-                value={`${vpsAccount.planName} — ${vpsAccount.cpu}vCPU / ${vpsAccount.ram}GB RAM`}
+                value={`${vpsAccount.planName} - ${vpsAccount.cpu}vCPU / ${vpsAccount.ram}GB RAM`}
                 color="bg-violet-100 dark:bg-violet-900/30 text-violet-600"
               />
             ) : (
@@ -370,7 +370,7 @@ export function AppDetail({ app }: AppDetailProps) {
               <p className="text-sm font-semibold">
                 {subscription?.expiryDate
                   ? new Date(subscription.expiryDate).toLocaleDateString()
-                  : '—'}
+                  : '-'}
               </p>
             </Card>
           </div>
@@ -382,7 +382,7 @@ export function AppDetail({ app }: AppDetailProps) {
                 Subscription
               </h3>
               <div className="divide-y">
-                <InfoRow label="Plan">{subscription.planName ?? '—'}</InfoRow>
+                <InfoRow label="Plan">{subscription.planName ?? '-'}</InfoRow>
                 <InfoRow label="Price">{formatCurrency(subscription.price)} / {subscription.billingCycle}</InfoRow>
                 <InfoRow label="Start Date">{new Date(subscription.startDate).toLocaleDateString()}</InfoRow>
                 <InfoRow label="End Date">{new Date(subscription.expiryDate).toLocaleDateString()}</InfoRow>

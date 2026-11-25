@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Invoice, Client } from '@/lib/types';
-import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/formatting';
+import { Invoice, Client } from '@/lib/core/types';
+import { formatCurrency, formatDate, formatInvoiceNumber } from '@/lib/core/formatting';
 import { StatusBadge } from './status-badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

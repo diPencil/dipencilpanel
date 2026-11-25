@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import { getCurrentUser } from '@/app/actions/auth';
+import { getCurrentUser } from '@/app/actions/auth/auth';
 
 interface User {
   name: string;

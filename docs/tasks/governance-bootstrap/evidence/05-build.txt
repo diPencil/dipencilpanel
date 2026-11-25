@@ -1,0 +1,19 @@
+Command: pnpm build
+Exit: 0
+
+Tail of the route table:
+
+├ ○ /dashboard/websites
+├ ƒ /dashboard/websites/[id]
+├ ○ /dashboard/websites/migrate
+├ ○ /dashboard/websites/new
+└ ○ /login
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+Build artifact check:
+BUILD_ID=rMryEooaMuiG6ruTqbiX5
+modified=11/25/2026 17:49:05

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, ArrowRightLeft, Globe, Plus, Search, Trash2, CheckCircle2, XCircle, Clock3 } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/formatting';
+import { formatCurrency, formatDate } from '@/lib/core/formatting';
 import { useToast } from '@/hooks/use-toast';
 
 type TransferFilter = 'all' | 'pending' | 'completed' | 'failed';

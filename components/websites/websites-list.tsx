@@ -39,20 +39,20 @@ import {
   User,
   Building2,
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/formatting';
-import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/core/formatting';
+import { cn } from '@/lib/core/utils';
 import { ConfirmDeleteDialog } from '@/components/shared/confirm-delete-dialog';
 import { toast } from 'sonner';
-import type { Client } from '@/lib/types';
-import { getWebsiteTypeOption } from '@/lib/website-type-options';
+import type { Client } from '@/lib/core/types';
+import { getWebsiteTypeOption } from '@/lib/services/website-type-options';
 import { WebsiteTypeIcon } from '@/components/websites/website-type-icon';
 
 type FilterStatus = 'all' | 'active' | 'inactive' | 'suspended';
 
 function clientBusinessDisplay(client: Client | undefined): string {
-  if (!client) return '—';
+  if (!client) return '-';
   const business = client.companyName?.trim();
-  return business || client.name || '—';
+  return business || client.name || '-';
 }
 
 export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
@@ -256,7 +256,7 @@ export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
                     <p className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
                       <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
                       <span className="truncate" title={client?.name}>
-                        {client?.name ?? '—'}
+                        {client?.name ?? '-'}
                       </span>
                     </p>
                   </div>
@@ -405,7 +405,7 @@ export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
                         <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
                           <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
                           <span className="line-clamp-2 wrap-break-word" title={client?.name}>
-                            {client?.name ?? '—'}
+                            {client?.name ?? '-'}
                           </span>
                         </p>
                       </TableCell>
@@ -498,7 +498,7 @@ export function WebsitesList({ typeFilter }: { typeFilter?: string }) {
                         </div>
                       </TableCell>
                       <TableCell className="align-middle">
-                        <span className="text-sm font-medium">{client?.name ?? '—'}</span>
+                        <span className="text-sm font-medium">{client?.name ?? '-'}</span>
                       </TableCell>
                       <TableCell className="align-middle">
                         <span className="line-clamp-2 text-xs font-medium text-foreground" title={business}>

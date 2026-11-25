@@ -18,8 +18,8 @@ import {
   Shield,
   BarChart3
 } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/formatting';
-import { isSubscriptionActiveForKpis } from '@/lib/subscription-display-status';
+import { formatCurrency, formatDate } from '@/lib/core/formatting';
+import { isSubscriptionActiveForKpis } from '@/lib/services/subscription-display-status';
 
 export default function BillingOverviewPage() {
   const { 

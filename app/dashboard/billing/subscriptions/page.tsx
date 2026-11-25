@@ -27,8 +27,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatCurrency, formatDate } from '@/lib/formatting';
-import { convertCurrency } from '@/lib/currency-utils';
+import { formatCurrency, formatDate } from '@/lib/core/formatting';
+import { convertCurrency } from '@/lib/billing/currency-utils';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import {
@@ -41,9 +41,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { Subscription } from '@/lib/types';
+import type { Subscription } from '@/lib/core/types';
 import { SubscriptionStatusBadge } from '@/components/subscriptions/subscription-status-badge';
-import { getSubscriptionDisplayStatus } from '@/lib/subscription-display-status';
+import { getSubscriptionDisplayStatus } from '@/lib/services/subscription-display-status';
 import { RenewSubscriptionDialog } from '@/components/subscriptions/renew-subscription-dialog';
 
 export default function SubscriptionsPage() {

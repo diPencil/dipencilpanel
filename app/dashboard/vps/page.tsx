@@ -26,8 +26,8 @@ import {
   ShieldCheck,
   LayoutDashboard
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { VPS, VPSPlan } from "@/lib/types";
+import { cn } from "@/lib/core/utils";
+import type { VPS, VPSPlan } from "@/lib/core/types";
 
 type DisplayStatus = "Active" | "Stopped" | "Suspended" | "Expired";
 
@@ -44,7 +44,7 @@ function vpsToCardModel(v: VPS, clientName: string) {
   else if (v.status === "active" || v.status === "expiring") status = "Active";
 
   const ipMatch = v.notes?.match(/IP:\s*([^;]+)/);
-  const ip = ipMatch ? ipMatch[1].trim() : "—";
+  const ip = ipMatch ? ipMatch[1].trim() : "-";
 
   return {
     id: v.id,
@@ -79,7 +79,7 @@ export default function VpsPage() {
 
   const filtered = useMemo(() => {
     return vps.filter((v) => {
-      const card = vpsToCardModel(v, clientNameById.get(v.clientId) ?? "—");
+      const card = vpsToCardModel(v, clientNameById.get(v.clientId) ?? "-");
       if (filter !== "all" && card.status !== filter) return false;
       if (!query) return true;
       const q = query.toLowerCase();
@@ -92,7 +92,7 @@ export default function VpsPage() {
   }, [vps, filter, query, clientNameById]);
 
   const displayRows = useMemo(
-    () => filtered.map((v) => vpsToCardModel(v, clientNameById.get(v.clientId) ?? "—")),
+    () => filtered.map((v) => vpsToCardModel(v, clientNameById.get(v.clientId) ?? "-")),
     [filtered, clientNameById],
   );
 

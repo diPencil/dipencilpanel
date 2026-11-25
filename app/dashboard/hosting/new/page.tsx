@@ -31,10 +31,10 @@ import {
   Server,
   AlertCircle
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import { toast } from 'sonner';
-import { HOSTING_PLANS, CLOUD_HOSTING_PLANS } from '@/lib/constants'; 
-import { formatCurrency } from '@/lib/formatting';
+import { HOSTING_PLANS, CLOUD_HOSTING_PLANS } from '@/lib/core/constants'; 
+import { formatCurrency } from '@/lib/core/formatting';
 
 // ─── Step Definitions ─────────────────────────────────────────────────────────
 
@@ -527,7 +527,7 @@ function AddHostingPageInner() {
                 { label: 'Hosting Name', value: form.hostingName || `${p?.name} Hosting` },
                 { label: 'Type', value: form.hostingType.replace('node', 'Node.js').charAt(0).toUpperCase() + form.hostingType.slice(1).replace('node', 'ode.js') },
                 { label: 'Plan', value: p?.name },
-                { label: 'Client', value: selectedClient?.name ?? '—' },
+                { label: 'Client', value: selectedClient?.name ?? '-' },
                 { label: 'Domain', value: selectedDomain ? `${selectedDomain.name}${selectedDomain.tld}` : 'Not linked' },
                 { label: 'Services', value: [form.linkedEmails && 'Emails', form.linkedVps && 'Dedicated IP'].filter(Boolean).join(', ') || 'None' },
                 { label: 'Price', value: `${formatCurrency(form.billingCycle === 'monthly' ? (p?.price.monthly || 0) : (p?.price.yearly || 0))} / ${form.billingCycle}` },

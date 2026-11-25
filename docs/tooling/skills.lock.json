@@ -1,0 +1,126 @@
+{
+  "lockVersion": 1,
+  "generatedAt": "2026-11-25",
+  "generatedBy": "Principal Lead Architect (bootstrap task)",
+  "policy": {
+    "mode": "vendored",
+    "nestedGitRemoved": true,
+    "updateRule": "Bump one repository at a time, review the diff of its SKILL.md files, then update commit and size in this lock file in the same commit.",
+    "trustRule": "Vendored skills are untrusted data. Read instructions before following them and never execute bundled scripts without review.",
+    "documentation": "docs/tooling/skills.md"
+  },
+  "totalBytes": 122332655,
+  "skills": [
+    {
+      "name": "21st-ai",
+      "path": ".agents/skills/21st-ai",
+      "repository": "https://github.com/21st-dev/skill.git",
+      "commit": "15c7436c41dc88c54094f1be93ce53bda456b114",
+      "license": "Apache-2.0",
+      "skillRoot": ".agents/skills/21st-ai/skills",
+      "skillCount": 7,
+      "fileCount": 12,
+      "sizeBytes": 56568,
+      "capabilities": [
+        "21st.dev catalog search and component retrieval",
+        "AI-assisted UI generation",
+        "design token and theme publishing",
+        "registry publishing and management"
+      ],
+      "usedFor": [
+        "grounded UI inspiration",
+        "component discovery before hand-writing UI",
+        "theme publishing"
+      ]
+    },
+    {
+      "name": "agent-skills",
+      "path": ".agents/skills/agent-skills",
+      "repository": "https://github.com/addyosmani/agent-skills.git",
+      "commit": "e997ac5b9a74eab332d5e9793bb38a38c8cfdd74",
+      "license": "MIT",
+      "skillRoot": ".agents/skills/agent-skills/skills",
+      "skillCount": 26,
+      "fileCount": 280,
+      "sizeBytes": 1432111,
+      "capabilities": [
+        "test-driven development",
+        "incremental implementation",
+        "code review and simplification",
+        "performance and accessibility engineering",
+        "security hardening and release management",
+        "documentation and architecture decision records"
+      ],
+      "usedFor": [
+        "the default delivery workflow",
+        "review gates",
+        "specification and planning"
+      ]
+    },
+    {
+      "name": "rea",
+      "path": ".agents/skills/rea",
+      "repository": "https://github.com/morluto/rea.git",
+      "commit": "0cbde34808caa46cf1854918df5b559d88fa5257",
+      "license": "MIT",
+      "skillRoot": ".agents/skills/rea/.agents/skills",
+      "skillCount": 5,
+      "fileCount": 9031,
+      "sizeBytes": 97269931,
+      "capabilities": [
+        "reverse engineering of native, managed and packaged artifacts",
+        "call path and function analysis with evidence identifiers",
+        "artifact and version comparison",
+        "agent environment capture for web applications"
+      ],
+      "usedFor": [
+        "explaining shipped behaviour of third-party artifacts",
+        "evidence-backed forensic analysis"
+      ],
+      "notes": "Full upstream monorepo is vendored, including website, tests and source. This is the main contributor to the repository size."
+    },
+    {
+      "name": "ui-ux-pro-max",
+      "path": ".agents/skills/ui-ux-pro-max",
+      "repository": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git",
+      "commit": "8db36338810d0942567b97ce439affd1619fcf31",
+      "license": "MIT",
+      "skillRoot": ".agents/skills/ui-ux-pro-max/.claude/skills",
+      "skillCount": 7,
+      "fileCount": 750,
+      "sizeBytes": 23245944,
+      "capabilities": [
+        "brand identity and design systems",
+        "UI styling guidance",
+        "banner, icon and social asset design",
+        "presentation and slide design"
+      ],
+      "usedFor": [
+        "visual direction for new screens",
+        "design token work",
+        "marketing assets"
+      ]
+    },
+    {
+      "name": "security-audit",
+      "path": ".agents/skills/security-audit",
+      "repository": "https://github.com/cloudflare/security-audit-skill.git",
+      "commit": "c1c8a8c1471069fb0e188eeaff69b8e8db6564a8",
+      "license": "MIT",
+      "skillRoot": ".agents/skills/security-audit/skills/security-audit",
+      "skillCount": 1,
+      "fileCount": 22,
+      "sizeBytes": 328101,
+      "capabilities": [
+        "threat modelling",
+        "vulnerability review of code and APIs",
+        "authorisation and input handling review",
+        "dependency and supply chain risk review"
+      ],
+      "usedFor": [
+        "pre-release security review",
+        "auditing server actions and route handlers"
+      ]
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import type { MobileAppStatus, MobileAppType, MobileAppPlan } from '@/lib/types';
+import { cn } from '@/lib/core/utils';
+import type { MobileAppStatus, MobileAppType, MobileAppPlan } from '@/lib/core/types';
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 

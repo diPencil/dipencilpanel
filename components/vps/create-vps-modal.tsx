@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import type { Client, VPSPlan } from "@/lib/types";
+import { cn } from "@/lib/core/utils";
+import type { Client, VPSPlan } from "@/lib/core/types";
 
 const PLAN_SPECS_FALLBACK: Record<string, { cpu: number; ram: number; storage: number }> = {
   "KVM 1": { cpu: 1, ram: 4, storage: 50 },
@@ -171,7 +171,7 @@ export default function CreateVpsModal({
                   {planOptions.map((nameOpt) => {
                     const p = vpsPlans.find((x) => x.name === nameOpt);
                     const label = p
-                      ? `${p.name} — ${p.cpu} vCPU / ${p.ram}GB RAM / ${p.storage}GB — $${p.price}/mo`
+                      ? `${p.name} - ${p.cpu} vCPU / ${p.ram}GB RAM / ${p.storage}GB - $${p.price}/mo`
                       : `${nameOpt} (configure plans in VPS → Plans for pricing)`;
                     return (
                       <SelectItem key={nameOpt} value={nameOpt}>
@@ -271,7 +271,7 @@ export default function CreateVpsModal({
               <Label>Assign to client</Label>
               <Select value={clientId} onValueChange={setClientId}>
                 <SelectTrigger>
-                  <SelectValue placeholder={clients.length ? "Select client" : "No clients — add a client first"} />
+                  <SelectValue placeholder={clients.length ? "Select client" : "No clients - add a client first"} />
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (

@@ -9,8 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Globe, Plus, Search, Trash2, RotateCcw, Monitor, Mail, Server, Info, Edit, Copy, Send } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/formatting';
-import { cn } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/core/formatting';
+import { cn } from '@/lib/core/utils';
 import {
   Popover,
   PopoverContent,
@@ -26,13 +26,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { REGISTRAR_NAMESERVERS } from '@/lib/constants';
+import { REGISTRAR_NAMESERVERS } from '@/lib/core/constants';
 import { toast } from 'sonner';
 import { RenewDomainDialog } from '@/components/domains/renew-domain-dialog';
 import { EditDomainDialog } from '@/components/domains/edit-domain-dialog';
 import { EditDomainDNSDialog } from '@/components/domains/edit-domain-dns-dialog';
 import { SendReminderDialog } from '@/components/reminders/send-reminder-dialog';
-import { sendReminderEmail, type ReminderItem } from '@/app/actions/reminder-emails';
+import { sendReminderEmail, type ReminderItem } from '@/app/actions/communications/reminder-emails';
 
 type DomainFilter = 'all' | 'active' | 'expired' | 'expiring';
 

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { useConfirm } from '@/context/ConfirmationContext';
-import { User } from '@/lib/types';
+import { User } from '@/lib/core/types';
 import { Users, Plus, Search, Edit, Trash2, CheckCircle, XCircle, Shield, Building2, Clock, Eye, Mail, AtSign, Calendar, LogIn, LogOut } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

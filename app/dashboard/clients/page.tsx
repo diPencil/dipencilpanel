@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useInvoiceData } from '@/context/InvoiceContext';
 import { ClientsResponsive } from '@/components/clients/clients-responsive';
 import { ClientDialog } from '@/components/clients/client-dialog';
-import { Client } from '@/lib/types';
+import { Client } from '@/lib/core/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';

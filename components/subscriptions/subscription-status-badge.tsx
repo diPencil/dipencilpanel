@@ -1,8 +1,8 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
-import type { Subscription } from '@/lib/types';
-import { getSubscriptionDisplayStatus } from '@/lib/subscription-display-status';
+import type { Subscription } from '@/lib/core/types';
+import { getSubscriptionDisplayStatus } from '@/lib/services/subscription-display-status';
 
 export function SubscriptionStatusBadge({
   subscription,

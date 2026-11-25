@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Invoice, Client, Company } from '@/lib/types';
-import { formatCurrency, formatInvoiceDate, formatInvoiceNumber } from '@/lib/formatting';
+import { Invoice, Client, Company } from '@/lib/core/types';
+import { formatCurrency, formatInvoiceDate, formatInvoiceNumber } from '@/lib/core/formatting';
 import {
   DIPENCIL_INVOICE_LOGO_SRC,
   DIPENCIL_INVOICE_SELLER_LINES,
   DIPENCIL_INVOICE_SELLER_NAME,
-} from '@/lib/dipencil-invoice-branding';
+} from '@/lib/billing/dipencil-invoice-branding';
 
 interface InvoiceDisplayProps {
   invoice: Invoice;
@@ -76,7 +76,11 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
   const isDipencil = invoice.invoiceKind === 'dipencil';
 
   const companyLogo = isDipencil
-    ? DIPENCIL_INVOICE_LOGO_SRC
+    ? (company.dipencilLogo && company.dipencilLogo !== '/logo.png'
+        ? company.dipencilLogo
+        : company.logo && company.logo !== '/logo.png'
+          ? company.logo
+          : DIPENCIL_INVOICE_LOGO_SRC)
     : company.invoiceLogo && company.invoiceLogo !== '/logo.png'
       ? company.invoiceLogo
       : company.logo && company.logo !== '/logo.png'
@@ -84,7 +88,9 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
         : '/pencil-logo.png';
 
   const sellerLines = isDipencil
-    ? [...DIPENCIL_INVOICE_SELLER_LINES]
+    ? (company.dipencilSellerLines
+        ? company.dipencilSellerLines.split('\n').map((s) => s.trim()).filter(Boolean)
+        : [...DIPENCIL_INVOICE_SELLER_LINES])
     : splitAddressLines(company.address).length > 0
       ? splitAddressLines(company.address)
       : ['61 Lordou Vironos Street', 'Larnaca 6023', 'Cyprus'];
@@ -144,12 +150,12 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           ))}
           <div style={{ fontSize: '10px', color: C_LIGHT, marginTop: '3px', lineHeight: 1.4 }}>
             {formatInvoiceDate(invoice.issueDate)} to{' '}
-            {invoice.nextBillingDate ? formatInvoiceDate(invoice.nextBillingDate) : '—'}
+            {invoice.nextBillingDate ? formatInvoiceDate(invoice.nextBillingDate) : '-'}
           </div>
         </td>
         <td style={N}>{formatCurrency(price, invoice.currency)}&nbsp;×&nbsp;{qty}</td>
         <td style={N}>
-          {item.discount && item.discount > 0 ? `(${formatCurrency(discountAmt, invoice.currency)})` : '—'}
+          {item.discount && item.discount > 0 ? `(${formatCurrency(discountAmt, invoice.currency)})` : '-'}
         </td>
         <td style={N}>{formatCurrency(exclVat, invoice.currency)}</td>
         <td style={N}>{formatCurrency(vatAmt,  invoice.currency)}</td>
@@ -213,7 +219,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '10px' }}>
           <div style={{ flex: '1 1 auto', minWidth: 0, paddingRight: '40px', fontSize: '11px', lineHeight: '1.5', color: '#333333', fontFamily: FONT }}>
-            <p style={{ margin: 0 }}>{isDipencil ? DIPENCIL_INVOICE_SELLER_NAME : company.name?.trim() || 'Company'}</p>
+            <p style={{ margin: 0 }}>{isDipencil ? (company.ownerName?.trim() || DIPENCIL_INVOICE_SELLER_NAME) : company.name?.trim() || 'Company'}</p>
             {sellerLines.map((l) => <p key={l} style={{ margin: 0 }}>{l}</p>)}
             {!isDipencil && company.vatNumber?.trim() && (
               <p style={{ margin: '4px 0 0 0' }}>
@@ -356,7 +362,7 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
 
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: C_SECONDARY, marginBottom: '6px' }}>
             <span>Payments</span>
-            <span>{isPaid ? `(${formatCurrency(invoice.total, invoice.currency)})` : '—'}</span>
+            <span>{isPaid ? `(${formatCurrency(invoice.total, invoice.currency)})` : '-'}</span>
           </div>
 
           <Divider />
@@ -398,33 +404,31 @@ export function InvoiceDisplay({ invoice, client, company }: InvoiceDisplayProps
           <div style={{ maxWidth: '400px' }}>
             {isDipencil ? (
               <>
-                <p style={{ margin: 0 }}>Pencil for E-Marketing Ltd.</p>
-                <p style={{ margin: '3px 0 0 0' }}>
-                  If you would like assistance with renewal or have any questions,
-                  <br />
-                  please contact our exclusive service engineer.
+                <p style={{ margin: 0 }}>
+                  {company.dipencilSellerName?.trim() || company.ownerName?.trim() || DIPENCIL_INVOICE_SELLER_NAME}
                 </p>
+                <div style={{ margin: '3px 0 0 0', whiteSpace: 'pre-line' }}>
+                  {company.dipencilFooterLeft || 'If you would like assistance with renewal or have any questions,\nplease contact our exclusive service engineer.'}
+                </div>
               </>
             ) : (
               <>
-                <p style={{ margin: 0 }}>Hostinger International Ltd.</p>
-                <p style={{ margin: '3px 0 0 0' }}>
-                  If you would like assistance with renewal or have any questions, please contact our exclusive service middle east agent.
-                </p>
+                <p style={{ margin: 0 }}>{company.name?.trim() || 'Hostinger International Ltd.'}</p>
+                <div style={{ margin: '3px 0 0 0', whiteSpace: 'pre-line' }}>
+                  {company.clientInvoiceFooterLeft || 'If you would like assistance with renewal or have any questions, please contact our exclusive service middle east agent.'}
+                </div>
               </>
             )}
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '20px', marginTop: '13px' }}>
             {isDipencil ? (
-              <>
-                <p style={{ margin: 0 }}>Mahmoud El-Sabbagh · Technical Visual Design Engineer</p>
-                <p style={{ margin: 0 }}>Don&apos;t hesitate to reach out : +201003778273</p>
-              </>
+              <div style={{ whiteSpace: 'pre-line' }}>
+                {company.dipencilFooterRight || "Mahmoud El-Sabbagh · Technical Visual Design Engineer\nDon't hesitate to reach out : +201003778273"}
+              </div>
             ) : (
-              <>
-                <p style={{ margin: 0 }}>Pencil for E-Marketing Ltd. · Technical Agent Provider</p>
-                <p style={{ margin: '0' }}>of Hosting &amp; Digital Systems in the Middle East.</p>
-              </>
+              <div style={{ whiteSpace: 'pre-line' }}>
+                {company.clientInvoiceFooterRight || "Pencil for E-Marketing Ltd. · Technical Agent Provider\nof Hosting & Digital Systems in the Middle East."}
+              </div>
             )}
           </div>
         </div>

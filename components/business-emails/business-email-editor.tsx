@@ -19,7 +19,7 @@ import {
   updateBusinessEmail,
   type BusinessEmailRecord,
   type BusinessEmailType,
-} from '@/app/actions/business-emails';
+} from '@/app/actions/communications/business-emails';
 
 export const EMAIL_TYPES: {
   value: BusinessEmailType;
@@ -55,14 +55,14 @@ export const EMAIL_TYPES: {
 
 export const TEMPLATES: Record<BusinessEmailType, { subject: string; body: string }> = {
   quotation: {
-    subject: 'Service Quotation — [Client Name]',
+    subject: 'Service Quotation - [Client Name]',
     body: `Dear [Client Name],
 
 Thank you for your interest in our services. We are pleased to provide you with the following quotation:
 
 Services Included:
-- [Service 1] — $[Price]
-- [Service 2] — $[Price]
+- [Service 1] - $[Price]
+- [Service 2] - $[Price]
 
 Total: $[Total Amount]
 Validity: This quote is valid for 30 days from the date of this email.
@@ -74,7 +74,7 @@ Please don't hesitate to reach out if you have any questions or need adjustments
 Visual art engineer Mahmoud Elsabbagh @Pencil Studio Team.`,
   },
   contract: {
-    subject: 'Service Agreement — [Client Name]',
+    subject: 'Service Agreement - [Client Name]',
     body: `Dear [Client Name],
 
 We are pleased to move forward with our agreement for the services outlined below.
@@ -95,7 +95,7 @@ Please review and confirm your acceptance by replying to this email, if you have
 Visual art engineer Mahmoud Elsabbagh @Pencil Studio Team.`,
   },
   project_start: {
-    subject: 'Project Kick-off — [Project Name]',
+    subject: 'Project Kick-off - [Project Name]',
     body: `Dear [Client Name],
 
 We are excited to officially kick off your project. Here are the key details:
@@ -107,9 +107,9 @@ Project Overview:
 - Project Manager: [Name]
 
 Timeline & Milestones:
-1. [Milestone 1] — [Date]
-2. [Milestone 2] — [Date]
-3. [Milestone 3] — [Date]
+1. [Milestone 1] - [Date]
+2. [Milestone 2] - [Date]
+3. [Milestone 3] - [Date]
 
 Deliverables:
 - [Deliverable 1]

@@ -34,12 +34,12 @@ import type {
   VPSPlan,
   ClientGroup,
   MobileApp,
-} from '@/lib/types';
+} from '@/lib/core/types';
 
 // ─── Server Actions ────────────────────────────────────────────────────────────
-import { getCompanies, createCompany, updateCompany as updateCompanyAction, deleteCompany } from '@/app/actions/company';
-import { getAllClients, createClient, updateClient as updateClientAction, deleteClient as deleteClientAction, getAllClientGroups, createClientGroup, updateClientGroup as updateClientGroupAction, deleteClientGroup as deleteClientGroupAction, toggleClientInGroup as toggleClientInGroupAction } from '@/app/actions/clients';
-import { getAllDomains, createDomain, updateDomain as updateDomainAction, deleteDomain as deleteDomainAction, renewDomain as renewDomainAction, renewDomainWithSchedule as renewDomainWithScheduleAction } from '@/app/actions/domains';
+import { getCompanies, createCompany, updateCompany as updateCompanyAction, deleteCompany } from '@/app/actions/auth/company';
+import { getAllClients, createClient, updateClient as updateClientAction, deleteClient as deleteClientAction, getAllClientGroups, createClientGroup, updateClientGroup as updateClientGroupAction, deleteClientGroup as deleteClientGroupAction, toggleClientInGroup as toggleClientInGroupAction } from '@/app/actions/clients/clients';
+import { getAllDomains, createDomain, updateDomain as updateDomainAction, deleteDomain as deleteDomainAction, renewDomain as renewDomainAction, renewDomainWithSchedule as renewDomainWithScheduleAction } from '@/app/actions/services/domains';
 import {
   getAllHosting,
   createHosting,
@@ -49,10 +49,10 @@ import {
   renewHosting as renewHostingAction,
   reactivateHosting as reactivateHostingAction,
   renewHostingWithSchedule as renewHostingWithScheduleAction,
-} from '@/app/actions/hosting';
-import { getAllVPS, createVPS, updateVPS as updateVPSAction, deleteVPS as deleteVPSAction } from '@/app/actions/vps';
-import { getAllEmails, createEmail, updateEmail as updateEmailAction, deleteEmail as deleteEmailAction } from '@/app/actions/emails';
-import { getAllWebsites, createWebsite, updateWebsite as updateWebsiteAction, deleteWebsite as deleteWebsiteAction } from '@/app/actions/websites';
+} from '@/app/actions/services/hosting';
+import { getAllVPS, createVPS, updateVPS as updateVPSAction, deleteVPS as deleteVPSAction } from '@/app/actions/services/vps';
+import { getAllEmails, createEmail, updateEmail as updateEmailAction, deleteEmail as deleteEmailAction } from '@/app/actions/services/emails';
+import { getAllWebsites, createWebsite, updateWebsite as updateWebsiteAction, deleteWebsite as deleteWebsiteAction } from '@/app/actions/services/websites';
 import {
   getAllSubscriptions,
   createSubscription as createSubscriptionAction,
@@ -61,7 +61,7 @@ import {
   cancelSubscription as cancelSubscriptionAction,
   renewSubscription as renewSubscriptionAction,
   renewSubscriptionWithSchedule as renewSubscriptionWithScheduleAction,
-} from '@/app/actions/subscriptions';
+} from '@/app/actions/billing/subscriptions';
 import {
   getAllInvoices,
   createInvoice,
@@ -69,16 +69,16 @@ import {
   deleteInvoice as deleteInvoiceAction,
   markInvoiceAsPaid,
   duplicateInvoice as duplicateInvoiceAction,
-} from '@/app/actions/invoices';
-import { getAllPayments, createPayment } from '@/app/actions/payments';
-import { getAllTransfers, createTransfer, updateTransfer as updateTransferAction, deleteTransfer as deleteTransferAction } from '@/app/actions/transfers';
-import { getAllUsers, createUser, updateUser as updateUserAction, deleteUser as deleteUserAction } from '@/app/actions/users';
-import { getAllRoles, createRole, updateRole as updateRoleAction, deleteRole as deleteRoleAction } from '@/app/actions/roles';
-import { getAllMobileApps, createMobileApp, updateMobileApp as updateMobileAppAction, deleteMobileApp as deleteMobileAppAction, updateMobileAppStatus } from '@/app/actions/mobile-apps';
-import { HOSTING_PLANS as HOSTING_PLANS_DEFAULT, CLOUD_HOSTING_PLANS as CLOUD_HOSTING_PLANS_DEFAULT } from '@/lib/constants';
+} from '@/app/actions/billing/invoices';
+import { getAllPayments, createPayment } from '@/app/actions/billing/payments';
+import { getAllTransfers, createTransfer, updateTransfer as updateTransferAction, deleteTransfer as deleteTransferAction } from '@/app/actions/services/transfers';
+import { getAllUsers, createUser, updateUser as updateUserAction, deleteUser as deleteUserAction } from '@/app/actions/auth/users';
+import { getAllRoles, createRole, updateRole as updateRoleAction, deleteRole as deleteRoleAction } from '@/app/actions/auth/roles';
+import { getAllMobileApps, createMobileApp, updateMobileApp as updateMobileAppAction, deleteMobileApp as deleteMobileAppAction, updateMobileAppStatus } from '@/app/actions/services/mobile-apps';
+import { HOSTING_PLANS as HOSTING_PLANS_DEFAULT, CLOUD_HOSTING_PLANS as CLOUD_HOSTING_PLANS_DEFAULT } from '@/lib/core/constants';
 
-import { calculateInvoiceTotals, generateInvoiceNumber } from '@/lib/invoice-utils';
-import { getStorageSummary } from '@/lib/storage-utils';
+import { calculateInvoiceTotals, generateInvoiceNumber } from '@/lib/billing/invoice-utils';
+import { getStorageSummary } from '@/lib/services/storage-utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -164,7 +164,7 @@ interface InvoiceContextType {
   deleteDomain: (id: string) => void;
   getDomain: (id: string) => Domain | undefined;
   renewDomain: (id: string) => Domain | undefined;
-  renewDomainWithSchedule: (id: string, input: import('@/app/actions/domains').DomainRenewalScheduleInput) => Promise<boolean>;
+  renewDomainWithSchedule: (id: string, input: import('@/app/actions/services/domains').DomainRenewalScheduleInput) => Promise<boolean>;
 
   // Subscription actions
   addSubscription: (subscription: Omit<Subscription, 'id' | 'companyId'>) => Subscription;
@@ -175,7 +175,7 @@ interface InvoiceContextType {
   renewSubscription: (id: string) => void;
   renewSubscriptionWithSchedule: (
     id: string,
-    input: import('@/app/actions/subscriptions').RenewalScheduleInput,
+    input: import('@/app/actions/billing/subscriptions').RenewalScheduleInput,
   ) => Promise<boolean>;
 
   // Payment actions
@@ -209,7 +209,7 @@ interface InvoiceContextType {
   renewHosting: (id: string) => void;
   renewHostingWithSchedule: (
     id: string,
-    input: import('@/app/actions/subscriptions').RenewalScheduleInput,
+    input: import('@/app/actions/billing/subscriptions').RenewalScheduleInput,
   ) => Promise<boolean>;
 
   // Mobile App actions
@@ -251,6 +251,32 @@ const DEFAULT_COMPANY: SystemCompany = {
   reminderEmailHeaderHtml: null,
   reminderEmailBodyHtml: null,
   reminderEmailFooterHtml: null,
+  dipencilSellerName: null,
+  dipencilSellerLines: null,
+  dipencilFooterLeft: null,
+  dipencilFooterRight: null,
+  clientInvoiceFooterLeft: null,
+  clientInvoiceFooterRight: null,
+  projectName: 'diPencil Panel',
+  favicon: '/favicon.svg',
+  loginLogo: '/favicon.png',
+  dipencilLogo: '/pencil-logo.png',
+  smtpHost: '',
+  smtpPort: 465,
+  smtpEncryption: 'SSL',
+  smtpUser: '',
+  smtpPass: '',
+  smtpFromName: '',
+  smtpFromEmail: '',
+  smtpTimeout: 30,
+  smtpAuthEnabled: true,
+  imapProtocol: 'IMAP',
+  imapHost: '',
+  imapPort: 993,
+  imapEncryption: 'SSL',
+  imapUser: '',
+  imapPass: '',
+  imapMailbox: 'INBOX',
   email: '',
   phone: '',
   address: '',
@@ -594,6 +620,32 @@ const COMPANY_DB_PATCH_KEYS = [
   'reminderEmailHeaderHtml',
   'reminderEmailBodyHtml',
   'reminderEmailFooterHtml',
+  'dipencilSellerName',
+  'dipencilSellerLines',
+  'dipencilFooterLeft',
+  'dipencilFooterRight',
+  'clientInvoiceFooterLeft',
+  'clientInvoiceFooterRight',
+  'projectName',
+  'favicon',
+  'loginLogo',
+  'dipencilLogo',
+  'smtpHost',
+  'smtpPort',
+  'smtpEncryption',
+  'smtpUser',
+  'smtpPass',
+  'smtpFromName',
+  'smtpFromEmail',
+  'smtpTimeout',
+  'smtpAuthEnabled',
+  'imapProtocol',
+  'imapHost',
+  'imapPort',
+  'imapEncryption',
+  'imapUser',
+  'imapPass',
+  'imapMailbox',
   'currency',
   'taxRate',
   'status',
@@ -631,6 +683,32 @@ function mapDbCompany(c: Record<string, unknown>): TenantCompany {
     reminderEmailHeaderHtml: (c.reminderEmailHeaderHtml as string | null | undefined) ?? null,
     reminderEmailBodyHtml: (c.reminderEmailBodyHtml as string | null | undefined) ?? null,
     reminderEmailFooterHtml: (c.reminderEmailFooterHtml as string | null | undefined) ?? null,
+    dipencilSellerName: (c.dipencilSellerName as string | null | undefined) ?? null,
+    dipencilSellerLines: (c.dipencilSellerLines as string | null | undefined) ?? null,
+    dipencilFooterLeft: (c.dipencilFooterLeft as string | null | undefined) ?? null,
+    dipencilFooterRight: (c.dipencilFooterRight as string | null | undefined) ?? null,
+    clientInvoiceFooterLeft: (c.clientInvoiceFooterLeft as string | null | undefined) ?? null,
+    clientInvoiceFooterRight: (c.clientInvoiceFooterRight as string | null | undefined) ?? null,
+    projectName: (c.projectName as string | null | undefined) ?? 'diPencil Panel',
+    favicon: (c.favicon as string | null | undefined) ?? '/favicon.svg',
+    loginLogo: (c.loginLogo as string | null | undefined) ?? '/favicon.png',
+    dipencilLogo: (c.dipencilLogo as string | null | undefined) ?? '/pencil-logo.png',
+    smtpHost: (c.smtpHost as string | null | undefined) ?? '',
+    smtpPort: (c.smtpPort as number | null | undefined) ?? 465,
+    smtpEncryption: (c.smtpEncryption as string | null | undefined) ?? 'SSL',
+    smtpUser: (c.smtpUser as string | null | undefined) ?? '',
+    smtpPass: (c.smtpPass as string | null | undefined) ?? '',
+    smtpFromName: (c.smtpFromName as string | null | undefined) ?? '',
+    smtpFromEmail: (c.smtpFromEmail as string | null | undefined) ?? '',
+    smtpTimeout: (c.smtpTimeout as number | null | undefined) ?? 30,
+    smtpAuthEnabled: (c.smtpAuthEnabled as boolean | null | undefined) ?? true,
+    imapProtocol: (c.imapProtocol as string | null | undefined) ?? 'IMAP',
+    imapHost: (c.imapHost as string | null | undefined) ?? '',
+    imapPort: (c.imapPort as number | null | undefined) ?? 993,
+    imapEncryption: (c.imapEncryption as string | null | undefined) ?? 'SSL',
+    imapUser: (c.imapUser as string | null | undefined) ?? '',
+    imapPass: (c.imapPass as string | null | undefined) ?? '',
+    imapMailbox: (c.imapMailbox as string | null | undefined) ?? 'INBOX',
     email: (c.email as string) ?? '',
     phone: (c.phone as string) ?? '',
     address: (c.address as string) ?? '',
@@ -873,7 +951,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   const requireTenantId = useCallback((): boolean => {
     if (!tenantId) {
-      toast.error('Workspace not ready — wait a moment or refresh the page.');
+      toast.error('Workspace not ready - wait a moment or refresh the page.');
       return false;
     }
     return true;
@@ -885,7 +963,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     async (updates: Partial<SystemCompany>): Promise<{ success: boolean; error?: string }> => {
       const tid = tenantId;
       if (!tid) {
-        toast.error('Workspace not ready — wait a moment or refresh the page.');
+        toast.error('Workspace not ready - wait a moment or refresh the page.');
         return { success: false, error: 'Workspace not ready' };
       }
 
@@ -903,7 +981,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         const res = await updateCompanyAction(tid, dbPatch);
         if (!res.success) {
           console.error(res.error);
-          toast.error('Could not save company settings');
+          toast.error(res.error || 'Could not save company settings');
           await loadCompanies();
           return { success: false, error: res.error };
         }
@@ -915,9 +993,10 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         return { success: true };
       } catch (err) {
         console.error(err);
-        toast.error('Could not save company settings');
+        const errMsg = err instanceof Error ? err.message : String(err);
+        toast.error(errMsg || 'Could not save company settings');
         await loadCompanies();
-        return { success: false, error: String(err) };
+        return { success: false, error: errMsg };
       }
     },
     [tenantId, loadCompanies],
@@ -1307,23 +1386,20 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
   const duplicateInvoice = (id: string) => {
     const original = getInvoice(id);
     if (!original) return;
-    addInvoice({
-      clientId: original.clientId,
-      companyId: tenantId,
-      issueDate: new Date().toISOString(),
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'pending',
-      paymentStatus: 'unpaid',
-      currency: original.currency,
-      items: original.items.map((item) => ({ ...item, id: tempId() })),
-      notes: original.notes,
-      invoiceKind: original.invoiceKind,
-      counterpartyName: original.counterpartyName,
-      counterpartyAddress: original.counterpartyAddress,
-      subscriptionId: original.subscriptionId,
-      ...calculateInvoiceTotals(original.items),
-    });
-    duplicateInvoiceAction(id, tenantId).catch(console.error);
+    duplicateInvoiceAction(id, tenantId)
+      .then((res) => {
+        if (res.success && res.data) {
+          const real = mapDbInvoice(res.data as unknown as Record<string, unknown>);
+          setInvoices((prev) => [real, ...prev]);
+          toast.success('Invoice duplicated');
+        } else {
+          toast.error(res.success === false ? res.error : 'Failed to duplicate invoice');
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error('Failed to duplicate invoice');
+      });
   };
 
   const markAsPaid = (id: string, method: Payment['method']) => {
@@ -1361,7 +1437,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     const owningClient = clients.find((c) => c.id === data.clientId);
     const fromClient = owningClient?.companyId?.trim();
     const fromForm = typeof data.companyId === 'string' ? data.companyId.trim() : '';
-    // Always prefer the client's tenant — matches getAllWebsites(tenantId) on reload (dropdown could pick wrong org)
+    // Always prefer the client's tenant - matches getAllWebsites(tenantId) on reload (dropdown could pick wrong org)
     const cid = fromClient || fromForm || tenantId;
 
     if (!data.clientId) {
@@ -1369,7 +1445,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       return { success: false, error: 'Missing clientId' };
     }
     if (!cid) {
-      toast.error('Workspace not ready — refresh the page and try again.');
+      toast.error('Workspace not ready - refresh the page and try again.');
       return { success: false, error: 'Missing companyId' };
     }
 
@@ -1472,7 +1548,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   // ─── Domain Actions ────────────────────────────────────────────────────────
 
-  // Optimistic addDomain (keeps existing behaviour) — and add addDomainAsync for awaitable server result
+  // Optimistic addDomain (keeps existing behaviour) - and add addDomainAsync for awaitable server result
   const addDomain = (data: Omit<Domain, 'id' | 'createdAt' | 'renewalDate' | 'subscriptionId'>) => {
     const id = tempId();
     const now = new Date().toISOString();
@@ -1492,6 +1568,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       clientId: data.clientId,
       companyId: tenantId,
       price: data.price,
+      currency: data.currency,
       planName: data.planName,
     }).then((res) => {
       if (res.success && res.data) {
@@ -1538,6 +1615,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         clientId: data.clientId,
         companyId: tenantId,
         price: data.price,
+        currency: data.currency,
         planName: data.planName,
       });
 
@@ -1594,7 +1672,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   const renewDomainWithSchedule = async (
     id: string,
-    input: import('@/app/actions/domains').DomainRenewalScheduleInput,
+    input: import('@/app/actions/services/domains').DomainRenewalScheduleInput,
   ): Promise<boolean> => {
     if (!requireTenantId()) return false;
     const res = await renewDomainWithScheduleAction(id, tenantId, input);
@@ -1680,7 +1758,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   const renewSubscriptionWithSchedule = async (
     id: string,
-    input: import('@/app/actions/subscriptions').RenewalScheduleInput,
+    input: import('@/app/actions/billing/subscriptions').RenewalScheduleInput,
   ): Promise<boolean> => {
     if (!requireTenantId()) return false;
     const res = await renewSubscriptionWithScheduleAction(id, tenantId, input);
@@ -1937,7 +2015,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
 
   const renewHostingWithSchedule = async (
     id: string,
-    input: import('@/app/actions/subscriptions').RenewalScheduleInput,
+    input: import('@/app/actions/billing/subscriptions').RenewalScheduleInput,
   ): Promise<boolean> => {
     if (!requireTenantId()) return false;
     const res = await renewHostingWithScheduleAction(id, tenantId, input);

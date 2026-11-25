@@ -1,0 +1,10 @@
+Context snapshot captured before the governance changes were finalized.
+
+branch=main
+changes=285
+head=c551940 style: update Payment History table layout to match modern service design
+agents_tracked=1
+
+Note: the working tree already contained 284 uncommitted entries before this
+task. The .agents tree appears as a single untracked entry because git collapses
+untracked directories. No application file was deleted, moved or rewritten.

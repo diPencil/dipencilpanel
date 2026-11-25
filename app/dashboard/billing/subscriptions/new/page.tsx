@@ -17,10 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Subscription } from '@/lib/types';
-import { generateSubscriptionServiceId } from '@/lib/subscription-service-id';
-import { CURRENCIES } from '@/lib/constants';
-import { convertCurrency } from '@/lib/currency-utils';
+import { Subscription } from '@/lib/core/types';
+import { generateSubscriptionServiceId } from '@/lib/services/subscription-service-id';
+import { CURRENCIES } from '@/lib/core/constants';
+import { convertCurrency } from '@/lib/billing/currency-utils';
 
 const SERVICE_TYPES: Subscription['serviceType'][] = ['website', 'domain', 'hosting', 'email', 'vps', 'mobile_app'];
 const BILLING_CYCLES: Subscription['billingCycle'][] = ['monthly', 'yearly'];
@@ -416,7 +416,7 @@ function CreateSubscriptionPageInner() {
       <form onSubmit={handleSubmit} className="rounded-lg border border-border bg-card p-6 space-y-6">
         <div className="grid grid-cols-2 gap-x-6 gap-y-5 items-start">
 
-          {/* Row 1 — Client | Service Type */}
+          {/* Row 1 - Client | Service Type */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Client</label>
             <Select
@@ -468,7 +468,7 @@ function CreateSubscriptionPageInner() {
             </Select>
           </div>
 
-          {/* Row 2 — Service Name (Add) | Service ID */}
+          {/* Row 2 - Service Name (Add) | Service ID */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm font-medium">Service Name</label>
@@ -555,7 +555,7 @@ function CreateSubscriptionPageInner() {
             <p className="text-xs text-muted-foreground mt-1">Auto-generated from service type. Change type to regenerate.</p>
           </div>
 
-          {/* Row 3 — Domain | Plan Name (Add) */}
+          {/* Row 3 - Domain | Plan Name (Add) */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Domain (optional)</label>
             <Select
@@ -566,7 +566,7 @@ function CreateSubscriptionPageInner() {
                 <SelectValue placeholder="Select a domain" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">— None —</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {domains.map((domain) => (
                   <SelectItem key={domain.id} value={domain.id}>
                     {domain.name}{domain.tld}
@@ -651,7 +651,7 @@ function CreateSubscriptionPageInner() {
             {errors.planName && <p className="text-xs text-red-600 mt-1">{errors.planName}</p>}
           </div>
 
-          {/* Row 4 — Price | Provider Price */}
+          {/* Row 4 - Price | Provider Price */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Price (client)</label>
             <Input
@@ -675,11 +675,11 @@ function CreateSubscriptionPageInner() {
               onChange={(event) => updateField('providerPrice', event.target.value)}
               placeholder="Your cost from vendor (optional)"
             />
-            <p className="text-xs text-muted-foreground mt-1">Not shown on invoices — used only for margin in Financial Summary.</p>
+            <p className="text-xs text-muted-foreground mt-1">Not shown on invoices - used only for margin in Financial Summary.</p>
             {errors.providerPrice && <p className="text-xs text-red-600 mt-1">{errors.providerPrice}</p>}
           </div>
 
-          {/* Row 5 — Currency | Billing Cycle */}
+          {/* Row 5 - Currency | Billing Cycle */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Currency</label>
             <Select
@@ -717,7 +717,7 @@ function CreateSubscriptionPageInner() {
             </Select>
           </div>
 
-          {/* Row 6 — Start Date | Expiry Date */}
+          {/* Row 6 - Start Date | Expiry Date */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Start Date</label>
             <Input
@@ -738,7 +738,7 @@ function CreateSubscriptionPageInner() {
             {errors.expiryDate && <p className="text-xs text-red-600 mt-1">{errors.expiryDate}</p>}
           </div>
 
-          {/* Row 7 — Status | Auto-renew */}
+          {/* Row 7 - Status | Auto-renew */}
           <div>
             <label className="block text-sm font-medium mb-1.5">Status</label>
             <Select
@@ -770,7 +770,7 @@ function CreateSubscriptionPageInner() {
           </div>
         </div>
 
-        {/* Notes — full width */}
+        {/* Notes - full width */}
         <div>
           <label className="block text-sm font-medium mb-1.5">Notes (optional)</label>
           <Textarea

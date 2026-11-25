@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Globe, Copy, ShieldCheck, Search, Pencil, ChevronRight, Info } from 'lucide-react';
-import { REGISTRAR_NAMESERVERS } from '@/lib/constants';
+import { REGISTRAR_NAMESERVERS } from '@/lib/core/constants';
 import { toast } from 'sonner';
 import { EditDomainDNSDialog } from '@/components/domains/edit-domain-dns-dialog';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 export default function DNSNameserversPage() {
   const { domains = [] } = useInvoiceData();

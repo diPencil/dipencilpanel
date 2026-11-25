@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Company } from '@/lib/types';
+import { Company } from '@/lib/core/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CURRENCIES } from '@/lib/constants';
+import { CURRENCIES } from '@/lib/core/constants';
 import { RefreshCw, TrendingUp, Info } from 'lucide-react';
 
 interface CurrencyConverterProps {

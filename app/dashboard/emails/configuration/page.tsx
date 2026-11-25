@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useInvoiceData } from '@/context/InvoiceContext';
-import type { Domain, Email } from '@/lib/types';
+import type { Domain, Email } from '@/lib/core/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

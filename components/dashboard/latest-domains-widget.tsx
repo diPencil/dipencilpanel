@@ -6,7 +6,7 @@ import { useInvoiceData } from '@/context/InvoiceContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import { formatDate } from '@/lib/formatting';
+import { formatDate } from '@/lib/core/formatting';
 
 export function LatestDomainsWidget() {
   const { getRecentDomains } = useInvoiceData();

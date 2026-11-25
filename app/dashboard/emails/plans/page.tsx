@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { EmailPlan } from '@/lib/types';
+import { EmailPlan } from '@/lib/core/types';
 import { 
   CheckCircle2, 
   Plus, 

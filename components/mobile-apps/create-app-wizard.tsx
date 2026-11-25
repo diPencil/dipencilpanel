@@ -21,10 +21,10 @@ import {
   Smartphone, Users, Globe, HardDrive, Server, Mail, CreditCard,
   CheckCircle2, ChevronRight, ChevronLeft, Plus, AlertCircle,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import { toast } from 'sonner';
-import type { MobileApp } from '@/lib/types';
-import { formatCurrency } from '@/lib/formatting';
+import type { MobileApp } from '@/lib/core/types';
+import { formatCurrency } from '@/lib/core/formatting';
 
 // ─── Step Definitions ─────────────────────────────────────────────────────────
 
@@ -659,8 +659,8 @@ export function CreateAppWizard() {
                 { label: 'App Name', value: form.name },
                 { label: 'Platform', value: form.appType === 'ios' ? 'iOS' : form.appType === 'windows' ? 'Windows' : 'Android' },
                 { label: 'Framework', value: formatFrameworkLabel(form.framework) },
-                { label: 'Description', value: form.description || '—' },
-                { label: 'Client', value: client?.name ?? '—' },
+                { label: 'Description', value: form.description || '-' },
+                { label: 'Client', value: client?.name ?? '-' },
                 { label: 'Domain', value: domain ? `${domain.name}${domain.tld}` : 'Not linked' },
                 {
                   label: 'Infrastructure',

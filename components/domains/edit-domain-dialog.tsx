@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { REGISTRAR_NAMESERVERS } from '@/lib/constants';
+import { REGISTRAR_NAMESERVERS } from '@/lib/core/constants';
 
 const REGISTRARS = Object.keys(REGISTRAR_NAMESERVERS);
 

@@ -15,8 +15,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Send, X, Users, Plus, Mail } from 'lucide-react';
 import { useInvoiceData } from '@/context/InvoiceContext';
-import type { Invoice } from '@/lib/types';
-import { formatInvoiceNumber } from '@/lib/formatting';
+import type { Invoice } from '@/lib/core/types';
+import { formatInvoiceNumber } from '@/lib/core/formatting';
 
 interface SendInvoiceDialogProps {
   invoice: Invoice | null;
@@ -152,7 +152,7 @@ export function SendInvoiceDialog({
                 {client?.name && (
                   <span className="text-foreground">{client.name} &mdash; </span>
                 )}
-                <span className="text-muted-foreground">{client?.email || '—'}</span>
+                <span className="text-muted-foreground">{client?.email || '-'}</span>
               </span>
             </div>
           </div>

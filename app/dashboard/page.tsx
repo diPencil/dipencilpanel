@@ -27,28 +27,29 @@ import {
   Server,
   Smartphone,
 } from 'lucide-react';
-import { isSubscriptionActiveForKpis } from '@/lib/subscription-display-status';
+import { isSubscriptionActiveForKpis } from '@/lib/services/subscription-display-status';
 
 
 export default function DashboardPage() {
-  try {
-    const {
-      company,
-      invoices,
-      clients,
-      subscriptions,
-      hosting = [],
-      domains = [],
-      websites = [],
-      vps = [],
-      emails = [],
-      payments = [],
-      mobileApps = [],
-      getRecentInvoices,
-      getMonthlyRevenue,
-    } = useInvoiceData();
+  const {
+    company,
+    invoices,
+    clients,
+    subscriptions,
+    hosting = [],
+    domains = [],
+    websites = [],
+    vps = [],
+    emails = [],
+    payments = [],
+    mobileApps = [],
+    getRecentInvoices,
+    getMonthlyRevenue,
+  } = useInvoiceData();
 
-    const [exportOpen, setExportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+
+  try {
     const recentInvoices = typeof getRecentInvoices === 'function' ? getRecentInvoices(5) : [];
     const monthlyRevenue = typeof getMonthlyRevenue === 'function' ? getMonthlyRevenue() : [];
 

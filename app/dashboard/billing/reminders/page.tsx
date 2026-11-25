@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { RenewSubscriptionDialog } from '@/components/subscriptions/renew-subscription-dialog';
 import { SendReminderDialog } from '@/components/reminders/send-reminder-dialog';
-import { getReminderItems, sendReminderEmail, type ReminderItem, type ServiceType } from '@/app/actions/reminder-emails';
+import { getReminderItems, sendReminderEmail, type ReminderItem, type ServiceType } from '@/app/actions/communications/reminder-emails';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -168,7 +168,7 @@ export default function RemindersPage() {
             Subscription Reminders
           </h1>
           <p className="text-muted-foreground mt-1">
-            Services expiring within 60 days — send renewal reminders to clients
+            Services expiring within 60 days - send renewal reminders to clients
           </p>
         </div>
         <Button variant="outline" onClick={load} disabled={loading} className="gap-2 self-start">

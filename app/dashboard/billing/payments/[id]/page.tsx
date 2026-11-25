@@ -20,8 +20,8 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from "@/components/ui/tooltip";
-import { formatCurrency, formatInvoiceDate, formatInvoiceNumber } from '@/lib/formatting';
-import { exportInvoiceToPdf, invoicePdfFilename } from '@/lib/export-invoice-pdf';
+import { formatCurrency, formatInvoiceDate, formatInvoiceNumber } from '@/lib/core/formatting';
+import { exportInvoiceToPdf, invoicePdfFilename } from '@/lib/billing/export-invoice-pdf';
 import { toast } from 'sonner';
 
 export default function PaymentDetailsPage() {

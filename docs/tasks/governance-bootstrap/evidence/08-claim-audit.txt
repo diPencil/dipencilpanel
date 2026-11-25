@@ -1,0 +1,46 @@
+﻿FULL CLAIM AUDIT
+========================================================================
+[OK  ] ERD covers every schema model  (schema=19 erd=19 missing=[] extra=[])
+[OK  ] ERD documents every scalar field (except timestamps)  ({})
+[OK  ] ERD has no invented fields  ({})
+[OK  ] unique claim User.username  (username  String    @unique)
+[OK  ] unique claim User.email  (email     String    @unique)
+[OK  ] unique claim Domain.subscriptionId  (subscriptionId String?       @unique)
+[OK  ] unique claim Hosting.subscriptionId  (subscriptionId String?       @unique)
+[OK  ] unique claim VPS.subscriptionId  (subscriptionId String?       @unique)
+[OK  ] unique claim Email.subscriptionId  (subscriptionId String?       @unique)
+[OK  ] unique claim Website.subscriptionId  (subscriptionId String?       @unique)
+[OK  ] unique claim MobileApp.subscriptionId  (subscriptionId String?       @unique)
+[OK  ] gap claim: Invoice.number has no unique index  (number           String)
+[OK  ] gap claim: InvoiceItem has no companyId
+[OK  ] gap claim: ReminderLog.clientId has no foreign key
+[OK  ] gap claim: BusinessEmail.clientId has no foreign key
+[OK  ] gap claim: Subscription.serviceId is a soft reference
+[OK  ] claim: 27 action files  (27)
+[OK  ] claim: 1 action file uses zod  (1)
+[OK  ] claim: 21 action files declare use server  (21)
+[OK  ] claim: 98 raw String(error) returns  (98)
+[OK  ] claim: 4 migrations  (4)
+[OK  ] claim: 19 models  (19)
+[OK  ] claim: 42 lib TypeScript files  (42)
+[OK  ] claim: 7 native selects  (7)
+[OK  ] claim: 85 design-system Select  (85)
+[OK  ] claim: 24 native date/time inputs  (24)
+[OK  ] claim: 8 product textareas  (8)
+[OK  ] claim: 55 hex colours in 3 files  (55)
+[OK  ] claim: 5 vendored repositories  (5)
+[OK  ] claim: 53 SKILL.md files, 46 canonical  (total=53 canonical=46)
+[OK  ] claim: 10,095 vendored files  (10095)
+[OK  ] claim: 122,332,655 vendored bytes  (122332655)
+[OK  ] claim: 0 nested .git directories  (0)
+[OK  ] claim: bcrypt cost 12
+[OK  ] claim: middleware skips /api/*
+[OK  ] claim: requireTenantAccess filters companyId
+[OK  ] claim: all 3 API routes call requireApiSession  (3/3)
+[OK  ] all 126 file paths mentioned in docs exist
+[OK  ] every referenced risk ID exists in the register  ({})
+[OK  ] register defines R-01 to R-20  (['R-01', 'R-02', 'R-03', 'R-04', 'R-05', 'R-06', 'R-07', 'R-08', 'R-09', 'R-10', 'R-11', 'R-12', 'R-13', 'R-14', 'R-15', 'R-16', 'R-17', 'R-18', 'R-19', 'R-20'])
+[OK  ] WCAG: only the ratified floor may say 2.1 without a 2.2 target  ([])
+[OK  ] no stale 517-select claims outside task reports  ([])
+========================================================================
+42/42 checks passed, 0 failed

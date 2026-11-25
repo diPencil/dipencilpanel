@@ -6,7 +6,8 @@ import { Header } from '@/components/layout/header';
 import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
 import { ConfirmationProvider, useConfirmation } from '@/context/ConfirmationContext';
 import { InvoiceProvider } from '@/context/InvoiceContext';
-import { cn } from '@/lib/utils';
+import { DynamicHeadBranding } from '@/components/layout/dynamic-head-branding';
+import { cn } from '@/lib/core/utils';
 import { Toaster } from '@/components/ui/sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -67,6 +68,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       
       <Toaster position="top-right" expand={false} richColors />
       <ConfirmationDialog />
+      <DynamicHeadBranding />
     </div>
   );
 }

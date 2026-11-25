@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { Hosting } from '@/lib/types';
+import type { Hosting } from '@/lib/core/types';
 
 function toInputDate(d: Date) {
   const y = d.getFullYear();
@@ -117,7 +117,7 @@ export function RenewHostingDialog({
           <DialogTitle>Renew hosting</DialogTitle>
           <DialogDescription>
             {host
-              ? `${host.name} — creates a renewal invoice and sets the account to active with the new expiry date.`
+              ? `${host.name} - creates a renewal invoice and sets the account to active with the new expiry date.`
               : 'Creates a renewal invoice and sets the hosting account to active with the new expiry date.'}
           </DialogDescription>
         </DialogHeader>

@@ -9,8 +9,8 @@ import { InvoiceForm } from '@/components/invoices/invoice-form';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { exportElementToPdf, invoicePdfFilename } from '@/lib/export-invoice-pdf';
-import { formatInvoiceNumber } from '@/lib/formatting';
+import { exportElementToPdf, invoicePdfFilename } from '@/lib/billing/export-invoice-pdf';
+import { formatInvoiceNumber } from '@/lib/core/formatting';
 import { ChevronLeft, Printer, Download, Edit } from 'lucide-react';
 const LIST_HREF = '/dashboard/billing/dipencil-invoices';
 

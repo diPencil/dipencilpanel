@@ -33,10 +33,10 @@ import {
   Zap,
   AlertCircle,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/lib/formatting';
+import { cn } from '@/lib/core/utils';
+import { formatCurrency } from '@/lib/core/formatting';
 import { toast } from 'sonner';
-import type { Domain, VPSPlan, Website } from '@/lib/types';
+import type { Domain, VPSPlan, Website } from '@/lib/core/types';
 
 const STEPS = [
   { id: 1, label: 'Client', icon: Users },
@@ -654,8 +654,8 @@ function AddVpsPageInner() {
               </div>
 
               <div className="rounded-xl border bg-muted/20 p-4 space-y-2 text-sm">
-                <div className="flex justify-between gap-3"><span className="text-muted-foreground">Client</span><span className="font-medium">{selectedClient?.name || '—'}</span></div>
-                <div className="flex justify-between gap-3"><span className="text-muted-foreground">Target</span><span className="font-medium">{targetLabel || '—'}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-muted-foreground">Client</span><span className="font-medium">{selectedClient?.name || '-'}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-muted-foreground">Target</span><span className="font-medium">{targetLabel || '-'}</span></div>
                 <div className="flex justify-between gap-3"><span className="text-muted-foreground">Plan</span><span className="font-medium">{selectedPlan?.name || form.planName}</span></div>
                 <div className="flex justify-between gap-3"><span className="text-muted-foreground">OS</span><span className="font-medium">{form.os}</span></div>
                 <div className="flex justify-between gap-3"><span className="text-muted-foreground">Panel</span><span className="font-medium">{compatiblePanels.find((panel) => panel.id === form.panel)?.label || form.panel}</span></div>
