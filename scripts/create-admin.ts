@@ -31,13 +31,16 @@ async function createAdmin() {
       password: hashedPassword,
       companyId: company.id,
       roleId: role.id,
-      status: 'active'
+      status: 'active',
+      // R-10: this script's password is published in the repository.
+      mustChangePassword: true,
     }
   });
 
   console.log('--- SUCCESS: Created Admin User ---');
   console.log('Username: dipencil');
   console.log('Password: (the one you usually use)');
+  console.log('A new password is required on first login (R-10).');
 }
 
 createAdmin().catch(console.error).finally(() => prisma.$disconnect());

@@ -106,7 +106,7 @@ override this per task.
 | Auth | `jose` JWT sessions + `bcryptjs` |
 | Package manager | pnpm 10 |
 | Local URL | `http://localhost:3000` by default (`next dev`); confirm the port printed by the dev server. Port 3001 may be occupied by another local app. |
-| Default login | `dipencil` / `@diPencil1907@` - local bootstrap only, change before deploy |
+| Default login | `dipencil` / `@diPencil1907@` - local bootstrap only; first login forces a new password (R-10) |
 
 **Source of truth for setup:** [`README.md`](README.md). Do not duplicate setup
 instructions here; keep the README current instead.
@@ -639,7 +639,7 @@ Remaining risks / not tested
 | Gap | Status / action |
 | --- | --------------- |
 | Port ownership on this machine is not fixed | `next dev` defaults to 3000; 3001 may belong to another app. Confirm the printed URL before debugging |
-| Default admin `dipencil` / `@diPencil1907@` | Must be changed before any deployment |
+| Default admin `dipencil` / `@diPencil1907@` | Mitigated by R-10: forced rotation on first login (`mustChangePassword`), production refuses the published password. Rotate before deploy regardless |
 | `/api/database` and `/api/websites/migrate` auth | Closed 2026-11-25: both use `requireApiSession`; database requires super admin. Keep the guard and re-verify with a negative test |
 | SMTP sending, PDF export, SSH website migration | Implemented but not end-to-end verified |
 | Next 16 `middleware` → `proxy` deprecation warning | Non-blocking; migrate when convenient |

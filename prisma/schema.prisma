@@ -123,6 +123,9 @@ model User {
   password  String?
   avatar    String?  @db.LongText
   status    String    @default("active")
+  // R-10: true while the account still uses a published/bootstrap password.
+  // Cleared only by an explicit password change (forced screen or settings).
+  mustChangePassword Boolean @default(false)
   lastLogin DateTime?
   lastLogoutAt DateTime?
   lastNotificationCheck DateTime?

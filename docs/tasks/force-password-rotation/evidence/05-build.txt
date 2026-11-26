@@ -1,0 +1,104 @@
+﻿== pnpm build ==
+
+> dipencil-panel@0.1.0 build D:\Development\pencil\diPencil Panel
+> next build
+
+Γû▓ Next.js 16.2.0 (Turbopack)
+- Environments: .env
+
+node.exe : ΓÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: 
+https://nextjs.org/docs/messages/middleware-to-proxy
+At C:\Users\mahmo\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ΓÜá The "middle...leware-to-proxy:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 24.7s
+  Running TypeScript ...
+  Finished TypeScript in 43s ...
+  Collecting page data using 19 workers ...
+  Generating static pages using 19 workers (0/52) ...
+  Generating static pages using 19 workers (13/52) 
+  Generating static pages using 19 workers (26/52) 
+  Generating static pages using 19 workers (39/52) 
+Γ£ô Generating static pages using 19 workers (52/52) in 2.2s
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ ╞Æ /api/database
+Γö£ ╞Æ /api/websites/migrate
+Γö£ ╞Æ /api/websites/migrate/[id]
+Γö£ ╞Æ /change-password
+Γö£ Γùï /dashboard
+Γö£ Γùï /dashboard/agents
+Γö£ Γùï /dashboard/billing
+Γö£ Γùï /dashboard/billing/business-emails
+Γö£ ╞Æ /dashboard/billing/business-emails/[id]
+Γö£ ╞Æ /dashboard/billing/business-emails/[id]/edit
+Γö£ Γùï /dashboard/billing/dipencil-invoices
+Γö£ ╞Æ /dashboard/billing/dipencil-invoices/[id]
+Γö£ Γùï /dashboard/billing/dipencil-invoices/new
+Γö£ Γùï /dashboard/billing/financial-summary
+Γö£ Γùï /dashboard/billing/invoices
+Γö£ ╞Æ /dashboard/billing/invoices/[id]
+Γö£ Γùï /dashboard/billing/invoices/new
+Γö£ Γùï /dashboard/billing/payments
+Γö£ ╞Æ /dashboard/billing/payments/[id]
+Γö£ Γùï /dashboard/billing/reminders
+Γö£ Γùï /dashboard/billing/subscriptions
+Γö£ ╞Æ /dashboard/billing/subscriptions/[id]
+Γö£ ╞Æ /dashboard/billing/subscriptions/[id]/edit
+Γö£ Γùï /dashboard/billing/subscriptions/new
+Γö£ Γùï /dashboard/clients
+Γö£ ╞Æ /dashboard/clients/[id]
+Γö£ Γùï /dashboard/clients/groups
+Γö£ Γùï /dashboard/domains
+Γö£ ╞Æ /dashboard/domains/[id]
+Γö£ Γùï /dashboard/domains/dns
+Γö£ Γùï /dashboard/domains/new
+Γö£ Γùï /dashboard/domains/transfer
+Γö£ Γùï /dashboard/emails
+Γö£ Γùï /dashboard/emails/configuration
+Γö£ Γùï /dashboard/emails/plans
+Γö£ Γùï /dashboard/help
+Γö£ Γùï /dashboard/hosting
+Γö£ ╞Æ /dashboard/hosting/[id]
+Γö£ Γùï /dashboard/hosting/new
+Γö£ Γùï /dashboard/hosting/plans
+Γö£ Γùï /dashboard/invoices
+Γö£ Γùï /dashboard/invoices/create
+Γö£ Γùï /dashboard/management/companies
+Γö£ Γùï /dashboard/management/roles
+Γö£ Γùï /dashboard/management/users
+Γö£ Γùï /dashboard/mobile-apps
+Γö£ ╞Æ /dashboard/mobile-apps/[id]
+Γö£ Γùï /dashboard/mobile-apps/new
+Γö£ Γùï /dashboard/resources/storage
+Γö£ Γùï /dashboard/resources/usage
+Γö£ Γùï /dashboard/settings
+Γö£ ╞Æ /dashboard/settings/account
+Γö£ Γùï /dashboard/settings/invoice-email
+Γö£ Γùï /dashboard/settings/notifications
+Γö£ Γùï /dashboard/settings/reminder-email
+Γö£ Γùï /dashboard/storage
+Γö£ Γùï /dashboard/vps
+Γö£ Γùï /dashboard/vps/new
+Γö£ Γùï /dashboard/vps/plans
+Γö£ Γùï /dashboard/websites
+Γö£ ╞Æ /dashboard/websites/[id]
+Γö£ Γùï /dashboard/websites/migrate
+Γö£ Γùï /dashboard/websites/new
+Γöö Γùï /login
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+
+
+exit code: 0

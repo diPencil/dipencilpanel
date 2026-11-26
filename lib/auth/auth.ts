@@ -28,6 +28,8 @@ export interface SessionPayload {
   name: string;
   email: string;
   avatar?: string;
+  /** R-10: mirrored into the JWT so middleware can redirect without a DB read. */
+  mustChangePassword?: boolean;
   isAuthenticated: true;
 }
 
@@ -125,7 +127,15 @@ export async function getSession(): Promise<SessionPayload | null> {
   try {
     const user = await prisma.user.findUnique({
       where: { id: jwtPayload.userId },
-      select: { id: true, username: true, name: true, email: true, avatar: true, status: true },
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        email: true,
+        avatar: true,
+        status: true,
+        mustChangePassword: true,
+      },
     });
     if (!user || user.status !== 'active') return null;
 
@@ -135,6 +145,7 @@ export async function getSession(): Promise<SessionPayload | null> {
       name: user.name,
       email: user.email,
       avatar: user.avatar ?? undefined,
+      mustChangePassword: user.mustChangePassword,
       isAuthenticated: true,
     };
   } catch (err) {

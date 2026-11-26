@@ -1,0 +1,42 @@
+# Browser evidence: rotation completes and the dashboard unlocks
+
+Date: 2026-11-26
+Server: `pnpm dev` on http://localhost:3000
+
+## Steps and observed results
+
+1. On `/change-password`, filled both fields through native `input` events
+   (the form is a controlled React form) with `<test-password>`, then clicked
+   "Save new password".
+   - Server log: `forceChangePasswordAction({confirmPassword, newPassword})`
+   - Final URL: `http://localhost:3000/dashboard`
+   - Dashboard heading rendered: "Dashboard Overview"
+   - Console errors: none
+
+2. Database immediately after the rotation:
+
+```text
+username  status  mustChangePassword  hash_prefix
+dipencil  active  0                   $2b$12$
+```
+
+3. Session after rotation: navigating to `/dashboard` stayed on `/dashboard`
+   (the gate no longer redirects).
+
+4. New password accepted: signing in again with `<test-password>` landed on
+   `/dashboard`.
+
+## Cleanup performed after the test
+
+The local account was restored to the documented bootstrap state with
+`npx tsx scripts/fix-password.ts` (no arguments), which sets
+`@diPencil1907@` and re-enables the forced rotation. Verified:
+
+```text
+mustChangePassword = 1
+bcrypt.compare('@diPencil1907@', hash) = true
+```
+
+## Not captured
+
+Screenshots unavailable (desktop window not visible to the browser host).

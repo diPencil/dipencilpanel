@@ -1,0 +1,50 @@
+# Production refusal of the published password
+
+Date: 2026-11-26
+Server: production build served by `next start` on http://localhost:3005
+(`NODE_ENV=production`, same `.env` and database as the dev run)
+
+## Setup
+
+- `pnpm build` completed (see `05-build.txt`).
+- `$env:PORT=3005; pnpm start`
+- Database state: `dipencil | active | mustChangePassword=1`,
+  `bcrypt.compare('@diPencil1907@', hash) = true`.
+
+## Attempt
+
+Opened `http://localhost:3005/login`, submitted `dipencil` /
+`@diPencil1907@`.
+
+Result (page stayed on `/login`):
+
+```text
+This password is disabled in production. Set a new password from the server
+(scripts/fix-password.ts "<new password>").
+```
+
+Server log:
+
+```text
+[loginAction] refused published bootstrap password for user dipencil
+```
+
+## Database after the refusal
+
+```text
+mustChangePassword  updatedAt                  lastLogin
+1                   2026-11-26 14:55:18.006    2026-11-26 14:50:49.640
+```
+
+`lastLogin` did not change, confirming the refused attempt did not create a
+session.
+
+## Note on the first attempt
+
+A first attempt in this same run returned "Invalid credentials" instead. At that
+moment the user row held a hash that matched neither the published password nor
+the test password used earlier, with `mustChangePassword=0` (verified with a
+throwaway bcrypt comparison script, since removed). The row was restored with
+`npx tsx scripts/fix-password.ts` and the test repeated. The cause of that
+intermediate row state was not identified; it is recorded here rather than
+hidden. The current, verified state is the one shown above.

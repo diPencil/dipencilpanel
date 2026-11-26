@@ -1,0 +1,43 @@
+# Browser evidence: 360 px layout
+
+Date: 2026-11-26
+Page: `http://localhost:3000/change-password`
+
+## Limitation (stated plainly)
+
+The in-app browser MCP has no viewport or device emulation
+(`search` for "viewport" returns only `screenshot` and `lighthouse`, and
+`lighthouse` explicitly does not emulate a device). The desktop window was not
+visible to the browser host, so the viewport could not be resized manually and
+screenshots were unavailable.
+
+**The screen was not rendered at an actual 360 px viewport.** The checks below
+are structural, not a 360 px rendering test.
+
+## Structural evidence
+
+- The screen is one centred card: `<main class="min-h-screen flex items-center
+  justify-center bg-background p-4">` containing
+  `<Card class="w-full max-w-md">`.
+- `max-w-md` is 28 rem (448 px); `w-full` plus the `p-4` (16 px) padding means
+  the card takes the available width below 448 px, i.e. 328 px at a 360 px
+  viewport.
+- No element inside the card sets a fixed pixel width. Measured at the live
+  viewport (1000 px):
+
+```json
+{
+  "docScroll/client": "1000/1000",
+  "horizontalOverflowingElements": [],
+  "fixedWidthsAbove360": ["HTML 1000px", "BODY 1000px", "MAIN 1000px", "DIV 448px", "DIV 446.4px"]
+}
+```
+
+The only widths above 360 px are the viewport-sized shell elements and the card
+capped by `max-w-md`, which shrinks below 448 px.
+
+## Remaining risk
+
+A true 360 px render, plus the 768 px and 1440 px breakpoints from the design
+system, remain unverified in this environment. They are listed as open
+verification in `report.md` and are not claimed as passing.

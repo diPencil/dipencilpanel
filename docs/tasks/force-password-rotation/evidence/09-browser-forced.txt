@@ -1,0 +1,49 @@
+# Browser evidence: flagged login lands on /change-password
+
+Date: 2026-11-26
+Server: `pnpm dev` on http://localhost:3000 (Next.js 16.2.0, Turbopack)
+Account state before the test: `dipencil | active | mustChangePassword=1`
+(restored with `npx tsx scripts/fix-password.ts`, no arguments)
+
+## Steps and observed results
+
+1. Opened `http://localhost:3000/login`, filled `dipencil` / `@diPencil1907@`,
+   clicked "Get Started".
+   - Final URL: `http://localhost:3000/change-password`
+   - Console errors: none
+   - Page heading: "Set a new password"
+   - Page copy: "Signed in as dipencil. This account still uses a bootstrap
+     password, so a new one is required before the panel unlocks."
+
+2. Gate check with a live session: navigated to `http://localhost:3000/dashboard`
+   while the account was flagged.
+   - Result: redirected back to `http://localhost:3000/change-password`.
+   - Note: the session JWT still carried `mustChangePassword=false` from the
+     earlier rotation, so this redirect came from the server-side gate
+     (`requireSession()` reading MySQL through `getSession()`), not from
+     `middleware.ts`. This is the strongest of the three gates.
+
+3. Dev server log excerpt (passwords redacted):
+
+```text
+GET /login 200
+POST /login 200
+  └─ ƒ loginAction("dipencil", "***", false)
+GET /change-password 200
+POST /change-password 200
+  └─ ƒ getCurrentUser()
+GET /dashboard 200
+POST /dashboard 303
+  └─ ƒ getCompanies()
+POST /change-password 200
+  └─ ƒ getCurrentUser()
+```
+
+`POST /dashboard 303` is the server redirect that bounces a flagged session.
+
+## Not captured
+
+Screenshots could not be captured: `browser.screenshot` requires the desktop
+window to be visible, and the browser host reported it was not
+("Screenshot needs a visible tab"). The DOM and log evidence above are the
+substitute.

@@ -19,11 +19,19 @@ import { hasPermission } from './api-auth';
 /**
  * Resolve the current session or redirect to `/login`.
  * Cached per request, so repeated calls in one render cost one database lookup.
+ *
+ * R-10: a session whose password has not been rotated yet (bootstrap
+ * credentials) is redirected to `/change-password` instead of receiving data.
+ * The change screen and its action call `getSession()` directly so they are
+ * never caught by this gate.
  */
 export const requireSession = cache(async (): Promise<SessionPayload> => {
   const session = await getSession();
   if (!session) {
     redirect('/login');
+  }
+  if (session.mustChangePassword) {
+    redirect('/change-password');
   }
   return session;
 });

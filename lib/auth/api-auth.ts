@@ -13,13 +13,27 @@ export type ApiSessionResult =
   | { ok: true; session: SessionPayload }
   | { ok: false; response: NextResponse };
 
-/** Resolve the session or return a 401 response. */
+/**
+ * Resolve the session or return a 401 response.
+ *
+ * R-10: a session whose password has not been rotated yet gets a stable 403,
+ * so a bootstrap account cannot read or write through `/api/*`.
+ */
 export async function requireApiSession(): Promise<ApiSessionResult> {
   const session = await getSession();
   if (!session) {
     return {
       ok: false,
       response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    };
+  }
+  if (session.mustChangePassword) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { success: false, error: 'Password change required.' },
+        { status: 403 },
+      ),
     };
   }
   return { ok: true, session };

@@ -1,0 +1,23 @@
+﻿== verify-project.py ==
+diPencil Panel - governance verification
+repository: D:\Development\pencil\diPencil Panel
+
+== Required files and directories ==
+[PASS] all 16 required files present
+[PASS] all 7 required directories present
+
+== Markdown links ==
+[PASS] 109 relative links resolved across 16 documents
+
+== Documentation language (English) ==
+[PASS] all 16 governed documents are English
+
+== No em dash (Article XI) ==
+[PASS] no em dash in 16 governed documents
+
+== Vendored skills lock ==
+[PASS] 5 vendored skills present, pinned and discoverable
+
+RESULT: PASS
+
+exit code: 0

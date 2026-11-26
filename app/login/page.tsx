@@ -23,6 +23,11 @@ function LoginForm() {
     startTransition(async () => {
       const result = await loginAction(identifier, password, remember);
       if (result.success) {
+        // R-10: a bootstrap account may not reach the dashboard until it rotates.
+        if (result.mustChangePassword) {
+          router.replace('/change-password');
+          return;
+        }
         const from = searchParams.get('from') || '/dashboard';
         router.replace(from);
       } else {

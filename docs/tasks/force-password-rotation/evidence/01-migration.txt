@@ -1,0 +1,84 @@
+﻿== prisma migrate status ==
+
+> dipencil-panel@0.1.0 db:generate D:\Development\pencil\diPencil Panel
+> prisma generate
+
+node.exe : Loaded Prisma config from prisma.config.ts.
+At C:\Users\mahmo\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Loaded Prisma c...isma.config.ts.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+Prisma schema loaded from prisma\schema.prisma.
+ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö
+ÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ
+Γöé  Update available 7.6.0 -> 8.0.0-rc.36                  Γöé
+Γöé                                                         Γöé
+Γöé  This is a major update - please follow the guide at    Γöé
+Γöé  https://pris.ly/d/major-version-upgrade                Γöé
+Γöé                                                         Γöé
+Γöé  Run the following to update                            Γöé
+Γöé    npm i --save-dev prisma@latest                       Γöé
+Γöé    npm i @prisma/client@latest                          Γöé
+ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö
+ÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ
+
+Γ£ö Generated Prisma Client (v7.6.0) to .\node_modules\.pnpm\@prisma+client@7.6.0_prisma_8587425d2ee76a38bad8bbe1fb9cae3d\node_modules\@prisma\client in 973ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+
+== migration file ==
+-- AlterTable
+ALTER TABLE `user` ADD COLUMN `mustChangePassword` BOOLEAN NOT NULL DEFAULT false;
+
+== User model fields ==
+
+> prisma\schema.prisma:118:model User {
+  prisma\schema.prisma:119:  id        String    @id @default(cuid())
+  prisma\schema.prisma:120:  username  String    @unique
+  prisma\schema.prisma:121:  name      String
+  prisma\schema.prisma:122:  email     String    @unique
+  prisma\schema.prisma:123:  password  String?
+  prisma\schema.prisma:124:  avatar    String?  @db.LongText
+  prisma\schema.prisma:125:  status    String    @default("active")
+  prisma\schema.prisma:126:  // R-10: true while the account still uses a published/bootstrap password.
+  prisma\schema.prisma:127:  // Cleared only by an explicit password change (forced screen or settings).
+  prisma\schema.prisma:128:  mustChangePassword Boolean @default(false)
+  prisma\schema.prisma:129:  lastLogin DateTime?
+  prisma\schema.prisma:130:  lastLogoutAt DateTime?
+  prisma\schema.prisma:131:  lastNotificationCheck DateTime?
+  prisma\schema.prisma:132:  lastNotificationClearCheck DateTime?
+  prisma\schema.prisma:133:
+  prisma\schema.prisma:134:  companyId String
+  prisma\schema.prisma:135:  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  prisma\schema.prisma:136:
+  prisma\schema.prisma:137:  roleId String
+  prisma\schema.prisma:138:  role   Role   @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  prisma\schema.prisma:139:
+  prisma\schema.prisma:140:  createdAt DateTime @default(now())
+  prisma\schema.prisma:141:  updatedAt DateTime @updatedAt
+  prisma\schema.prisma:142:
+  prisma\schema.prisma:143:  @@index([companyId])
+  prisma\schema.prisma:144:}
+  prisma\schema.prisma:145:
+  prisma\schema.prisma:146:// ==========================================
+  prisma\schema.prisma:147:// 2. CLIENT MANAGEMENT
+  prisma\schema.prisma:148:// ==========================================
+  prisma\schema.prisma:149:
+  prisma\schema.prisma:150:model Client {
+  prisma\schema.prisma:151:  id          String  @id @default(cuid())
+  prisma\schema.prisma:152:  name        String
+  prisma\schema.prisma:153:  email       String
+  prisma\schema.prisma:154:  phone       String?
+  prisma\schema.prisma:155:  address     String?  @db.Text
+  prisma\schema.prisma:156:  companyName String?  @db.Text
+  prisma\schema.prisma:157:  /// Hidden system client used only for diPencil internal invoices (FK); not shown in 
+client lists.
+  prisma\schema.prisma:158:  isDipencilInternal Boolean @default(false)
+
+
+

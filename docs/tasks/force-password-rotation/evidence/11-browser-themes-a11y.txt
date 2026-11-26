@@ -1,0 +1,96 @@
+# Browser evidence: both themes, focus ring, Lighthouse
+
+Date: 2026-11-26
+Page: `http://localhost:3000/change-password`
+Theme storage key: `pencil-theme` (custom `components/theme-provider.tsx`, not
+`next-themes`; the key is `pencil-theme`, not `theme`).
+
+## Dark theme (computed styles)
+
+```json
+{
+  "theme": "dark",
+  "bodyBg": "lab(2.75381 0 0)",
+  "cardBg": "lab(2.75381 0 0)",
+  "heading": "Set a new password",
+  "inputs": ["new-password", "confirm-password"],
+  "docScroll/client": "1000/1000"
+}
+```
+
+## Light theme (after localStorage `pencil-theme=light` and reload)
+
+```json
+{
+  "theme": "light",
+  "stored": "light",
+  "bodyBg": "lab(96.52 -0.0000596046 0)",
+  "cardBg": "lab(100 0 0)",
+  "cardBorder": "lab(90.952 -0.0000596046 0)",
+  "labelColor": "lab(2.75381 0 0)",
+  "headingColor": "lab(2.75381 0 0)",
+  "buttonBg": "lab(7.78201 -0.0000149012 0)",
+  "buttonColor": "lab(98.26 0 0)"
+}
+```
+
+Both themes resolve through semantic tokens; no hard-coded colours on the
+screen.
+
+## Focus ring
+
+Focused `#confirm-password` with a pointer click, then read computed styles:
+
+```json
+{
+  "id": "confirm-password",
+  "focus": true,
+  "focusVisible": true,
+  "borderColor": "lab(66.128 ...)",
+  "boxShadow": "... oklab(0.707999 ... / 0.5) 0px 0px 0px 3px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px"
+}
+```
+
+A visible 3 px ring at 50 % opacity plus a border change (WCAG 2.4.7).
+
+## Accessibility audit (Lighthouse, in-app browser)
+
+Before the `<main>` fix:
+
+```text
+accessibility: 98
+best-practices: 100
+seo: 100
+failed: landmark-one-main (Document does not have a main landmark)
+```
+
+`app/change-password/change-password-form.tsx` now renders `<main>` instead of
+the outer `<div>`. Re-run after the fix:
+
+```text
+accessibility: 100
+best-practices: 100
+seo: 100
+failed: (none)
+```
+
+## Keyboard traversal
+
+`browser.press` did not move focus (every Tab press left `document.activeElement`
+on `BODY`), because the browser host had no visible desktop window, the same
+constraint that blocked screenshots. Keyboard order was therefore not exercised
+end to end. The form uses native `<input>` elements in DOM order, visible labels
+and a native submit button; focus styling is verified above.
+
+## Form accessibility attributes
+
+```json
+[
+  {"id":"new-password","type":"password","autocomplete":"new-password","required":true,
+   "ariaRequired":"true","labelText":"New password","labelFor":"new-password",
+   "describedby":"new-password-hint","describedbyResolves":true,"height":36},
+  {"id":"confirm-password","type":"password","autocomplete":"new-password","required":true,
+   "ariaRequired":"true","labelText":"Confirm new password","labelFor":"confirm-password",
+   "height":36}
+]
+```

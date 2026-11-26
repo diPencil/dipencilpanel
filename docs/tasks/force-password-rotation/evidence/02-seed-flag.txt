@@ -1,0 +1,22 @@
+﻿== pnpm db:seed ==
+
+> dipencil-panel@0.1.0 db:seed D:\Development\pencil\diPencil Panel
+> prisma db seed
+
+node.exe : Loaded Prisma config from prisma.config.ts.
+At C:\Users\mahmo\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Loaded Prisma c...isma.config.ts.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+Running seed command `tsx prisma/seed.ts` ...
+ΓÜá∩╕Å  Default password still active and already flagged for rotation.
+
+The seed command has been executed.
+
+== DB row ==
+username	status	mustChangePassword
+dipencil	active	1
+

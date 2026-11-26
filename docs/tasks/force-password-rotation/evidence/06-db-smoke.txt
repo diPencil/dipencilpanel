@@ -1,0 +1,10 @@
+﻿== pnpm db:smoke ==
+
+> dipencil-panel@0.1.0 db:smoke D:\Development\pencil\diPencil Panel
+> tsx scripts/smoke-db.ts
+
+company: Hostinger International Ltd.
+client roundtrip: ok
+counts: { users: 1, clients: 0, invoices: 0 }
+
+exit code: 0

@@ -5,6 +5,9 @@ const COOKIE_NAME = 'dipencil_session';
 
 const PUBLIC_PATHS = ['/login'];
 
+/** R-10: reachable without a rotated password (the screen itself, sign-out target). */
+const PASSWORD_CHANGE_PATHS = ['/change-password'];
+
 /** Only real static assets may skip the session check. */
 const STATIC_FILE_PATTERN =
   /\.(?:avif|css|gif|ico|jpe?g|js|json|map|otf|png|svg|ttf|txt|webmanifest|webp|woff2?|xml)$/i;
@@ -15,14 +18,14 @@ function getSecret(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
-async function isAuthenticated(request: NextRequest): Promise<boolean> {
+async function getSessionPayload(request: NextRequest): Promise<{ mustChangePassword?: boolean } | null> {
   const token = request.cookies.get(COOKIE_NAME)?.value;
-  if (!token) return false;
+  if (!token) return null;
   try {
-    await jwtVerify(token, getSecret());
-    return true;
+    const { payload } = await jwtVerify(token, getSecret());
+    return payload as { mustChangePassword?: boolean };
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -41,7 +44,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const authed = await isAuthenticated(request);
+  const payload = await getSessionPayload(request);
+  const authed = payload !== null;
 
   // Redirect root → dashboard or login
   if (pathname === '/') {
@@ -55,6 +59,16 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('from', pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // R-10: a bootstrap session may only reach the password change screen.
+  // This is a UX gate (edge runtime has no database); the security gate lives
+  // in requireSession() / requireApiSession(), which read MySQL.
+  if (
+    payload?.mustChangePassword &&
+    !PASSWORD_CHANGE_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
+  ) {
+    return NextResponse.redirect(new URL('/change-password', request.url));
   }
 
   return NextResponse.next();

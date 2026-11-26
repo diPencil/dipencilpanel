@@ -130,7 +130,8 @@ Open <http://localhost:3000> and sign in with the seeded account:
 | ---------- | ---------------- |
 | `dipencil` | `@diPencil1907@` |
 
-> ⚠️ **Change this password immediately** in production. See
+> ⚠️ **Bootstrap only.** The first sign-in forces a new password before the
+> panel unlocks, and production refuses the published password at login. See
 > [Security notes](#security-notes).
 
 ---
@@ -344,13 +345,16 @@ For a VPS deployment:
 
 Before exposing this panel to the internet:
 
-- **Change the seeded admin password.** `prisma/seed.ts` creates
-  `dipencil` / `@diPencil1907@` for local bootstrap only.
+- **Rotate the seeded admin password.** `prisma/seed.ts` creates
+  `dipencil` / `@diPencil1907@` for local bootstrap only. The account is flagged
+  with `mustChangePassword`, so the panel stays locked until a new password is
+  set; production (`NODE_ENV=production`) refuses the published password
+  outright. Bootstrap a production deployment from the server with
+  `npx tsx scripts/fix-password.ts "<new password>"` (sets the password and
+  clears the flag).
 - **Rotate `AUTH_SECRET`** and never commit `.env`.
-- **Restrict `app/api/database/route.ts`** - it currently exports a full
-  database dump without an authorization check.
-- **Restrict `app/api/websites/migrate/route.ts`** - the migration endpoint is
-  reachable without authentication.
+- **`/api/database`** requires a session and super-admin permission.
+- **`/api/websites/migrate`** requires a session; keep both guards in place.
 - Run behind HTTPS; session cookies should be `Secure` in production.
 
 ---
